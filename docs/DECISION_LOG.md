@@ -94,6 +94,18 @@ Every major decision made in developing this product, so future work (human or A
 
 ---
 
+### D12 — Engineering organization: four lanes, not developer headcount
+
+**Problem:** Prior planning (`ENGINEERING_OPERATING_MANUAL.md` Task 6) split ownership across 3 developers, contradicting `PROJECT_CONTEXT.md`'s stated 4-person team — an unresolved contradiction flagged but not fixed at the time.
+**Alternatives considered:** (a) Fix the headcount mismatch by simply adding a 4th named-developer lane matching the original Person A–D split from `IMPLEMENTATION_PLAN.md`'s earlier parallel-work-streams table. (b) Reorganize entirely around function (lane) rather than name, with AI and Integration merged under one owner.
+**Chosen approach:** (b) — four engineering lanes: Backend Core, Frontend, Graph Intelligence, AI + Architecture + Integration (the last owned by Sujal).
+**Reason:** AI and Integration are unusually tightly coupled in this architecture — the conversational layer's grounding depends on stable contracts from every other lane, and integration bugs are most diagnosable by whoever also owns the AI layer's expected inputs/outputs. Merging them under one owner reduces coordination overhead and directly targets D9's failure pattern (disconnected pipelines), since the integration owner is structurally forced to understand every other lane's output, not just their own.
+**Trade-offs:** Lane 4 (Sujal) now sits on the critical path for two of the three remaining Catalyst spikes (AppSail, QuickML) plus all cross-lane integration — a concentration-of-risk trade accepted deliberately in exchange for reduced drift, not an oversight. If Lane 4 falls behind, there is no equivalent backup owner for integration review.
+**Consequences:** `ENGINEERING_OPERATING_MANUAL.md` Task 6, `IMPLEMENTATION_PLAN.md`'s Parallel Work Streams table, and `TASK.md`'s ownership tracking are all updated to lane-based assignment in the same session this decision was made, per `EXECUTION_RULES.md`'s documentation-update rule.
+**Known limitation:** This resolves the 3-vs-4 contradiction structurally but does not by itself reduce total engineering risk — it relocates coordination risk from "ambiguous ownership" to "single point of failure in Lane 4," which is a different risk, not a smaller one.
+
+---
+
 ### D11 — Wow-moment demo design: pair deterministic escalation with a scripted (not open-floor) refusal demonstration
 
 **Problem:** Selecting the single highest-impact demo moment.

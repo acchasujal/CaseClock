@@ -327,20 +327,20 @@ Everything else in `FEATURE_REGISTRY.md` (Network beyond co-accused, Similarity,
 
 ---
 
-## Parallel Work Streams (4-person team, safe after Phase 2 schema freeze)
+## Parallel Work Streams (organized by engineering lane, not headcount — see `DECISION_LOG.md` D12)
 
-Before Phase 2 is frozen, **do not parallelize feature work** — only one person should be driving schema decisions, with the rest on Phase 0/1 foundation tasks, to avoid the two-people-guessing-differently rework risk named at the top of this document.
+Before Phase 2 is frozen, **do not parallelize feature work** — only Lane 4 (Sujal, owns Repository Architecture and API Contracts) should be driving schema decisions, with the other lanes on Phase 0/1 foundation tasks, to avoid the two-people-guessing-differently rework risk named at the top of this document.
 
 After schema freeze (post-Phase 2), four independent, non-conflicting streams:
 
-| Person | Stream | Touches |
+| Lane | Stream | Touches |
 |---|---|---|
-| A | Backend deterministic core: Clock Engine → Dependency Tracker → Escalation Engine | `/backend/clock_engine`, `/backend/dependency`, `/backend/escalation` |
-| B | Backend aggregation/similarity + API layer | `/backend/aggregation`, `/backend/similarity`, `/backend/api` |
-| C | Frontend layout/routing/design system + Worklist + Rollup screens (against a mocked API contract until B's real API lands) | `/frontend/*` (excluding Case Detail's AI-dependent parts) |
-| D | Synthetic data generator refinement + AI/conversational layer groundwork (query-grounding logic design, refusal-gate test question drafting) — can start test-question drafting immediately, doesn't need working code | `/synthetic_data`, `/backend/nl_layer` (design/scaffolding only until Phase 5) |
+| Lane 1 — Backend Core | Clock Engine → Dependency Tracker → Escalation Engine → Backend APIs, Auth, Database (incl. Catalyst Data Store spike) | `/backend/clock_engine`, `/backend/dependency`, `/backend/escalation`, `/backend/api`, `/backend/auth` |
+| Lane 3 — Graph Intelligence | Aggregation, Similarity, Pattern/Trend, Risk Analysis, rule-based Forecasting alert | `/backend/aggregation`, `/backend/similarity` |
+| Lane 2 — Frontend | Layout/routing/design system + Worklist + Rollup + Dashboard screens (against a documented mock contract until Lane 1's real API lands) | `/frontend/*` (excluding Case Detail's AI-dependent parts) |
+| Lane 4 — AI + Architecture + Integration (Sujal) | Synthetic data generator, Conversational/NL layer, refusal-gate test set, API Contracts, Catalyst AppSail + QuickML spikes, CI/CD, cross-lane integration and merge review | `/synthetic_data`, `/backend/nl_layer`, repo-wide contract/integration review |
 
-**Merge-conflict risk points:** A and B both touch graph query patterns — agree on a shared query-helper interface before splitting, don't let both write ad hoc graph traversal code independently. C's mocked API contract must match B's real API contract exactly — write the contract down (even informally) before C starts building against it, to avoid late reconciliation.
+**Merge-conflict risk points:** Lane 1 and Lane 3 both touch graph query patterns — agree on a shared query-helper interface before splitting, don't let both write ad hoc graph traversal code independently (Lane 4 arbitrates this contract, per its Repository Architecture ownership). Lane 2's mocked API contract must match Lane 1's real API contract exactly — write the contract down (even informally, reviewed by Lane 4) before Lane 2 starts building against it, to avoid late reconciliation.
 
 ---
 

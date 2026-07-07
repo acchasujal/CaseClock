@@ -79,6 +79,10 @@ Governed by `EXECUTION_RULES.md`. Any AI agent or engineer picking up this repo 
 | `DECISION_LOG.md` | Every major decision made and why, to prevent re-litigating settled choices |
 | `TASK.md` | Live execution plan — what's built, what's next, what's blocked |
 
+## Engineering Ownership
+
+Four lanes, not four fixed roles-by-name: Backend Core, Frontend, Graph Intelligence, and AI + Architecture + Integration (owned by Sujal). See `TEAM_PLAYBOOK.md` for daily workflow, branch naming, and PR process — this README doesn't duplicate it.
+
 ## Contribution Workflow
 
 Single-team hackathon project (4 members: Sujal, Shriraj, Vikram, Dhiren). No external contributors expected before submission. Any change to architecture must be reflected in `DECISION_LOG.md` in the same session it's made — do not defer.
