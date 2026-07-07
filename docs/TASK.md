@@ -21,7 +21,11 @@ The project is organized around four engineering lanes, not developer headcount 
 
 1. **Refusal-gate test set** (D7 in `DECISION_LOG.md`) — 10–15 questions, answerable + ambiguous, must be run and scored before any demo claim about refusal reliability. Owner: **Lane 4**. Not started.
 2. **Scale test at 1–2 lakh synthetic records** (D8) — no synthetic dataset generator exists yet either. Owner: **Lane 4** (generator) + **Lane 1** (query performance under test). Not started.
-3. **Zoho Catalyst capability verification** — three spikes, not one: (a) AppSail Python/FastAPI support — owner **Lane 4**; (b) Data Store recursive-query support for graph traversal — owner **Lane 1**; (c) QuickML general grounded-completion support — owner **Lane 4**. All three block Phase 2 of `IMPLEMENTATION_PLAN.md`. Not started.
+3. **Zoho Catalyst capability verification** — four spikes, not one: (a) AppSail Python/FastAPI support — owner **Lane 4**; (b) Data Store recursive-query support for graph traversal — owner **Lane 1**; (c) QuickML general grounded-completion support — owner **Lane 4**.
+(d)Catalyst SmartBrowz spike
+Can it generate downloadable PDFs from HTML?Owner:Lane 4 Priority:Medium
+Status:NOT STARTED
+ All three block Phase 2 of `IMPLEMENTATION_PLAN.md`. Not started.
 4. **BNSS section-number verification** — default-bail trigger section (176(2) vs 187(2)) unverified against bare statute text. Owner: **Lane 1** (feeds the Clock Engine's mapping table). Not started.
 
 ## Next Action

@@ -44,6 +44,30 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 
 **Review checklist:** [ ] Deployed and reachable [ ] Catalyst capability findings logged in `TASK.md` [ ] CI passes on a clean clone.
 
+Record actual Catalyst capabilities by completing the following implementation spikes:
+
+- Catalyst Data Store
+    - recursive queries
+    - joins
+    - indexes
+    - query limits
+
+- Catalyst QuickML
+    - supported models
+    - RAG support
+    - document ingestion
+    - citations
+    - structured output
+    - API latency
+
+- Catalyst SmartBrowz
+    - HTML → PDF generation
+
+- Catalyst Zia
+    - English STT/TTS
+    - Kannada STT/TTS
+
+Update TASK.md with findings.
 ---
 
 # Phase 1 — Foundation
@@ -77,6 +101,8 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 ---
 
 # Phase 2 — Data Model (Graph Schema + Synthetic Data)
+
+Validate that Catalyst Data Store can efficiently represent the adjacency-list graph model before freezing the schema. If limitations are found, redesign now instead of after backend development.
 
 **Goal:** Implement the node/edge model from `ARCHITECTURE.md` and generate synthetic data that can actually exercise every downstream feature — including deliberately-engineered repeat entities for network analysis to have something real to show.
 
@@ -120,7 +146,25 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 3. Escalation Rule Engine — deterministic trigger logic, correct-rank routing using Officer/Unit hierarchy, writes to `EscalationEvent` and audit log.
 4. Aggregation Layer — pattern/trend grouped queries; rule-based trend-alert threshold check (`FEATURE_REGISTRY.md` #17), explicitly labeled non-ML in code comments.
 5. Similarity Function — structured feature match, returns the specific shared attributes with every result (not just a score).
-6. API layer — REST/GraphQL endpoints exposing the above, with the validation and auth middleware from Phase 1 applied to every endpoint.
+6. Catalyst Integration Layer
+
+Responsible for:
+
+- Data Store access
+- QuickML wrapper
+- SmartBrowz wrapper
+- Zia wrapper
+
+No frontend or business logic may call Catalyst SDKs directly.
+
+Reason:
+
+Keeps Catalyst isolated.
+
+If Catalyst APIs change
+
+only one folder changes.
+7. API layer — REST/GraphQL endpoints exposing the above, with the validation and auth middleware from Phase 1 applied to every endpoint.
 
 **Dependencies:** Phase 2 (frozen schema + seeded data).
 
@@ -150,7 +194,9 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 - Risk-Ranked Worklist (IO view).
 - District/Pattern Rollup (SP/DCP view, exception-only).
 - Escalation Queue view.
-- Conversation history panel + PDF export (`FEATURE_REGISTRY.md` #13) — this has no AI dependency, can be built as soon as `ConversationLog` shape exists.
+- Conversation History
+          ↓
+SmartBrowz HTML→PDF Export (`FEATURE_REGISTRY.md` #13) — this has no AI dependency, can be built as soon as `ConversationLog` shape exists.
 
 **Dependencies:** Phase 3 API layer for real data; Phase 0 design/routing scaffold can start earlier.
 
@@ -175,11 +221,52 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 **Why it comes now:** Building this earlier risks masking bugs (is a wrong answer a graph problem or a prompt problem?) per `EXECUTION_RULES.md`'s debugging methodology, which depends on the deterministic layers already being trustworthy.
 
 **Deliverables:**
+Production pipeline:
+Voice (optional)
+↓
+Zia STT
+↓
+QuickML
+↓
+Structured Query
+↓
+Deterministic Verification
+↓
+Catalyst Data Store
+↓
+Evidence Collection
+↓
+QuickML Response Generation
+↓
+Evidence Annotation
+↓
+Zia TTS (optional)
+
 - NL → structured query translation, grounded against the real API/schema (never inventing fields).
 - Deterministic verification gate: checks the translated query against known schema/entities before execution; if grounding confidence is low, triggers refusal instead of guessing.
 - Path-annotated response formatting: every successful answer returns the specific nodes/edges/rows that produced it.
 - Refusal response: explicit, states why, logged to audit log.
 - **The refusal-gate test set (10–15 questions, answerable + ambiguous) — build and run this now, as part of this phase, not deferred.** This directly resolves D7 in `DECISION_LOG.md`.
+
+Grounding Strategy:
+QuickML never makes final investigative decisions.
+
+QuickML only performs:
+
+- intent understanding
+- response generation
+- summarization
+
+All evidence retrieval comes from Catalyst Data Store.
+
+Every response must include:
+
+- FIR IDs
+- Entity IDs
+- Evidence source
+- Query path
+
+Otherwise refuse.
 
 **Dependencies:** Phase 3 (stable API), Phase 2 (stable schema).
 
@@ -233,6 +320,20 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 - Manual QA: at least 2 non-team members (or team members acting as skeptical judges) run the demo flow and specifically try to break the refusal gate and the escalation trigger.
 - Rehearsal of the live threshold-crossing escalation moment, multiple times, checking specifically whether it reads as competence or malfunction to a non-technical observer (a risk flagged repeatedly across prior planning rounds).
 
+Measure
+
+- latency
+
+- memory
+
+- Catalyst API response time
+
+- QuickML response time
+
+- PDF generation time
+
+- Graph traversal time
+
 **Dependencies:** Phase 6.
 
 **Files:** `/synthetic_data/scale_test`, test result logs appended to `TASK.md`.
@@ -268,6 +369,19 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 **Common mistakes:** Treating deployment as done because it worked once during development — verify it works from a clean state, not just the developer's own machine.
 
 **Review checklist:** [ ] Clean-clone deployment succeeds [ ] All submission deliverables present.
+
+Verify every required Catalyst service used in the project is actually deployed through Catalyst.
+
+Record:
+Frontend
+Backend
+Authentication
+Data Store
+QuickML
+SmartBrowz
+Zia
+Cron
+Storage
 
 ---
 
@@ -341,6 +455,8 @@ After schema freeze (post-Phase 2), four independent, non-conflicting streams:
 | Lane 4 — AI + Architecture + Integration (Sujal) | Synthetic data generator, Conversational/NL layer, refusal-gate test set, API Contracts, Catalyst AppSail + QuickML spikes, CI/CD, cross-lane integration and merge review | `/synthetic_data`, `/backend/nl_layer`, repo-wide contract/integration review |
 
 **Merge-conflict risk points:** Lane 1 and Lane 3 both touch graph query patterns — agree on a shared query-helper interface before splitting, don't let both write ad hoc graph traversal code independently (Lane 4 arbitrates this contract, per its Repository Architecture ownership). Lane 2's mocked API contract must match Lane 1's real API contract exactly — write the contract down (even informally, reviewed by Lane 4) before Lane 2 starts building against it, to avoid late reconciliation.
+
+If Lane 4 becomes blocked, Lane 1 becomes backup reviewer for API contracts and integration.
 
 ---
 
@@ -423,3 +539,30 @@ Steps beyond 057 (Kannada wrapper, voice I/O, financial stub, forecasting alert,
 **Remaining risk this plan cannot fully eliminate:** Entity resolution quality (flagged throughout `PROJECT_CONTEXT.md` and `ARCHITECTURE.md`) depends on synthetic data design quality (step 022), which depends on human judgment about what "realistic messiness" looks like — no amount of process ordering removes this risk, it only ensures the risk is visible and tested (step 024) rather than silently assumed away.
 
 **Verdict on the plan itself:** This ordering minimizes rework by freezing the schema before parallelizing, de-risks deployment before feature work begins, and places the two most-neglected items (refusal-gate test, scale test) as named, checkable gates rather than end-of-project hopes — directly countering this team's documented D9 failure pattern rather than just hoping it doesn't recur.
+
+Never build a workaround for Catalyst until the Catalyst service itself has been tested.
+Always spike first.
+Then architect.
+Never architect from documentation alone.
+
+Catalyst Validation Checklist:
+□ Data Store
+□ QuickML
+□ SmartBrowz
+□ Zia Voice
+□ Authentication
+□ AppSail
+□ Web Hosting
+□ Cron
+□ Storage
+
+Each spike must answer:
+Supported?
+Limitations?
+Workaround?
+Use?
+Skip?
+Owner?
+Decision?
+
+
