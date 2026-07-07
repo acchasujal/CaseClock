@@ -1,0 +1,28 @@
+# CODEOWNERS — Lane-based auto-reviewer assignment
+# Lane 4 (Sujal) is required reviewer on any contract-boundary PR.
+# Replace @lane1-owner, @lane2-owner, @lane3-owner with actual GitHub usernames.
+
+# Global fallback — Lane 4 reviews anything unclaimed
+*                           @acchasujal
+
+# Lane 1 — Backend Core (clock, dependency, escalation, auth, API)
+/backend/                   @lane1-owner
+/shared/constants/          @lane1-owner @acchasujal
+
+# Lane 2 — Frontend (all React screens and components)
+/frontend/                  @lane2-owner
+# frontend/src/types MUST import from shared/contracts — Lane 4 guards this
+/frontend/src/types/        @acchasujal
+
+# Lane 3 — Graph Intelligence (aggregation, similarity, synthetic data)
+/graph/                     @lane3-owner
+# DB schema changes affect both Lane 1 and Lane 3
+/backend/app/db/            @lane1-owner @lane3-owner
+
+# Lane 4 — AI + Architecture + Integration (Sujal)
+# These files require Lane 4 review on every PR, no exceptions:
+/ai/                        @acchasujal
+/shared/contracts/          @acchasujal
+/deployment/                @acchasujal
+/.github/                   @acchasujal
+/docs/                      @acchasujal

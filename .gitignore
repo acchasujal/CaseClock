@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+.venv
+venv/
+env/
+pip-wheel-metadata/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+*.log
+npm-debug.log*
+
+# Environment files — never commit real credentials
+.env
+.env.local
+.env.*.local
+*.env
+
+# Catalyst credentials and deploy artifacts
+deployment/*.key
+deployment/*.pem
+catalyst.json.bak
+.zcatalyst/
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+tests/scale/results/*.json
+ai/tests/refusal_testset/results/*.json

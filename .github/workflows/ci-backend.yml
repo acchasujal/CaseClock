@@ -1,0 +1,35 @@
+name: CI — Backend (Lane 1)
+
+on:
+  pull_request:
+    branches: [lane1, main]
+    paths:
+      - 'backend/**'
+      - 'shared/constants/**'
+
+jobs:
+  lint-and-test:
+    name: Lint + Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Lint (ruff)
+        run: python -m ruff check backend/
+
+      - name: Type check (mypy)
+        run: python -m mypy backend/app/ --ignore-missing-imports
+
+      - name: Unit tests
+        run: python -m pytest backend/tests/unit/ -v --tb=short
+
+      - name: Integration tests
+        run: python -m pytest backend/tests/integration/ -v --tb=short
