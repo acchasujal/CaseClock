@@ -2,6 +2,17 @@
 
 This document governs how any AI coding agent (or human engineer) must think and act while working on this repository. Read `PROJECT_CONTEXT.md` first — this file assumes you already know why the project exists.
 
+This is the single daily operations document. For strategy, read `HACKATHON_MASTER_GUIDE.md` once. For architecture, read `ARCHITECTURE.md`.
+
+## Engineering Lanes & Ownership
+
+| Lane | Owns | Does not touch |
+|---|---|---|
+| **Lane 1 — Backend Core** | Clock Engine, Dependency Engine, Escalation Engine, Database, Authentication, Backend APIs, Validation, Business Logic, and constants | Frontend, Graph internals, NL/copilot core |
+| **Lane 2 — Frontend** | React app, Dashboard, Case Detail, Timeline, Dependency Graph UI, Analytics UI, Charts, Components, Theme, PDF UI | Backend business logic |
+| **Lane 3 — Graph Intelligence** | Relationship Analysis, Pattern Detection, Aggregation, Similarity Engine, Graph Algorithms, Risk Analysis, Crime Analytics, Forecasting (rule-based alerts only) | Clock/Escalation logic (Lane 1), NL/copilot core (Lane 4) |
+| **Lane 4 — AI + Architecture + Integration (Owner: Sujal)** | Conversational Copilot, Prompt System, Grounding, Refusal Gate, Explainability, Synthetic Data Generator, AI Evaluation, QuickML Integration, Shared Types, API Contracts, Repository Architecture, Documentation, Catalyst Deployment, CI/CD, Merge Reviews, Integration, Release, Demo Integration | Does not own feature logic inside Lanes 1–3, only their contracts/integration points |
+
 ## Mandatory Reasoning Workflow (every task, no exceptions)
 
 1. **Understand** — restate the task in your own words. What is actually being asked?
@@ -14,7 +25,7 @@ This document governs how any AI coding agent (or human engineer) must think and
 8. **Implement** — smallest correct change. Do not scope-creep into roadmap items listed in `PROJECT_CONTEXT.md`'s Non-Goals.
 9. **Review** — re-read your own diff against the anti-hallucination rules below before considering it done.
 10. **Test** — every deterministic component (clock rules, escalation triggers) needs unit tests with real edge cases (offence category not in mapping table, missing dependency data). The refusal gate needs an actual test set of answerable/ambiguous questions — this has been flagged as unresolved across multiple planning sessions and is the highest-priority testing gap in the project.
-11. **Reflect** — did this change require updating any of the seven docs? If architecture changed, update `ARCHITECTURE.md` and log the decision in `DECISION_LOG.md` in the same session.
+11. **Reflect** — did this change require updating any of the docs? If architecture changed, update `ARCHITECTURE.md` and log the decision in `DECISION_LOG.md` in the same session.
 
 ## Anti-Hallucination Rules (absolute, non-negotiable)
 
@@ -53,7 +64,7 @@ If a change breaks an existing test or demo path: revert first, diagnose second.
 
 - [ ] Does this match an existing decision in `DECISION_LOG.md`, or does it contradict one? If it contradicts one, is that intentional and logged?
 - [ ] Does this introduce a parallel/duplicate system instead of extending the unified graph?
-- [ ] Is anything claimed (AI-detected, real-time, production-grade) actually true of this implementation?
+- [ ] Is anything claimed (AI-detected, real-time, production-grade) that isn't actually true of this implementation?
 - [ ] Are legal citations marked `[VERIFIED]` or `[UNVERIFIED]`?
 - [ ] Would this survive a technically literate judge asking "show me where this data actually comes from"?
 
@@ -64,8 +75,8 @@ Any architectural change updates `ARCHITECTURE.md` and `DECISION_LOG.md` in the 
 ## Testing Expectations
 
 - Deterministic components (clock engine, escalation rules): unit tests covering every offence-category mapping and at least one missing-mapping edge case.
-- Refusal gate: a held-out set of 10–15 questions (mix of answerable and deliberately ambiguous) run and scored before any demo claim about refusal behavior is made — this is currently outstanding, see `TASK.md`.
-- Scale: a load test against synthetic data approaching the organizer's stated 1–2 lakh record target, with a measured (not asserted) latency number — currently outstanding, see `TASK.md`.
+- Refusal gate: a held-out set of 10–15 questions (mix of answerable and deliberately ambiguous) run and scored before any demo claim about refusal behavior is made.
+- Scale: a load test against synthetic data approaching the organizer's stated 1–2 lakh record target, with a measured (not asserted) latency number.
 
 ## Mandatory Self-Review Questions (ask before marking any task complete)
 
@@ -73,3 +84,42 @@ Any architectural change updates `ARCHITECTURE.md` and `DECISION_LOG.md` in the 
 2. Would this claim survive being fact-checked live by a skeptical, technically literate person?
 3. Did I update the documentation that this change makes stale?
 4. Is this the smallest correct change, or did I scope-creep into roadmap territory?
+
+---
+
+## Daily Operational & Git Workflow (Merged from TEAM_PLAYBOOK.md)
+
+### Git Strategy: GitHub Flow (simplified)
+- Task branches cut directly from `main` and merged directly to `main` via PR.
+- Branch naming: `lane{N}/task-name` (e.g. `lane1/clock-engine`).
+- Commit style: `scope: imperative description` (e.g. `clock: add BNSS offence-category mapping table [UNVERIFIED]`).
+- Squash-merge only (enforced on GitHub settings).
+- Before PR creation, rebase locally: `git pull --rebase origin main`.
+- Lane branches no longer exist as persistent branches.
+
+### Review and Merging Gates
+- Any merge to `main` requires a PR.
+- Required CI run must pass (ci.yml green).
+- Teammate approval (at least 1 reviewer) required.
+- **Contract/Schema changes:** PRs affecting `shared/contracts/` or `deployment/` trigger CODEOWNERS and require Lane 4 (Sujal) approval.
+- **Emergency self-merge:** Lane owner may self-merge only when deadline-critical and reviewer is unavailable. Must post a note in the next sync and log any architecture-relevant changes in `DECISION_LOG.md` retroactively, same day.
+
+### AI Workflow Paste Block
+Every AI coding session must start by pasting the following context:
+```
+You are working on CaseClock, a legal-deadline-aware investigation tracking system for Karnataka State Police (KSP Datathon 2026).
+
+MANDATORY: Read these four files before responding to any task:
+1. docs/PROJECT_CONTEXT.md — why the product exists
+2. docs/EXECUTION_RULES.md — daily ops and anti-hallucination rules
+3. docs/ARCHITECTURE.md — system architecture
+4. docs/TASK.md — what is actually built vs. not built
+
+CRITICAL RULES:
+- Search existing code before writing new code.
+- Never invent a schema field, API endpoint, or database table that doesn't exist.
+- Never claim a feature is AI/ML-based when it is a rule engine.
+- Never generate free-text about a specific person's guilt or risk.
+- Legal citations (BNSS/BNS section numbers) must be marked [VERIFIED] or [UNVERIFIED].
+- If this task changes shared/contracts/, the graph schema, or clock_types.py — STOP and flag it.
+```

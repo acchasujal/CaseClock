@@ -88,3 +88,35 @@ Sensitive-data handling deferred to synthetic data only, per organizer's DPDP-co
 
 ## Future Evolution
 Real entity resolution service, real Kannada NLU, prosecutor workflow, mobile/offline, full ABAC, real financial-intelligence integration contingent on actual KSP data-sharing agreements — all explicitly roadmap, not near-term commitments.
+
+---
+
+## ER Diagram Notes (Merged from ER_DIAGRAM_NOTES.md)
+
+### Overview
+Summary of the Karnataka Police FIR database schema.
+
+### Central Entity
+- CaseMaster
+
+### Connected Entities
+- Victim
+- Accused
+- ComplainantDetails
+- ArrestSurrender
+- ChargesheetDetails
+- Act
+- Section
+- CrimeHead
+- CrimeSubHead
+- Employee
+- Unit
+- Court
+- District
+- State
+
+### Key Insights
+- CaseMaster is the hub.
+- One FIR can have many victims, accused, complainants and arrests.
+- Existing schema supports conversational AI, graph analysis, analytics and profiling.
+- Investigation workflow and deadline management are not present and can be added as an extension.

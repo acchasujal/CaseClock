@@ -1,5 +1,7 @@
 # HACKATHON_MASTER_GUIDE.md
 
+> STATUS: FROZEN as of 2026-07-08. Update only if submission strategy changes.
+
 A new team member should be able to read only this document and understand the hackathon, the judges, the problem, the product, and how to win. This is a strategy document, not an engineering document — see `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, and `IMPLEMENTATION_PLAN.md` for the technical layer.
 
 **Honesty note, upfront:** Some sections below (screenshots, exact demo screen recordings) describe what to build once real screens exist — they are specifications, not evidence of a finished product. Do not present anything in this document as "already built" unless `TASK.md` says it's DONE.
