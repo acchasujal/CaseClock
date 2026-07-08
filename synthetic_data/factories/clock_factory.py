@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from backend.app.core.graph.entities import ClockInstance
 from backend.app.core.graph.enums import GraphEntityType
 
-from shared.constants.clock_types import ClockType
+from shared.constants.clock_types import ClockType, get_clock_rule
 
 from synthetic_data.configs import SyntheticDataConfig, SyntheticNodeRecord, build_faker, clock_type_choices, choose_weighted, stable_uuid, utc_now
 from synthetic_data.factories.case_factory import CaseBlueprint
@@ -40,7 +40,7 @@ def build_clock_records(
     clock_types = list(clock_type_choices())
 
     for index, blueprint in enumerate(case_blueprints):
-        primary_clock_type = clock_types[index % 2]
+        primary_clock_type = get_clock_rule(blueprint.offence_category).clock_type
         records.append(_make_clock_record(fake, blueprint, primary_clock_type, index, snapshot, rng))
         if index % 3 == 0:
             secondary_clock_type = clock_types[2 if index % 2 == 0 else 3]
@@ -51,7 +51,17 @@ def build_clock_records(
 
 def _make_clock_record(fake, blueprint: CaseBlueprint, clock_type: ClockType, index: int, snapshot, rng: Random) -> ClockRecord:
     case = blueprint.case
-    clock_duration = 60 if clock_type == ClockType.INVESTIGATION_60_DAY else 90 if clock_type == ClockType.INVESTIGATION_90_DAY else 30
+    
+    if clock_type == ClockType.DOCUMENT_SUPPLY:
+        rule = get_clock_rule("document_supply")
+    elif clock_type == ClockType.FURTHER_INVESTIGATION:
+        rule = get_clock_rule("further_investigation")
+    else:
+        rule = get_clock_rule(blueprint.offence_category)
+
+    clock_duration = rule.duration_days
+    bnss_reference = rule.bnss_reference
+
     if blueprint.risk_band == "overdue":
         days_remaining = -rng.randint(1, 20)
     elif blueprint.risk_band == "red":
@@ -76,7 +86,7 @@ def _make_clock_record(fake, blueprint: CaseBlueprint, clock_type: ClockType, in
                 "deadline_date": deadline_date,
                 "status": status,
                 "days_remaining": days_remaining,
-                "bnss_reference": "BNSS §[UNVERIFIED]",
+                "bnss_reference": bnss_reference,
                 "stage": blueprint.case_stage,
             },
         ),
