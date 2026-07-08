@@ -17,7 +17,7 @@ The project is organized around four engineering lanes, not developer headcount 
 | Lane 3 — Graph Intelligence                      | Aggregation, Similarity, Pattern/Risk/Forecasting (rule-based only, per D5)                              | GRAPH FOUNDATION REVIEW COMPLETE         |
 | Lane 4 — AI + Architecture + Integration (Sujal) | Copilot, refusal gate, synthetic data, API contracts, Catalyst deployment, CI/CD, cross-lane integration | IN PROGRESS (Bootstrap + Ops Setup done) |
 
-## Outstanding Items Carried Over From Planning (highest priority — do not treat as optional)
+## Outstanding Items Carried Over From Initial Planning (highest priority — do not treat as optional)
 
 1. **Refusal-gate test set** (D7 in `DECISION_LOG.md`) — 10–15 questions, answerable + ambiguous, must be run and scored before any demo claim about refusal reliability. Owner: **Lane 4**. Not started.
 2. **Scale test at 1–2 lakh synthetic records** (D8) — the synthetic data generator exists (`synthetic_data/`) but has only been run at ~500 record scale. The scale-volume run against 1–2 lakh records has not been executed. Owner: **Lane 4** (scale generator extension) + **Lane 1** (query performance under test). Not started.

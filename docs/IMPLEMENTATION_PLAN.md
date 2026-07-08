@@ -10,7 +10,7 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 
 **The third danger is starting the AI/conversational layer before the deterministic layers are stable.** The copilot's grounded-query generation depends on a stable, tested clock engine and dependency tracker to query against. Building the AI layer first means building against a moving target, and it also risks masking whether a bug is in the deterministic logic or the generative logic (a distinction `EXECUTION_RULES.md`'s debugging methodology depends on being able to make).
 
-**The fourth danger, specific to this project:** the two most-repeated unresolved items across all planning (`DECISION_LOG.md` D7, D8) — the refusal-gate test set and the scale test — are exactly the kind of work that gets silently dropped under time pressure because they don't produce visible UI progress. This plan places them as **blocking gates**, not final-phase nice-to-haves, so they cannot be skipped without the plan visibly saying so.
+**The fourth danger, specific to this project:** the two most-repeated unresolved items across the initial planning phase (`DECISION_LOG.md` D7, D8) — the refusal-gate test set and the scale test — are exactly the kind of work that gets silently dropped under time pressure because they don't produce visible UI progress. This plan places them as **blocking gates**, not final-phase nice-to-haves, so they cannot be skipped without the plan visibly saying so.
 
 **Assumption this plan makes, flagged explicitly:** a 4-person team can parallelize after the graph schema is frozen (end of Phase 2). Before that point, parallelization is dangerous — two people building against different guesses of the schema is a direct path to rework.
 

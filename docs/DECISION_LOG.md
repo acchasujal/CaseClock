@@ -1,6 +1,6 @@
 # DECISION_LOG.md
 
-Every major decision made in developing this product, so future work (human or AI) doesn't re-litigate settled questions without new evidence. Ordered chronologically by when the decision was reached in the project's planning history.
+Every major decision made in developing this product, so future work (human or AI) doesn't re-litigate settled questions without new evidence. Ordered chronologically by when the decision was reached in the project lifecycle.
 
 ---
 
@@ -106,7 +106,7 @@ Every major decision made in developing this product, so future work (human or A
 
 ### D12 — Engineering organization: four lanes, not developer headcount
 
-**Problem:** Prior planning (`ENGINEERING_OPERATING_MANUAL.md` Task 6) split ownership across 3 developers, contradicting `PROJECT_CONTEXT.md`'s stated 4-person team — an unresolved contradiction flagged but not fixed at the time.
+**Problem:** Prior planning phase (`ENGINEERING_OPERATING_MANUAL.md` Task 6) split ownership across 3 developers, contradicting `PROJECT_CONTEXT.md`'s stated 4-person team — an unresolved contradiction flagged but not fixed at the time.
 **Alternatives considered:** (a) Fix the headcount mismatch by simply adding a 4th named-developer lane matching the original Person A–D split from `IMPLEMENTATION_PLAN.md`'s earlier parallel-work-streams table. (b) Reorganize entirely around function (lane) rather than name, with AI and Integration merged under one owner.
 **Chosen approach:** (b) — four engineering lanes: Backend Core, Frontend, Graph Intelligence, AI + Architecture + Integration (the last owned by Sujal).
 **Reason:** AI and Integration are unusually tightly coupled in this architecture — the conversational layer's grounding depends on stable contracts from every other lane, and integration bugs are most diagnosable by whoever also owns the AI layer's expected inputs/outputs. Merging them under one owner reduces coordination overhead and directly targets D9's failure pattern (disconnected pipelines), since the integration owner is structurally forced to understand every other lane's output, not just their own.

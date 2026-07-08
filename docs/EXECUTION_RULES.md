@@ -26,7 +26,7 @@ The project is organized around four engineering lanes. **Lanes represent owners
 7. **Plan** — write the plan before writing code, especially for anything touching the clock engine, dependency tracker, or graph schema (these are load-bearing; errors here are legal-accuracy risks, not just bugs).
 8. **Implement** — smallest correct change. Do not scope-creep into roadmap items listed in `PROJECT_CONTEXT.md`'s Non-Goals.
 9. **Review** — re-read your own diff against the anti-hallucination rules below before considering it done.
-10. **Test** — every deterministic component (clock rules, escalation triggers) needs unit tests with real edge cases (offence category not in mapping table, missing dependency data). The refusal gate needs an actual test set of answerable/ambiguous questions — this has been flagged as unresolved across multiple planning sessions and is the highest-priority testing gap in the project.
+10. **Test** — every deterministic component (clock rules, escalation triggers) needs unit tests with real edge cases (offence category not in mapping table, missing dependency data). The refusal gate needs an actual test set of answerable/ambiguous questions — this has been flagged as unresolved since the planning phase and is the highest-priority testing gap in the project.
 11. **Reflect** — did this change require updating any of the docs? If architecture changed, update `ARCHITECTURE.md` and log the decision in `DECISION_LOG.md` in the same session.
 
 ## Anti-Hallucination Rules (absolute, non-negotiable)

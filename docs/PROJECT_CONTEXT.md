@@ -60,7 +60,7 @@ The team is organized around four engineering lanes (Backend Core, Frontend, Gra
 - Software only, no hardware/IoT.
 - Must deploy on Zoho Catalyst (mandatory for eligibility).
 - Must use synthetic data — organizer will not provide real/sensitive records, only schema + master tables.
-- Team of 4, hackathon timeline (prototype submission per organizer timeline; verify exact current deadline against the live dashboard, as dates have shifted between phases of this project's planning).
+- Team of 4, hackathon timeline (prototype submission per organizer timeline; verify exact current deadline against the live dashboard, as dates have shifted during implementation).
 - Organizer target test scale: ~1–2 lakh (100,000–200,000) synthetic records; jury explicitly does not want "quick and dirty, throwaway" code.
 
 ## Key Assumptions (flagged, not asserted as fact)
