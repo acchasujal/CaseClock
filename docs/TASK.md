@@ -41,12 +41,12 @@ See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at th
 | Repository scaffold                 | DONE (Bootstrap complete, files structured)                         |
 | Catalyst capability verification    | NOT STARTED                                                         |
 | Graph schema implementation         | DONE (graph foundation models, enums, edges, and schema normalized) |
-| Legal Clock Engine                  | NOT STARTED                                                         |
-| Dependency Tracker                  | NOT STARTED                                                         |
-| Escalation Rule Engine              | NOT STARTED                                                         |
+| Legal Clock Engine                  | BLOCKED (Catalyst Spikes)                                           |
+| Dependency Tracker                  | BLOCKED (Catalyst Spikes)                                           |
+| Escalation Rule Engine              | BLOCKED (Catalyst Spikes)                                           |
 | Synthetic data generator            | DONE (synthetic_data module generates and exports JSON/CSV)         |
-| Conversational layer + refusal gate | NOT STARTED                                                         |
+| Conversational layer + refusal gate | BLOCKED (Catalyst Spikes)                                           |
 | Refusal-gate test set execution     | NOT STARTED                                                         |
-| Scale test (1–2 lakh records)       | NOT STARTED                                                         |
+| Scale test (1–2 lakh records)       | BLOCKED (Catalyst Spikes)                                           |
 | Frontend shell                      | NOT STARTED                                                         |
 | Catalyst deployment                 | NOT STARTED                                                         |
