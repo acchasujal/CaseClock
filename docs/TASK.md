@@ -20,7 +20,7 @@ The project is organized around four engineering lanes, not developer headcount 
 ## Outstanding Items Carried Over From Planning (highest priority — do not treat as optional)
 
 1. **Refusal-gate test set** (D7 in `DECISION_LOG.md`) — 10–15 questions, answerable + ambiguous, must be run and scored before any demo claim about refusal reliability. Owner: **Lane 4**. Not started.
-2. **Scale test at 1–2 lakh synthetic records** (D8) — no synthetic dataset generator exists yet either. Owner: **Lane 4** (generator) + **Lane 1** (query performance under test). Not started.
+2. **Scale test at 1–2 lakh synthetic records** (D8) — the synthetic data generator exists (`synthetic_data/`) but has only been run at ~500 record scale. The scale-volume run against 1–2 lakh records has not been executed. Owner: **Lane 4** (scale generator extension) + **Lane 1** (query performance under test). Not started.
 3. **Zoho Catalyst capability verification** — IN PROGRESS:
    - QuickML capability spike: DONE (safety evaluation, model validation, prompt safety, and architect decision finalized. QuickML is restricted to intent parsing and entity extraction only).
    - AppSail, Data Store, and SmartBrowz: NOT STARTED.
@@ -31,20 +31,20 @@ The project is organized around four engineering lanes, not developer headcount 
 See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at the start and end of every work session — mark items done, add blockers, never let this file go stale relative to actual repository state.
 
 ## Status Key
-36: 
-37: `NOT STARTED` / `IN PROGRESS` / `BLOCKED (reason)` / `DONE (verified how)`
-38: 
-39: | Item                                | Status                                                              |
-40: | ----------------------------------- | ------------------------------------------------------------------- |
-41: | Repository scaffold                 | DONE (Bootstrap complete, files structured)                         |
-42: | Catalyst capability verification    | IN PROGRESS (QuickML DONE, AppSail/Data Store/SmartBrowz NOT STARTED)|
-43: | Graph schema implementation         | DONE (graph foundation models, enums, edges, and schema normalized) |
-44: | Legal Clock Engine                  | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked)|
-45: | Dependency Tracker                  | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked)|
-46: | Escalation Rule Engine              | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked)|
-47: | Synthetic data generator            | DONE (synthetic_data module generates and exports JSON/CSV)         |
-48: | Conversational layer + refusal gate | NOT STARTED (Integration blocked by Catalyst, core logic unblocked) |
-49: | Refusal-gate test set execution     | NOT STARTED                                                         |
-50: | Scale test (1–2 lakh records)       | NOT STARTED                                                         |
-51: | Frontend shell                      | NOT STARTED                                                         |
-52: | Catalyst deployment                 | NOT STARTED                                                         |
+
+`NOT STARTED` / `IN PROGRESS` / `BLOCKED (reason)` / `DONE (verified how)`
+
+| Item                                | Status                                                              |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| Repository scaffold                 | DONE (Bootstrap complete, files structured)                         |
+| Catalyst capability verification    | IN PROGRESS (QuickML DONE — see `docs/spikes/quickml.md` and DECISION_LOG D14; AppSail/Data Store/SmartBrowz NOT STARTED) |
+| Graph schema implementation         | DONE (graph foundation models, enums, edges, and schema normalized; Evidence node added in v1.1 — see DECISION_LOG D15) |
+| Legal Clock Engine                  | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked) |
+| Dependency Tracker                  | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked) |
+| Escalation Rule Engine              | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked) |
+| Synthetic data generator            | DONE (synthetic_data module generates and exports JSON/CSV)         |
+| Conversational layer + refusal gate | NOT STARTED (Integration blocked by Catalyst, core logic unblocked) |
+| Refusal-gate test set execution     | NOT STARTED                                                         |
+| Scale test (1–2 lakh records)       | NOT STARTED                                                         |
+| Frontend shell                      | NOT STARTED                                                         |
+| Catalyst deployment                 | NOT STARTED                                                         |
