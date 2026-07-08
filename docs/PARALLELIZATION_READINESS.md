@@ -16,7 +16,7 @@ The repository has successfully established its Graph Foundation, core rules eng
 - [x] **Clock Rules Source of Truth:** Synchronized mapping table built in `shared/constants/clock_types.py`.
 - [x] **Integration Tests:** Baseline verification suite checking graph integrity, clock lookup, and determinism.
 - [x] **CI Configuration:** Standard CI pipeline configured under `.github/workflows/ci.yml`.
-- [x] **QuickML Spike & Evaluation:** Safety evaluation, prompt safety validation, and architectural decisions finalized. QuickML is restricted exclusively to intent parsing and entity extraction.
+- [x] **QuickML Spike & Evaluation:** Safety evaluation, prompt safety validation, and architectural decisions finalized (see `docs/spikes/quickml.md` and `DECISION_LOG.md` D14). QuickML is restricted exclusively to intent parsing and entity extraction.
 
 ---
 
@@ -61,6 +61,8 @@ Before final submission:
 1. **Complete Catalyst Spikes:** Confirm AppSail, Data Store capabilities, and SmartBrowz.
 2. **Deploy Walking Skeleton:** Verify a deployed endpoint is reachable.
 3. **Ingest Scale Dataset:** Run scale performance metrics under 1–2 lakh records.
+
+> **Branch Naming Gap (Manual):** Existing feature branches use `feature/*` naming (e.g. `feature/backend-clock-engine`). `EXECUTION_RULES.md` mandates `lane{N}/task-name`. New branches going forward should follow the documented convention. Existing branches do not need to be renamed.
 
 ---
 

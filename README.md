@@ -132,3 +132,9 @@ Current deployment URL: *to be added after M0 walking skeleton is live.*
 | [`FEATURE_REGISTRY.md`](docs/FEATURE_REGISTRY.md) | Feature status and scope labels |
 | [`HACKATHON_MASTER_GUIDE.md`](docs/HACKATHON_MASTER_GUIDE.md) | Submission strategy (frozen) |
 | [`PROTOTYPE_SUBMISSION_GUIDE.md`](docs/PROTOTYPE_SUBMISSION_GUIDE.md) | Deliverable list |
+| [`docs/spikes/quickml.md`](docs/spikes/quickml.md) | QuickML capability spike results and architectural decision |
+| [`docs/graph-intelligence/DATA_MODEL.md`](docs/graph-intelligence/DATA_MODEL.md) | Detailed graph entity catalog with planned fields |
+| [`docs/graph-intelligence/EDGE_MODEL.md`](docs/graph-intelligence/EDGE_MODEL.md) | Stored and derived edge definitions |
+| [`docs/graph-intelligence/DATASTORE_SPIKE.md`](docs/graph-intelligence/DATASTORE_SPIKE.md) | Catalyst Data Store spike validation plan |
+| [`docs/graph-intelligence/MIGRATION_PLAN.md`](docs/graph-intelligence/MIGRATION_PLAN.md) | Adjacency-list mapping strategy for Catalyst |
+| [`docs/graph-intelligence/SYNTHETIC_DATA_SPEC.md`](docs/graph-intelligence/SYNTHETIC_DATA_SPEC.md) | Synthetic dataset targets and repeat-entity strategy |
