@@ -146,3 +146,18 @@ Every major decision made in developing this product, so future work (human or A
 **Reason:** Evidence items (FSL reports, CDR analyses, device records, documents) are a primary blocker category for the Dependency Tracker feature and are referenced explicitly in `FEATURE_REGISTRY.md` #2. Modeling them as a separate node rather than collapsing them into Dependency keeps the two concepts distinguishable and enables separate evidence-completeness queries.
 **Consequence:** `ARCHITECTURE.md`'s conceptual node list is now slightly behind the implementation. This is intentional — `ARCHITECTURE.md` is explicitly labeled "conceptual only" — but implementors should treat the code (`entities.py`, `graph_schema.py` v1.1) as the authoritative node-type list, not the prose in `ARCHITECTURE.md`.
 **Status:** No change to `ARCHITECTURE.md` prose required (it already states "conceptual only, implementation may differ"); this log entry is the authoritative record of the delta.
+
+---
+
+### D16 — Primary clock selection rule for CaseSummaryResponse
+
+**Problem:** `shared/contracts/api.py` defines `CaseSummaryResponse.clock` as a single `ClockInstanceResponse` (singular), but a case may have multiple active `ClockInstance` nodes (e.g., the primary investigation clock plus a concurrent document-supply clock). Without a defined rule for which clock populates the worklist field, Lane 1 (backend query) and Lane 2 (frontend display logic) will independently invent different selection strategies and produce inconsistent risk rankings.
+
+**Decision:** The primary clock for `CaseSummaryResponse.clock` is the `ClockInstance` with the lowest `days_remaining` value among all active (non-OVERDUE) clocks for that case. If all clocks are OVERDUE, select the one with the most negative `days_remaining` (most overdue). If only one clock exists, use it.
+
+**Reason:** The worklist is a risk-ranked view; the most-urgent active clock drives the risk rank. Using the most-negative value for the all-overdue case keeps the ordering monotonically useful.
+
+**Implementation note:** The backend query (Lane 1) must apply this rule server-side before returning the worklist. The frontend (Lane 2) must not re-implement its own primary-clock selection — it must display exactly what the backend returns in the `clock` field.
+
+**Contract impact:** No change to `shared/contracts/api.py` — `CaseSummaryResponse.clock` remains a single `ClockInstanceResponse`. This decision documents the selection rule, not a contract change.
+
