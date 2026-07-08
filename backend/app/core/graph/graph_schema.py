@@ -17,7 +17,7 @@ class GraphSchema(BaseModel):
 
 GRAPH_SCHEMA = GraphSchema(
     name="case_clock_investigation_graph",
-    version="1.0",
+    version="1.1",
     entities=(
         GraphEntityType.CASE,
         GraphEntityType.PERSON,
@@ -36,7 +36,6 @@ GRAPH_SCHEMA = GraphSchema(
         GraphEntityType.CONVERSATION_LOG,
     ),
     relationships=(
-        GraphRelationshipType.CASE_HAS_PERSON,
         GraphRelationshipType.ACCUSED_IN,
         GraphRelationshipType.VICTIM_IN,
         GraphRelationshipType.COMPLAINANT_IN,
@@ -44,12 +43,7 @@ GRAPH_SCHEMA = GraphSchema(
         GraphRelationshipType.CASE_HAS_DEPENDENCY,
         GraphRelationshipType.CASE_HAS_CLOCK,
         GraphRelationshipType.CASE_HAS_EVIDENCE,
-        GraphRelationshipType.CASE_HAS_OFFICER,
-        GraphRelationshipType.CASE_HAS_UNIT,
         GraphRelationshipType.CASE_HAS_COURT,
-        GraphRelationshipType.CASE_HAS_LOCATION,
-        GraphRelationshipType.CASE_HAS_ACT,
-        GraphRelationshipType.CASE_HAS_SECTION,
         GraphRelationshipType.CASE_HAS_CRIME_HEAD,
         GraphRelationshipType.CASE_HAS_CRIME_SUB_HEAD,
         GraphRelationshipType.CASE_HAS_ESCALATION_EVENT,
@@ -58,6 +52,7 @@ GRAPH_SCHEMA = GraphSchema(
         GraphRelationshipType.CHARGED_UNDER,
         GraphRelationshipType.OCCURRED_IN,
         GraphRelationshipType.BELONGS_TO_UNIT,
+        GraphRelationshipType.BELONGS_TO_ACT,
     ),
     derived_relationships=(
         GraphRelationshipType.CO_ACCUSED_WITH,

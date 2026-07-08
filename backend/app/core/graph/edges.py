@@ -14,7 +14,6 @@ class GraphEdgeDefinition(BaseModel):
     storage_mode: EdgeStorageMode = EdgeStorageMode.STORED
 
 
-CASE_HAS_PERSON = GraphRelationshipType.CASE_HAS_PERSON
 ACCUSED_IN = GraphRelationshipType.ACCUSED_IN
 VICTIM_IN = GraphRelationshipType.VICTIM_IN
 COMPLAINANT_IN = GraphRelationshipType.COMPLAINANT_IN
@@ -22,12 +21,7 @@ WITNESS_IN = GraphRelationshipType.WITNESS_IN
 CASE_HAS_DEPENDENCY = GraphRelationshipType.CASE_HAS_DEPENDENCY
 CASE_HAS_CLOCK = GraphRelationshipType.CASE_HAS_CLOCK
 CASE_HAS_EVIDENCE = GraphRelationshipType.CASE_HAS_EVIDENCE
-CASE_HAS_OFFICER = GraphRelationshipType.CASE_HAS_OFFICER
-CASE_HAS_UNIT = GraphRelationshipType.CASE_HAS_UNIT
 CASE_HAS_COURT = GraphRelationshipType.CASE_HAS_COURT
-CASE_HAS_LOCATION = GraphRelationshipType.CASE_HAS_LOCATION
-CASE_HAS_ACT = GraphRelationshipType.CASE_HAS_ACT
-CASE_HAS_SECTION = GraphRelationshipType.CASE_HAS_SECTION
 CASE_HAS_CRIME_HEAD = GraphRelationshipType.CASE_HAS_CRIME_HEAD
 CASE_HAS_CRIME_SUB_HEAD = GraphRelationshipType.CASE_HAS_CRIME_SUB_HEAD
 CASE_HAS_ESCALATION_EVENT = GraphRelationshipType.CASE_HAS_ESCALATION_EVENT
@@ -36,16 +30,12 @@ INVESTIGATED_BY = GraphRelationshipType.INVESTIGATED_BY
 CHARGED_UNDER = GraphRelationshipType.CHARGED_UNDER
 OCCURRED_IN = GraphRelationshipType.OCCURRED_IN
 BELONGS_TO_UNIT = GraphRelationshipType.BELONGS_TO_UNIT
+BELONGS_TO_ACT = GraphRelationshipType.BELONGS_TO_ACT
 CO_ACCUSED_WITH = GraphRelationshipType.CO_ACCUSED_WITH
 LINKED_TO = GraphRelationshipType.LINKED_TO
 
 
 GRAPH_EDGE_DEFINITIONS = (
-    GraphEdgeDefinition(
-        name=GraphRelationshipType.CASE_HAS_PERSON,
-        source=GraphEntityType.CASE,
-        target=GraphEntityType.PERSON,
-    ),
     GraphEdgeDefinition(
         name=GraphRelationshipType.ACCUSED_IN,
         source=GraphEntityType.PERSON,
@@ -82,34 +72,9 @@ GRAPH_EDGE_DEFINITIONS = (
         target=GraphEntityType.EVIDENCE,
     ),
     GraphEdgeDefinition(
-        name=GraphRelationshipType.CASE_HAS_OFFICER,
-        source=GraphEntityType.CASE,
-        target=GraphEntityType.OFFICER,
-    ),
-    GraphEdgeDefinition(
-        name=GraphRelationshipType.CASE_HAS_UNIT,
-        source=GraphEntityType.CASE,
-        target=GraphEntityType.UNIT,
-    ),
-    GraphEdgeDefinition(
         name=GraphRelationshipType.CASE_HAS_COURT,
         source=GraphEntityType.CASE,
         target=GraphEntityType.COURT,
-    ),
-    GraphEdgeDefinition(
-        name=GraphRelationshipType.CASE_HAS_LOCATION,
-        source=GraphEntityType.CASE,
-        target=GraphEntityType.LOCATION,
-    ),
-    GraphEdgeDefinition(
-        name=GraphRelationshipType.CASE_HAS_ACT,
-        source=GraphEntityType.CASE,
-        target=GraphEntityType.ACT,
-    ),
-    GraphEdgeDefinition(
-        name=GraphRelationshipType.CASE_HAS_SECTION,
-        source=GraphEntityType.CASE,
-        target=GraphEntityType.SECTION,
     ),
     GraphEdgeDefinition(
         name=GraphRelationshipType.CASE_HAS_CRIME_HEAD,
@@ -150,6 +115,11 @@ GRAPH_EDGE_DEFINITIONS = (
         name=GraphRelationshipType.BELONGS_TO_UNIT,
         source=GraphEntityType.OFFICER,
         target=GraphEntityType.UNIT,
+    ),
+    GraphEdgeDefinition(
+        name=GraphRelationshipType.BELONGS_TO_ACT,
+        source=GraphEntityType.SECTION,
+        target=GraphEntityType.ACT,
     ),
     GraphEdgeDefinition(
         name=GraphRelationshipType.CO_ACCUSED_WITH,

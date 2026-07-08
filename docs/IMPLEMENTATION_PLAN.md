@@ -23,6 +23,7 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 **Why it comes now:** Catalyst's actual capabilities are unverified (`TASK.md`). Discovering a deployment blocker in the final week is the single most common late-stage failure mode for this team (D9). Resolve it in hours, not in week three.
 
 **Deliverables:**
+
 - Git repository with backend (`/backend`) and frontend (`/frontend`) folders per `README.md`'s target structure.
 - Linting, formatting, type-checking configured (Python: ruff/mypy or equivalent; JS/TS: eslint/prettier).
 - Environment variable handling (`.env` pattern, never committed).
@@ -47,28 +48,27 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 Record actual Catalyst capabilities by completing the following implementation spikes:
 
 - Catalyst Data Store
-    - recursive queries
-    - joins
-    - indexes
-    - query limits
+  - recursive queries
+  - joins
+  - indexes
+  - query limits
 
 - Catalyst QuickML
-    - supported models
-    - RAG support
-    - document ingestion
-    - citations
-    - structured output
-    - API latency
+  - supported models
+  - RAG support
+  - document ingestion
+  - citations
+  - structured output
+  - API latency
 
 - Catalyst SmartBrowz
-    - HTML → PDF generation
+  - HTML → PDF generation
 
 - Catalyst Zia
-    - English STT/TTS
-    - Kannada STT/TTS
+  - English STT/TTS
+  - Kannada STT/TTS
 
-Update TASK.md with findings.
----
+## Update TASK.md with findings.
 
 # Phase 1 — Foundation
 
@@ -77,6 +77,7 @@ Update TASK.md with findings.
 **Why it comes now:** Every subsequent phase needs consistent error handling and config — building this after Phase 2 means retrofitting it into already-written modules.
 
 **Deliverables:**
+
 - Centralized config loading (env-driven, no hardcoded values).
 - Structured logging (every request/query loggable — this feeds the audit log requirement in `FEATURE_REGISTRY.md` #15).
 - Centralized error-handling middleware/pattern with consistent error response shape.
@@ -109,8 +110,9 @@ Validate that Catalyst Data Store can efficiently represent the adjacency-list g
 **Why it comes now:** This is the schema every other module depends on. It must be frozen (with a documented process for controlled change) before Phase 3 begins in earnest — freezing it late means rework across every dependent module.
 
 **Deliverables:**
+
 - Node types: Case, Person (role-typed via edges), Section, Act, CrimeHead/SubHead, Location, Officer, Unit, Court, Dependency, ClockInstance, EscalationEvent, ConversationLog — per `ARCHITECTURE.md`.
-- Edge types: role edges, CHARGED_UNDER, OCCURRED_IN, INVESTIGATED_BY, HAS_DEPENDENCY, TRACKED_BY, and the two derived (not stored) edges CO_ACCUSED_WITH and (only if justified) LINKED_TO.
+- Edge types: ACCUSED_IN, VICTIM_IN, COMPLAINANT_IN, WITNESS_IN, CHARGED_UNDER, BELONGS_TO_ACT, OCCURRED_IN, INVESTIGATED_BY, BELONGS_TO_UNIT, CASE_HAS_DEPENDENCY, CASE_HAS_CLOCK, and the two derived (not stored) edges CO_ACCUSED_WITH and (only if justified) LINKED_TO.
 - Migration/creation scripts against whatever storage pattern Phase 0 confirmed Catalyst supports.
 - **Synthetic data generator** producing ~500–1,000 realistic cases for early development (not yet the full 1–2 lakh scale test — that's Phase 7), with:
   - Deliberate repeat entities (same person as accused across 2+ cases) so network analysis has real signal.
@@ -141,6 +143,7 @@ Validate that Catalyst Data Store can efficiently represent the adjacency-list g
 **Why it comes now, and in this internal order:** The Clock Engine has no dependencies on any other backend module and is the most legally sensitive (errors here are accuracy risks, not just bugs) — build and test it in isolation first. The Dependency Tracker and Escalation Engine both consume ClockInstance data, so they come next. Aggregation and Similarity consume the same Case/Person nodes but don't depend on the clock/escalation logic, so they can be built in parallel with each other once the graph is stable. The API layer comes last because it's a thin exposure layer over already-tested logic — building it first would mean testing against unstable internals.
 
 **Deliverables (in order):**
+
 1. Legal Clock Engine — resolves offence category to clock(s), computes days-remaining. Unit tests cover every mapping-table entry plus the missing-mapping edge case (must flag "undetermined," never guess).
 2. Dependency Tracker — CRUD for named dependencies, staleness computation.
 3. Escalation Rule Engine — deterministic trigger logic, correct-rank routing using Officer/Unit hierarchy, writes to `EscalationEvent` and audit log.
@@ -163,8 +166,7 @@ Keeps Catalyst isolated.
 
 If Catalyst APIs change
 
-only one folder changes.
-7. API layer — REST/GraphQL endpoints exposing the above, with the validation and auth middleware from Phase 1 applied to every endpoint.
+only one folder changes. 7. API layer — REST/GraphQL endpoints exposing the above, with the validation and auth middleware from Phase 1 applied to every endpoint.
 
 **Dependencies:** Phase 2 (frozen schema + seeded data).
 
@@ -189,14 +191,15 @@ only one folder changes.
 **Why it comes now:** Building against a real, tested API avoids the double-rework of building against a mock and then reconciling. Frontend work on layout/routing/design-system can start earlier in parallel (see Parallel Work) using a mocked contract, but feature screens wait for real endpoints.
 
 **Deliverables:**
+
 - Layout, routing, base design system/components.
 - Case Detail screen: clock badges, dependency panel, Network tab, Similarity tab, Copilot box (wired to a stub until Phase 5 completes).
 - Risk-Ranked Worklist (IO view).
 - District/Pattern Rollup (SP/DCP view, exception-only).
 - Escalation Queue view.
 - Conversation History
-          ↓
-SmartBrowz HTML→PDF Export (`FEATURE_REGISTRY.md` #13) — this has no AI dependency, can be built as soon as `ConversationLog` shape exists.
+  ↓
+  SmartBrowz HTML→PDF Export (`FEATURE_REGISTRY.md` #13) — this has no AI dependency, can be built as soon as `ConversationLog` shape exists.
 
 **Dependencies:** Phase 3 API layer for real data; Phase 0 design/routing scaffold can start earlier.
 
@@ -315,6 +318,7 @@ Otherwise refuse.
 **Why it comes now:** These require a stable, integrated system (Phase 6) to test meaningfully. They are listed as their own phase specifically so they cannot be silently dropped as "already handled" without an explicit checkmark.
 
 **Deliverables:**
+
 - Scale test: generate ~1–2 lakh synthetic records (extend the Phase 2 generator), run core queries (worklist ranking, escalation check, similarity, copilot grounding), record actual latency numbers.
 - Full refusal-gate test set results, if not finalized in Phase 5.
 - Manual QA: at least 2 non-team members (or team members acting as skeptical judges) run the demo flow and specifically try to break the refusal gate and the escalation trigger.
@@ -447,12 +451,12 @@ Before Phase 2 is frozen, **do not parallelize feature work** — only Lane 4 (S
 
 After schema freeze (post-Phase 2), four independent, non-conflicting streams:
 
-| Lane | Stream | Touches |
-|---|---|---|
-| Lane 1 — Backend Core | Clock Engine → Dependency Tracker → Escalation Engine → Backend APIs, Auth, Database (incl. Catalyst Data Store spike) | `/backend/clock_engine`, `/backend/dependency`, `/backend/escalation`, `/backend/api`, `/backend/auth` |
-| Lane 3 — Graph Intelligence | Aggregation, Similarity, Pattern/Trend, Risk Analysis, rule-based Forecasting alert | `/backend/aggregation`, `/backend/similarity` |
-| Lane 2 — Frontend | Layout/routing/design system + Worklist + Rollup + Dashboard screens (against a documented mock contract until Lane 1's real API lands) | `/frontend/*` (excluding Case Detail's AI-dependent parts) |
-| Lane 4 — AI + Architecture + Integration (Sujal) | Synthetic data generator, Conversational/NL layer, refusal-gate test set, API Contracts, Catalyst AppSail + QuickML spikes, CI/CD, cross-lane integration and merge review | `/synthetic_data`, `/backend/nl_layer`, repo-wide contract/integration review |
+| Lane                                             | Stream                                                                                                                                                                     | Touches                                                                                                |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Lane 1 — Backend Core                            | Clock Engine → Dependency Tracker → Escalation Engine → Backend APIs, Auth, Database (incl. Catalyst Data Store spike)                                                     | `/backend/clock_engine`, `/backend/dependency`, `/backend/escalation`, `/backend/api`, `/backend/auth` |
+| Lane 3 — Graph Intelligence                      | Aggregation, Similarity, Pattern/Trend, Risk Analysis, rule-based Forecasting alert                                                                                        | `/backend/aggregation`, `/backend/similarity`                                                          |
+| Lane 2 — Frontend                                | Layout/routing/design system + Worklist + Rollup + Dashboard screens (against a documented mock contract until Lane 1's real API lands)                                    | `/frontend/*` (excluding Case Detail's AI-dependent parts)                                             |
+| Lane 4 — AI + Architecture + Integration (Sujal) | Synthetic data generator, Conversational/NL layer, refusal-gate test set, API Contracts, Catalyst AppSail + QuickML spikes, CI/CD, cross-lane integration and merge review | `/synthetic_data`, `/backend/nl_layer`, repo-wide contract/integration review                          |
 
 **Merge-conflict risk points:** Lane 1 and Lane 3 both touch graph query patterns — agree on a shared query-helper interface before splitting, don't let both write ad hoc graph traversal code independently (Lane 4 arbitrates this contract, per its Repository Architecture ownership). Lane 2's mocked API contract must match Lane 1's real API contract exactly — write the contract down (even informally, reviewed by Lane 4) before Lane 2 starts building against it, to avoid late reconciliation.
 
@@ -528,7 +532,7 @@ Steps beyond 057 (Kannada wrapper, voice I/O, financial stub, forecasting alert,
 
 ## Self-Review — Challenging This Plan
 
-**Bad ordering found and corrected:** An earlier draft of this reasoning placed deployment (Phase 8) at the very end, matching the phase-number ordering in your prompt structure. This was corrected: a minimal deployment happens in Phase 0 (step 007) specifically because `ARCHITECTURE.md` already states "deploy early" as a philosophy, and because Catalyst's real capabilities are unverified — discovering a deployment blocker at the literal end of the project (original Phase 8 position) would be the worst possible time. Phase 8 as written above is deployment *hardening*, not first deployment.
+**Bad ordering found and corrected:** An earlier draft of this reasoning placed deployment (Phase 8) at the very end, matching the phase-number ordering in your prompt structure. This was corrected: a minimal deployment happens in Phase 0 (step 007) specifically because `ARCHITECTURE.md` already states "deploy early" as a philosophy, and because Catalyst's real capabilities are unverified — discovering a deployment blocker at the literal end of the project (original Phase 8 position) would be the worst possible time. Phase 8 as written above is deployment _hardening_, not first deployment.
 
 **Hidden dependency found:** The Copilot (Phase 5) implicitly depends on the API layer's query shape being stable, which itself depends on the Aggregation and Similarity modules being done, not just the Clock/Dependency/Escalation modules. Step 039 (extending the API) is placed explicitly before step 042 (grounding layer) to make this dependency visible in the numbered list, rather than leaving it implicit.
 
@@ -564,5 +568,3 @@ Use?
 Skip?
 Owner?
 Decision?
-
-
