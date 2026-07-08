@@ -501,7 +501,7 @@ If Lane 4 becomes blocked, Lane 1 becomes backup reviewer for API contracts and 
 050  Extend synthetic data generator to ~1–2 lakh records for scale testing
 051  Run scale test against core queries (worklist, escalation check, similarity, copilot grounding); record real latency numbers in TASK.md
 052  Rehearse the live threshold-crossing escalation moment multiple times with a non-builder observer
-523  Run manual QA: attempt to break the refusal gate and escalation trigger deliberately
+053  Run manual QA: attempt to break the refusal gate and escalation trigger deliberately
 054  Harden deployment: separate prod/dev environment variables, confirm audit log persists correctly in deployed environment
 055  Verify fresh deployment from a clean clone, following only README.md
 056  Confirm all submission deliverables present (Prototype Brief, GitHub, Catalyst Deployment, Demo Video, Deck) per PROTOTYPE_SUBMISSION_GUIDE.md
