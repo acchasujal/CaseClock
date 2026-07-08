@@ -94,6 +94,16 @@ Every major decision made in developing this product, so future work (human or A
 
 ---
 
+### D11 — Wow-moment demo design: pair deterministic escalation with a scripted (not open-floor) refusal demonstration
+
+**Problem:** Selecting the single highest-impact demo moment.
+**Alternatives considered:** Inviting judges to ask an unscripted live question (highest emotional ceiling, highest uncontrolled risk given D7's unresolved status).
+**Chosen approach:** A live, staged threshold-crossing escalation immediately followed by a scripted correct-answer-then-refusal pair on the same case/screen.
+**Reason:** Demonstrates the product's actual stated philosophy (deterministic where possible, honestly uncertain where not) in under 30 seconds, without exposing an untested refusal gate to fully unscripted input.
+**Contingency:** Revisit the open-floor version only after D7 is resolved with a passing test score.
+
+---
+
 ### D12 — Engineering organization: four lanes, not developer headcount
 
 **Problem:** Prior planning (`ENGINEERING_OPERATING_MANUAL.md` Task 6) split ownership across 3 developers, contradicting `PROJECT_CONTEXT.md`'s stated 4-person team — an unresolved contradiction flagged but not fixed at the time.
@@ -103,16 +113,6 @@ Every major decision made in developing this product, so future work (human or A
 **Trade-offs:** Lane 4 (Sujal) now sits on the critical path for two of the three remaining Catalyst spikes (AppSail, QuickML) plus all cross-lane integration — a concentration-of-risk trade accepted deliberately in exchange for reduced drift, not an oversight. If Lane 4 falls behind, there is no equivalent backup owner for integration review.
 **Consequences:** `ENGINEERING_OPERATING_MANUAL.md` Task 6, `IMPLEMENTATION_PLAN.md`'s Parallel Work Streams table, and `TASK.md`'s ownership tracking are all updated to lane-based assignment in the same session this decision was made, per `EXECUTION_RULES.md`'s documentation-update rule.
 **Known limitation:** This resolves the 3-vs-4 contradiction structurally but does not by itself reduce total engineering risk — it relocates coordination risk from "ambiguous ownership" to "single point of failure in Lane 4," which is a different risk, not a smaller one.
-
----
-
-### D11 — Wow-moment demo design: pair deterministic escalation with a scripted (not open-floor) refusal demonstration
-
-**Problem:** Selecting the single highest-impact demo moment.
-**Alternatives considered:** Inviting judges to ask an unscripted live question (highest emotional ceiling, highest uncontrolled risk given D7's unresolved status).
-**Chosen approach:** A live, staged threshold-crossing escalation immediately followed by a scripted correct-answer-then-refusal pair on the same case/screen.
-**Reason:** Demonstrates the product's actual stated philosophy (deterministic where possible, honestly uncertain where not) in under 30 seconds, without exposing an untested refusal gate to fully unscripted input.
-**Contingency:** Revisit the open-floor version only after D7 is resolved with a passing test score.
 
 ---
 
@@ -126,3 +126,23 @@ Every major decision made in developing this product, so future work (human or A
 **Chosen approach:** GitHub Flow directly to `main` with short-lived feature branches (`lane{N}/task-name`).
 **Reason:** Direct merges to `main` (backed by status-checked consolidated CI) enforce continuous integration, preventing "big-bang" integration conflicts in the final week. Task branches remain short-lived (under 2 days), encouraging rapid cycles, clear scope, and immediate regression visibility.
 **Trade-offs:** Puts higher emphasis on the reliability of the consolidated CI pipeline on the `main` branch. A broken `main` is visible to all developers, but mitigated by a strict "revert first, diagnose second" recovery strategy.
+
+---
+
+### D14 — Adopt QuickML as intent parser only; explicitly exclude it from legal reasoning
+
+**Problem:** Phase 0 required a Catalyst QuickML capability spike before the AI architecture could be finalized. The spike was completed (see `docs/spikes/quickml.md`) and resulted in a concrete architectural decision, but was never logged here as required by `EXECUTION_RULES.md`.
+**Spike findings (repository-backed):** Model: GLM-4.7-Flash at Temperature=0.0, Thinking disabled. Passed: structured JSON output, entity extraction, Kannada queries, prompt injection resistance, safety refusals with schema-constrained prompt. Failed without constraints: invented unsupported fields (hallucination). API stability concern: observed HTTP 400/500 errors during Playground testing — root cause unverified.
+**Chosen approach:** Adopt QuickML exclusively for natural language → structured intent parsing (intent extraction, entity extraction, structured query generation). Explicitly prohibit QuickML from performing legal reasoning, BNSS calculations, deadline computation, graph traversal, database execution, guilt determination, or prediction.
+**Reason:** Sufficient for the scoped role; deterministic backend handles all decision logic, keeping the architecture's core explainability guarantee intact. Temperature=0.0 + strict schema prompt produces reliable, parseable output.
+**Trade-offs:** API stability is still unverified under backend integration load — this is a documented open risk requiring the next spike (Tool Calling, API Integration, Load & Latency per `docs/spikes/quickml.md`'s Next Spikes section). Do not build the full copilot pipeline until API stability is confirmed under real request volume.
+**Known limitation:** RAG, Knowledge Base, Tool Calling, and Vision models were explicitly not evaluated in this spike and remain unverified.
+
+---
+
+### D15 — Graph schema v1.1: add Evidence node beyond original ARCHITECTURE.md conceptual list
+
+**Problem:** `ARCHITECTURE.md`'s conceptual node type list did not include `Evidence` as a named node type. During Lane 3 graph foundation implementation, `Evidence` was added as a first-class node (`entities.py`, `enums.py`, `graph_schema.py` version 1.1) with a `CASE_HAS_EVIDENCE` stored edge, and the synthetic data spec (`docs/graph-intelligence/SYNTHETIC_DATA_SPEC.md`) was designed to generate 1000 evidence records.
+**Reason:** Evidence items (FSL reports, CDR analyses, device records, documents) are a primary blocker category for the Dependency Tracker feature and are referenced explicitly in `FEATURE_REGISTRY.md` #2. Modeling them as a separate node rather than collapsing them into Dependency keeps the two concepts distinguishable and enables separate evidence-completeness queries.
+**Consequence:** `ARCHITECTURE.md`'s conceptual node list is now slightly behind the implementation. This is intentional — `ARCHITECTURE.md` is explicitly labeled "conceptual only" — but implementors should treat the code (`entities.py`, `graph_schema.py` v1.1) as the authoritative node-type list, not the prose in `ARCHITECTURE.md`.
+**Status:** No change to `ARCHITECTURE.md` prose required (it already states "conceptual only, implementation may differ"); this log entry is the authoritative record of the delta.
