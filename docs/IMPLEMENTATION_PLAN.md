@@ -111,8 +111,8 @@ Validate that Catalyst Data Store can efficiently represent the adjacency-list g
 
 **Deliverables:**
 
-- Node types: Case, Person (role-typed via edges), Section, Act, CrimeHead/SubHead, Location, Officer, Unit, Court, Dependency, ClockInstance, EscalationEvent, ConversationLog — per `ARCHITECTURE.md`.
-- Edge types: ACCUSED_IN, VICTIM_IN, COMPLAINANT_IN, WITNESS_IN, CHARGED_UNDER, BELONGS_TO_ACT, OCCURRED_IN, INVESTIGATED_BY, BELONGS_TO_UNIT, CASE_HAS_DEPENDENCY, CASE_HAS_CLOCK, and the two derived (not stored) edges CO_ACCUSED_WITH and (only if justified) LINKED_TO.
+- Node types: Case, Person (role-typed via edges), Section, Act, CrimeHead/SubHead, Location, Officer, Unit, Court, Evidence, Dependency, ClockInstance, EscalationEvent, ConversationLog — per `ARCHITECTURE.md` and `DECISION_LOG.md` D15 (Evidence added in graph schema v1.1).
+- Edge types: ACCUSED_IN, VICTIM_IN, COMPLAINANT_IN, WITNESS_IN, CHARGED_UNDER, BELONGS_TO_ACT, OCCURRED_IN, INVESTIGATED_BY, BELONGS_TO_UNIT, CASE_HAS_DEPENDENCY, CASE_HAS_CLOCK, CASE_HAS_EVIDENCE, CASE_HAS_COURT, CASE_HAS_CRIME_HEAD, CASE_HAS_CRIME_SUB_HEAD, CASE_HAS_ESCALATION_EVENT, CASE_HAS_CONVERSATION_LOG, and the two derived (not stored) edges CO_ACCUSED_WITH and (only if justified) LINKED_TO.
 - Migration/creation scripts against whatever storage pattern Phase 0 confirmed Catalyst supports.
 - **Synthetic data generator** producing ~500–1,000 realistic cases for early development (not yet the full 1–2 lakh scale test — that's Phase 7), with:
   - Deliberate repeat entities (same person as accused across 2+ cases) so network analysis has real signal.
