@@ -52,3 +52,25 @@ def test_deterministic_synthetic_generation():
     edge_types_1 = [edge.edge_type.value for edge in assembly_1.dataset.edges]
     edge_types_2 = [edge.edge_type.value for edge in assembly_2.dataset.edges]
     assert edge_types_1 == edge_types_2
+
+
+def test_investigated_by_edges_present():
+    """Every case must have exactly one INVESTIGATED_BY edge.
+
+    This edge connects Case to Officer and is the primary path used by escalation
+    routing to resolve the correct supervisor rank via Case→Officer→Unit traversal.
+    A missing INVESTIGATED_BY edge means escalation routing silently has no officer
+    to route through — a silent failure that only surfaces at Phase 3 integration time.
+    """
+    config = SyntheticDataConfig(seed=42, case_count=20, person_count=30, officer_count=10, evidence_count=5, dependency_count=5)
+    assembly = generate_synthetic_graph(config)
+    investigated_by_edges = [
+        edge for edge in assembly.dataset.edges
+        if edge.edge_type == GraphRelationshipType.INVESTIGATED_BY
+    ]
+    case_nodes = [node for node in assembly.dataset.nodes if node.entity_type.value == "Case"]
+    # Every case must have at least one INVESTIGATED_BY edge
+    assert len(investigated_by_edges) >= len(case_nodes), (
+        f"Expected at least {len(case_nodes)} INVESTIGATED_BY edges (one per case), "
+        f"got {len(investigated_by_edges)}"
+    )

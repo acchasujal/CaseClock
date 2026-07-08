@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from random import Random
 from uuid import UUID
 
@@ -20,7 +20,7 @@ class EvidenceRecord(BaseModel):
     node: SyntheticNodeRecord
     case_id: UUID
     evidence_type: str
-    collected_at: object
+    collected_at: datetime
     collected_by_officer_id: UUID | None = None
     chain_of_custody_status: str = "intact"
 

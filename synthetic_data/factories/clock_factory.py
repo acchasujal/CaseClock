@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from random import Random
 from uuid import UUID
 
@@ -21,8 +21,8 @@ class ClockRecord(BaseModel):
     node: SyntheticNodeRecord
     case_id: UUID
     clock_type: ClockType
-    start_date: object
-    deadline_date: object
+    start_date: datetime
+    deadline_date: datetime
     status: str
     days_remaining: int
 

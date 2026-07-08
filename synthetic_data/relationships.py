@@ -51,6 +51,17 @@ def build_relationships(
         for section_id in blueprint.section_ids:
             add_edge(GraphRelationshipType.CHARGED_UNDER, blueprint.case.id, section_id)
 
+    # INVESTIGATED_BY: assign each case to an officer from the same district.
+    # Build a district → officer list index once for O(n) total assignment.
+    district_officers: dict[str, list] = defaultdict(list)
+    for officer in officer_profiles:
+        district_officers[officer.district].append(officer)
+
+    for idx, blueprint in enumerate(case_blueprints):
+        candidates = district_officers.get(blueprint.district) or officer_profiles
+        officer = candidates[idx % len(candidates)]
+        add_edge(GraphRelationshipType.INVESTIGATED_BY, blueprint.case.id, officer.node.id)
+
     for section in references.sections:
         act_id = section.properties["act_id"]
         add_edge(GraphRelationshipType.BELONGS_TO_ACT, section.id, act_id)

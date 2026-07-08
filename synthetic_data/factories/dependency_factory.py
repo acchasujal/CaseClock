@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from random import Random
 from uuid import UUID
 
@@ -21,9 +21,9 @@ class DependencyRecord(BaseModel):
     case_id: UUID
     dependency_type: str
     status: str
-    requested_at: object
-    due_at: object
-    resolved_at: object | None = None
+    requested_at: datetime
+    due_at: datetime
+    resolved_at: datetime | None = None
     assigned_to_officer_id: UUID | None = None
     days_stale: int = 0
 
