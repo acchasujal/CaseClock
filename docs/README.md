@@ -61,7 +61,7 @@ Full detail: `ARCHITECTURE.md`. Conceptual only — no schema or API specifics a
 
 ## Setup
 
-Not yet established — no repository scaffold exists as of this writing. First engineering task (see `TASK.md`) is to scaffold backend + frontend and connect to a Catalyst project.
+See `README.md` at the repository root for setup instructions. The repository scaffold exists (backend + frontend directories created, CI configured).
 
 ## Development Workflow
 
@@ -78,10 +78,18 @@ Governed by `EXECUTION_RULES.md`. Any AI agent or engineer picking up this repo 
 | `ARCHITECTURE.md` | Conceptual system architecture |
 | `DECISION_LOG.md` | Every major decision made and why, to prevent re-litigating settled choices |
 | `TASK.md` | Live execution plan — what's built, what's next, what's blocked |
+| `IMPLEMENTATION_PLAN.md` | Phased build sequence and parallel work stream plan |
+| `PARALLELIZATION_READINESS.md` | Current parallel development readiness assessment |
+| `spikes/quickml.md` | QuickML capability spike results and architectural decision (D14) |
+| `graph-intelligence/DATA_MODEL.md` | Detailed graph entity catalog with planned fields |
+| `graph-intelligence/EDGE_MODEL.md` | Stored and derived edge definitions |
+| `graph-intelligence/DATASTORE_SPIKE.md` | Catalyst Data Store spike validation plan |
+| `graph-intelligence/MIGRATION_PLAN.md` | Adjacency-list mapping strategy for Catalyst |
+| `graph-intelligence/SYNTHETIC_DATA_SPEC.md` | Synthetic dataset targets and repeat-entity strategy |
 
 ## Engineering Ownership
 
-Four lanes, not four fixed roles-by-name: Backend Core, Frontend, Graph Intelligence, and AI + Architecture + Integration (owned by Sujal). See `TEAM_PLAYBOOK.md` for daily workflow, branch naming, and PR process — this README doesn't duplicate it.
+Four lanes, not four fixed roles-by-name: Backend Core, Frontend, Graph Intelligence, and AI + Architecture + Integration (owned by Sujal). See `EXECUTION_RULES.md` for daily workflow, branch naming, and PR process — this README doesn't duplicate it.
 
 ## Contribution Workflow
 

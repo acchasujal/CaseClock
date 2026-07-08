@@ -53,7 +53,7 @@ FIR registration → investigation (evidence/dependency gathering: FSL, CDR, wit
 
 ## Engineering Organization
 
-The team is organized around four engineering lanes (Backend Core, Frontend, Graph Intelligence, AI + Architecture + Integration) rather than by individual developer. This is a deliberate choice, not a headcount formality: it keeps ownership tied to what a module *does* rather than who happens to be free, and it puts the AI layer and cross-team integration under a single owner (Sujal) specifically because those two are the most tightly coupled parts of the system and the most likely place for architecture drift to enter unnoticed. Full reasoning and alternatives considered: `DECISION_LOG.md` D12. Operational detail (branching, PRs, daily workflow): `TEAM_PLAYBOOK.md`.
+The team is organized around four engineering lanes (Backend Core, Frontend, Graph Intelligence, AI + Architecture + Integration) rather than by individual developer. This is a deliberate choice, not a headcount formality: it keeps ownership tied to what a module *does* rather than who happens to be free, and it puts the AI layer and cross-team integration under a single owner (Sujal) specifically because those two are the most tightly coupled parts of the system and the most likely place for architecture drift to enter unnoticed. Full reasoning and alternatives considered: `DECISION_LOG.md` D12. Operational detail (branching, PRs, daily workflow): `EXECUTION_RULES.md` (TEAM_PLAYBOOK was merged into EXECUTION_RULES — see `TASK.md` bootstrap note).
 
 ## Constraints
 
