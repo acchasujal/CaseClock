@@ -52,8 +52,6 @@ class ClockRule:
 # ──────────────────────────────────────────────────────────────────────────────
 
 CLOCK_RULES: dict[str, ClockRule] = {
-    # TODO: populate from actual BNSS/BNS offence categories in organizer schema
-    # Example stub entries — DO NOT present these as verified
     "serious_offence": ClockRule(
         clock_type=ClockType.INVESTIGATION_90_DAY,
         duration_days=90,
@@ -65,6 +63,80 @@ CLOCK_RULES: dict[str, ClockRule] = {
         duration_days=60,
         bnss_reference="BNSS §[UNVERIFIED — verify section number before asserting]",
         notes="Non-serious offences per BNSS. Category boundary [UNVERIFIED].",
+    ),
+    # Offence categories used in synthetic data
+    "theft": ClockRule(
+        clock_type=ClockType.INVESTIGATION_60_DAY,
+        duration_days=60,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Theft [UNVERIFIED].",
+    ),
+    "burglary": ClockRule(
+        clock_type=ClockType.INVESTIGATION_60_DAY,
+        duration_days=60,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Burglary [UNVERIFIED].",
+    ),
+    "robbery": ClockRule(
+        clock_type=ClockType.INVESTIGATION_90_DAY,
+        duration_days=90,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Robbery [UNVERIFIED].",
+    ),
+    "vehicle_theft": ClockRule(
+        clock_type=ClockType.INVESTIGATION_60_DAY,
+        duration_days=60,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Vehicle theft [UNVERIFIED].",
+    ),
+    "assault": ClockRule(
+        clock_type=ClockType.INVESTIGATION_90_DAY,
+        duration_days=90,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Assault [UNVERIFIED].",
+    ),
+    "public_order": ClockRule(
+        clock_type=ClockType.INVESTIGATION_60_DAY,
+        duration_days=60,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Public order offence [UNVERIFIED].",
+    ),
+    "fraud": ClockRule(
+        clock_type=ClockType.INVESTIGATION_60_DAY,
+        duration_days=60,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Fraud [UNVERIFIED].",
+    ),
+    "forgery": ClockRule(
+        clock_type=ClockType.INVESTIGATION_60_DAY,
+        duration_days=60,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Forgery [UNVERIFIED].",
+    ),
+    "harassment": ClockRule(
+        clock_type=ClockType.INVESTIGATION_60_DAY,
+        duration_days=60,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Harassment [UNVERIFIED].",
+    ),
+    "narcotics": ClockRule(
+        clock_type=ClockType.INVESTIGATION_90_DAY,
+        duration_days=90,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Narcotics offence [UNVERIFIED].",
+    ),
+    # Post-filing clock rules (for document supply & further investigation stage lookup)
+    "document_supply": ClockRule(
+        clock_type=ClockType.DOCUMENT_SUPPLY,
+        duration_days=30,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Document supply to accused [UNVERIFIED].",
+    ),
+    "further_investigation": ClockRule(
+        clock_type=ClockType.FURTHER_INVESTIGATION,
+        duration_days=30,
+        bnss_reference="BNSS §[UNVERIFIED]",
+        notes="Further investigation [UNVERIFIED].",
     ),
 }
 
