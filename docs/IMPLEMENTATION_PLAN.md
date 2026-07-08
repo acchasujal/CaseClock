@@ -24,15 +24,15 @@ Blueprint for building Case Clock from an empty repository to a demoable, honest
 
 **Deliverables:**
 - Git repository with backend (`/backend`) and frontend (`/frontend`) folders per `README.md`'s target structure.
-- Linting, formatting, type-checking configured (Python: ruff/mypy or equivalent; JS/TS: eslint/prettier).
+- Linting, formatting, type-checking configured (Python: ruff/mypy; JS/TS: eslint/prettier).
 - Environment variable handling (`.env` pattern, never committed).
-- CI: a basic pipeline that runs lint + type-check + unit tests on every push (even with zero tests initially).
+- CI: a consolidated `ci.yml` workflow that runs lint + type-check + unit tests for both backend and frontend on every PR.
 - A single dummy backend endpoint deployed to Catalyst, a single dummy frontend page deployed to Catalyst, and confirmation they can talk to each other over the real deployment.
 - A written note (append to `TASK.md`) recording what Catalyst actually supports (data store type, whether native graph/recursive query capability exists, auth service availability).
 
 **Dependencies:** None — this is the true starting point.
 
-**Files:** `/backend` scaffold, `/frontend` scaffold, `.env.example`, CI config, `TASK.md` update.
+**Files:** `/backend` scaffold, `/frontend` scaffold, `.env.example`, consolidated CI config, `TASK.md` update.
 
 **Risks:** Catalyst may not support the storage pattern `ARCHITECTURE.md` assumed (relational adjacency table). If so, **stop and update `ARCHITECTURE.md` and log the change in `DECISION_LOG.md` immediately** — do not proceed to Phase 2 on a storage assumption known to be wrong.
 
@@ -86,7 +86,7 @@ Update TASK.md with findings.
 
 **Dependencies:** Phase 0 (repo + deployment path must exist).
 
-**Files:** `/backend/config`, `/backend/logging`, `/backend/errors`, `/backend/validation`, `/backend/constants` (incl. clock mapping table), `/backend/auth`.
+**Files:** `/backend/app/core/auth`, `/shared/constants/clock_types.py`, validation & logging configurations.
 
 **Risks:** Populating the clock-mapping table with unverified section numbers and forgetting to mark them — cross-check against `EXECUTION_RULES.md` rule on legal citations before considering this phase done.
 
@@ -120,7 +120,7 @@ Validate that Catalyst Data Store can efficiently represent the adjacency-list g
 
 **Dependencies:** Phase 1 (config/validation needed for generator scripts).
 
-**Files:** `/backend/graph/models`, `/backend/graph/migrations`, `/synthetic_data/generator`, `/synthetic_data/seed`.
+**Files:** `/backend/app/db/` (models and migrations), `/scripts/seed_synthetic_data.py`.
 
 **Risks:** If the generator produces data that's too clean (no realistic near-duplicate entity spellings, no genuinely stale dependencies), every downstream feature will look artificially good in development and then behave differently against messier data later. Deliberately inject imperfection.
 
@@ -144,31 +144,24 @@ Validate that Catalyst Data Store can efficiently represent the adjacency-list g
 1. Legal Clock Engine — resolves offence category to clock(s), computes days-remaining. Unit tests cover every mapping-table entry plus the missing-mapping edge case (must flag "undetermined," never guess).
 2. Dependency Tracker — CRUD for named dependencies, staleness computation.
 3. Escalation Rule Engine — deterministic trigger logic, correct-rank routing using Officer/Unit hierarchy, writes to `EscalationEvent` and audit log.
-4. Aggregation Layer — pattern/trend grouped queries; rule-based trend-alert threshold check (`FEATURE_REGISTRY.md` #17), explicitly labeled non-ML in code comments.
-5. Similarity Function — structured feature match, returns the specific shared attributes with every result (not just a score).
+4. Aggregation Layer — pattern/trend grouped queries; rule-based trend-alert threshold check (`FEATURE_REGISTRY.md` #17), explicitly labeled non-ML in code comments. Exists inside `backend/app/core/graph/`.
+5. Similarity Function — structured feature match, returns the specific shared attributes with every result (not just a score). Exists inside `backend/app/core/graph/`.
 6. Catalyst Integration Layer
 
 Responsible for:
-
 - Data Store access
 - QuickML wrapper
 - SmartBrowz wrapper
 - Zia wrapper
 
 No frontend or business logic may call Catalyst SDKs directly.
+Reason: Keeps Catalyst isolated. If Catalyst APIs change, only `backend/app/catalyst/` changes.
 
-Reason:
-
-Keeps Catalyst isolated.
-
-If Catalyst APIs change
-
-only one folder changes.
 7. API layer — REST/GraphQL endpoints exposing the above, with the validation and auth middleware from Phase 1 applied to every endpoint.
 
 **Dependencies:** Phase 2 (frozen schema + seeded data).
 
-**Files:** `/backend/clock_engine`, `/backend/dependency`, `/backend/escalation`, `/backend/aggregation`, `/backend/similarity`, `/backend/api`.
+**Files:** `backend/app/core/clock/`, `backend/app/core/dependency/`, `backend/app/core/escalation/`, `backend/app/core/graph/` (aggregation and similarity), `backend/app/catalyst/`, `backend/app/api/`.
 
 **Risks:** Skipping the missing-mapping edge case test for the Clock Engine — this is the single highest-consequence silent-failure mode in the whole backend (a case silently getting a wrong or default clock).
 
@@ -242,7 +235,7 @@ Evidence Annotation
 ↓
 Zia TTS (optional)
 
-- NL → structured query translation, grounded against the real API/schema (never inventing fields).
+- NL → structured query translation, grounded against the real API/schema (never inventing fields). Exists inside `backend/app/core/copilot/`.
 - Deterministic verification gate: checks the translated query against known schema/entities before execution; if grounding confidence is low, triggers refusal instead of guessing.
 - Path-annotated response formatting: every successful answer returns the specific nodes/edges/rows that produced it.
 - Refusal response: explicit, states why, logged to audit log.
@@ -250,27 +243,22 @@ Zia TTS (optional)
 
 Grounding Strategy:
 QuickML never makes final investigative decisions.
-
 QuickML only performs:
-
 - intent understanding
 - response generation
 - summarization
 
 All evidence retrieval comes from Catalyst Data Store.
-
 Every response must include:
-
 - FIR IDs
 - Entity IDs
 - Evidence source
 - Query path
-
 Otherwise refuse.
 
 **Dependencies:** Phase 3 (stable API), Phase 2 (stable schema).
 
-**Files:** `/backend/nl_layer`, `/backend/nl_layer/refusal_gate`, `/backend/nl_layer/tests/refusal_test_set.md` (or equivalent).
+**Files:** `backend/app/core/copilot/` (NL engine and refusal gate), `backend/tests/refusal_testset/` (test set definitions).
 
 **Risks:** Under-refusal (answering confidently when it shouldn't) is more dangerous than over-refusal (declining when it could have answered) — bias the gate's threshold toward caution, and say so explicitly in the deck as a deliberate design choice.
 
@@ -320,23 +308,17 @@ Otherwise refuse.
 - Manual QA: at least 2 non-team members (or team members acting as skeptical judges) run the demo flow and specifically try to break the refusal gate and the escalation trigger.
 - Rehearsal of the live threshold-crossing escalation moment, multiple times, checking specifically whether it reads as competence or malfunction to a non-technical observer (a risk flagged repeatedly across prior planning rounds).
 
-Measure
-
+Measure:
 - latency
-
 - memory
-
 - Catalyst API response time
-
 - QuickML response time
-
 - PDF generation time
-
 - Graph traversal time
 
 **Dependencies:** Phase 6.
 
-**Files:** `/synthetic_data/scale_test`, test result logs appended to `TASK.md`.
+**Files:** `tests/scale/` (for metrics and run files), test result logs appended to `TASK.md`.
 
 **Acceptance Criteria:** A measured latency number exists and is recorded — not an estimate. Refusal-gate pass rate is recorded. At least one non-builder has successfully triggered the live escalation demo without assistance.
 
@@ -371,17 +353,16 @@ Measure
 **Review checklist:** [ ] Clean-clone deployment succeeds [ ] All submission deliverables present.
 
 Verify every required Catalyst service used in the project is actually deployed through Catalyst.
-
 Record:
-Frontend
-Backend
-Authentication
-Data Store
-QuickML
-SmartBrowz
-Zia
-Cron
-Storage
+- Frontend
+- Backend
+- Authentication
+- Data Store
+- QuickML
+- SmartBrowz
+- Zia
+- Cron
+- Storage
 
 ---
 
@@ -449,10 +430,10 @@ After schema freeze (post-Phase 2), four independent, non-conflicting streams:
 
 | Lane | Stream | Touches |
 |---|---|---|
-| Lane 1 — Backend Core | Clock Engine → Dependency Tracker → Escalation Engine → Backend APIs, Auth, Database (incl. Catalyst Data Store spike) | `/backend/clock_engine`, `/backend/dependency`, `/backend/escalation`, `/backend/api`, `/backend/auth` |
-| Lane 3 — Graph Intelligence | Aggregation, Similarity, Pattern/Trend, Risk Analysis, rule-based Forecasting alert | `/backend/aggregation`, `/backend/similarity` |
-| Lane 2 — Frontend | Layout/routing/design system + Worklist + Rollup + Dashboard screens (against a documented mock contract until Lane 1's real API lands) | `/frontend/*` (excluding Case Detail's AI-dependent parts) |
-| Lane 4 — AI + Architecture + Integration (Sujal) | Synthetic data generator, Conversational/NL layer, refusal-gate test set, API Contracts, Catalyst AppSail + QuickML spikes, CI/CD, cross-lane integration and merge review | `/synthetic_data`, `/backend/nl_layer`, repo-wide contract/integration review |
+| Lane 1 — Backend Core | Clock Engine → Dependency Tracker → Escalation Engine → Backend APIs, Auth, Database (incl. Catalyst Data Store spike) | `backend/app/core/clock/`, `backend/app/core/dependency/`, `backend/app/core/escalation/`, `backend/app/core/auth/`, `shared/constants/` |
+| Lane 3 — Graph Intelligence | Aggregation, Similarity, Pattern/Trend, Risk Analysis, rule-based Forecasting alert | `backend/app/core/graph/` |
+| Lane 2 — Frontend | Layout/routing/design system + Worklist + Rollup + Dashboard screens (against a documented mock contract until Lane 1's real API lands) | `frontend/` (excluding Case Detail's AI-dependent parts) |
+| Lane 4 — AI + Architecture + Integration (Sujal) | Synthetic data generator, Conversational/NL layer, refusal-gate test set, API Contracts, Catalyst AppSail + QuickML spikes, CI/CD, cross-lane integration and merge review | `scripts/seed_synthetic_data.py`, `backend/app/core/copilot/`, `backend/app/catalyst/`, `shared/contracts/`, `deployment/`, `.github/`, `docs/` |
 
 **Merge-conflict risk points:** Lane 1 and Lane 3 both touch graph query patterns — agree on a shared query-helper interface before splitting, don't let both write ad hoc graph traversal code independently (Lane 4 arbitrates this contract, per its Repository Architecture ownership). Lane 2's mocked API contract must match Lane 1's real API contract exactly — write the contract down (even informally, reviewed by Lane 4) before Lane 2 starts building against it, to avoid late reconciliation.
 
@@ -466,7 +447,7 @@ If Lane 4 becomes blocked, Lane 1 becomes backup reviewer for API contracts and 
 001  Initialize git repository, folder structure per README.md
 002  Configure linting, formatting, type-checking (backend + frontend)
 003  Configure environment variable handling (.env pattern)
-004  Set up CI pipeline (lint + type-check + test stages, even with 0 tests)
+004  Set up consolidated CI pipeline (ci.yml)
 005  Build one dummy backend endpoint
 006  Build one dummy frontend page calling that endpoint
 007  Deploy both to Zoho Catalyst
@@ -482,7 +463,7 @@ If Lane 4 becomes blocked, Lane 1 becomes backup reviewer for API contracts and 
 017  Build 3-role auth skeleton (IO/SHO/SP) with role-check middleware
 018  Write unit tests for validation and error handling
 019  Design and freeze graph node/edge schema per ARCHITECTURE.md
-020  Implement node/edge models against Catalyst's confirmed storage pattern
+020  Implement node/edge models against Catalyst's confirmed storage pattern (backend/app/db/)
 021  Write migration/creation scripts
 022  Build synthetic data generator (deliberate repeat entities, deliberate stale dependencies, deliberate offence-category variety)
 023  Run generator to produce ~500–1,000 seed records
@@ -493,19 +474,19 @@ If Lane 4 becomes blocked, Lane 1 becomes backup reviewer for API contracts and 
 028  Build Dependency Tracker (CRUD, staleness computation)
 029  Build Escalation Rule Engine (deterministic trigger, correct-rank routing, audit log write)
 030  Write Escalation Engine tests against seeded data, confirm reproducible trigger
-031  Build Aggregation Layer (pattern/trend grouped queries, rule-based trend-alert)
-032  Build Similarity Function (structured feature match, returns shared attributes)
+031  Build Aggregation Layer in graph module (pattern/trend grouped queries, rule-based trend-alert)
+032  Build Similarity Function in graph module (structured feature match, returns shared attributes)
 033  Build API layer: worklist endpoint, case detail endpoint, escalation endpoint (minimum for critical path)
 034  Apply auth middleware to all endpoints
-035  [Parallel start point — see Parallel Work Streams] Begin frontend layout/routing/design system against a documented mock API contract
+035  Begin frontend layout/routing/design system against a documented mock API contract
 036  Build Case Detail screen (clock badges, dependency panel) against real API
 037  Build Risk-Ranked Worklist screen against real API
 038  Build Conversation history panel shell + PDF export (no AI dependency yet)
 039  Extend API layer: network (co-accused) endpoint, similarity endpoint, pattern/rollup endpoint
 040  Build Network tab, Similarity tab, District/Pattern Rollup screen, Escalation Queue view
-041  Draft refusal-gate test set (10–15 questions, answerable + ambiguous) — can happen anytime from step 022 onward, independently
+041  Draft refusal-gate test set (10–15 questions, answerable + ambiguous) in backend/tests/refusal_testset/
 042  Build NL → structured query grounding layer against the real, stable API
-043  Build deterministic verification/refusal gate
+043  Build deterministic verification/refusal gate in copilot module
 044  Build path-annotated response formatting
 045  Wire Copilot box (from step 036) to real responses
 046  Run the refusal-gate test set; record pass rate in TASK.md
@@ -515,7 +496,7 @@ If Lane 4 becomes blocked, Lane 1 becomes backup reviewer for API contracts and 
 050  Extend synthetic data generator to ~1–2 lakh records for scale testing
 051  Run scale test against core queries (worklist, escalation check, similarity, copilot grounding); record real latency numbers in TASK.md
 052  Rehearse the live threshold-crossing escalation moment multiple times with a non-builder observer
-053  Run manual QA: attempt to break the refusal gate and escalation trigger deliberately
+523  Run manual QA: attempt to break the refusal gate and escalation trigger deliberately
 054  Harden deployment: separate prod/dev environment variables, confirm audit log persists correctly in deployed environment
 055  Verify fresh deployment from a clean clone, following only README.md
 056  Confirm all submission deliverables present (Prototype Brief, GitHub, Catalyst Deployment, Demo Video, Deck) per PROTOTYPE_SUBMISSION_GUIDE.md
@@ -564,5 +545,3 @@ Use?
 Skip?
 Owner?
 Decision?
-
-

@@ -17,18 +17,20 @@ If this task requires a schema or API contract change, stop and flag it — do n
 
 ## Lane Ownership
 
-Work only in your assigned lane's directories. Cross-lane changes require explicit approval from the other lane's owner, and any contract-boundary change (`shared/contracts/`, graph schema) requires Lane 4 (Sujal) sign-off.
+Lanes represent **ownership domains**, not Git branches. Work only on code within your assigned lane's functional domain. Cross-lane changes require explicit approval from the other lane's owner, and any contract-boundary change (`shared/contracts/`, graph schema) requires Lane 4 (Sujal) sign-off.
 
-| Lane | Directories |
-|---|---|
-| 1 — Backend Core | `backend/`, `shared/constants/` |
-| 2 — Frontend | `frontend/` |
-| 3 — Graph Intelligence | `graph/` |
-| 4 — AI + Architecture + Integration | `ai/`, `shared/contracts/`, `deployment/`, `.github/`, `docs/` |
+| Lane | Ownership Domain | Key Directories/Files |
+|---|---|---|
+| 1 — Backend Core | Clock/Dependency/Escalation, Auth, APIs, Constants | `backend/app/core/clock/`, `backend/app/core/dependency/`, `backend/app/core/escalation/`, `backend/app/core/auth/`, `shared/constants/` |
+| 2 — Frontend | React UI, dashboard, timeline, charts, analytics | `frontend/` |
+| 3 — Graph Intelligence | Aggregations, similarity, pattern/risk/forecasting | `backend/app/core/graph/` |
+| 4 — AI + Architecture + Integration | Copilot, refusal gate, contracts, Catalyst deployment, CI/CD | `backend/app/core/copilot/`, `backend/app/catalyst/`, `shared/contracts/`, `deployment/`, `.github/`, `docs/` |
 
 ---
 
-## Branch Naming
+## Branch Naming & Workflow
+
+Development uses **GitHub Flow** with short-lived feature branches targeting `main` directly.
 
 ```
 lane{N}/{imperative-noun}
@@ -59,9 +61,9 @@ Every merge to `main` goes through a PR. Use the template at [`.github/PULL_REQU
 
 ## Merge Strategy
 
-- Task → Lane branch: squash merge, 1 approval
-- Lane → Main: squash merge, 1 approval (+ Lane 4 for contract-boundary PRs)
-- Never force-push to `main` or lane branches
+- Task branch → `main`: squash merge, 1 approval (+ Lane 4 for contract-boundary PRs)
+- Never force-push to `main`
+- Branches are deleted automatically on merge
 
 ---
 

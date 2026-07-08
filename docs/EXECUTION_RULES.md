@@ -6,12 +6,14 @@ This is the single daily operations document. For strategy, read `HACKATHON_MAST
 
 ## Engineering Lanes & Ownership
 
-| Lane | Owns | Does not touch |
-|---|---|---|
-| **Lane 1 — Backend Core** | Clock Engine, Dependency Engine, Escalation Engine, Database, Authentication, Backend APIs, Validation, Business Logic, and constants | Frontend, Graph internals, NL/copilot core |
-| **Lane 2 — Frontend** | React app, Dashboard, Case Detail, Timeline, Dependency Graph UI, Analytics UI, Charts, Components, Theme, PDF UI | Backend business logic |
-| **Lane 3 — Graph Intelligence** | Relationship Analysis, Pattern Detection, Aggregation, Similarity Engine, Graph Algorithms, Risk Analysis, Crime Analytics, Forecasting (rule-based alerts only) | Clock/Escalation logic (Lane 1), NL/copilot core (Lane 4) |
-| **Lane 4 — AI + Architecture + Integration (Owner: Sujal)** | Conversational Copilot, Prompt System, Grounding, Refusal Gate, Explainability, Synthetic Data Generator, AI Evaluation, QuickML Integration, Shared Types, API Contracts, Repository Architecture, Documentation, Catalyst Deployment, CI/CD, Merge Reviews, Integration, Release, Demo Integration | Does not own feature logic inside Lanes 1–3, only their contracts/integration points |
+The project is organized around four engineering lanes. **Lanes represent ownership domains, not Git branches.** Development uses **GitHub Flow** with short-lived feature branches targeting `main` directly. Ownership boundaries remain lane-based regardless of branch names. Graph Intelligence and AI + Architecture + Integration remain separate ownership domains even though their code modules reside in the consolidated `backend` codebase.
+
+| Lane | Ownership Domain | Key Directories/Files | Does not touch |
+|---|---|---|---|
+| **Lane 1 — Backend Core** | Clock Engine, Dependency Engine, Escalation Engine, Database, Authentication, Backend APIs, Validation, Business Logic, and Constants | `backend/app/core/clock/`, `backend/app/core/dependency/`, `backend/app/core/escalation/`, `backend/app/core/auth/`, `shared/constants/` | Frontend, Graph internals, NL/copilot core |
+| **Lane 2 — Frontend** | React app, Dashboard, Case Detail, Timeline, Dependency Graph UI, Analytics UI, Charts, Components, Theme, PDF UI | `frontend/` | Backend business logic |
+| **Lane 3 — Graph Intelligence** | Relationship Analysis, Pattern Detection, Aggregation, Similarity Engine, Graph Algorithms, Risk Analysis, Crime Analytics, Forecasting (rule-based alerts only) | `backend/app/core/graph/` | Clock/Escalation logic (Lane 1), NL/copilot core (Lane 4) |
+| **Lane 4 — AI + Architecture + Integration (Owner: Sujal)** | Conversational Copilot, Prompt System, Grounding, Refusal Gate, Explainability, Synthetic Data Generator, AI Evaluation, QuickML Integration, Shared Types, API Contracts, Repository Architecture, Documentation, Catalyst Deployment, CI/CD, Merge Reviews, Integration, Release, Demo Integration | `backend/app/core/copilot/`, `backend/app/catalyst/`, `shared/contracts/`, `deployment/`, `.github/`, `docs/` | Does not own feature logic inside Lanes 1–3, only their contracts/integration points |
 
 ## Mandatory Reasoning Workflow (every task, no exceptions)
 

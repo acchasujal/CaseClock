@@ -113,3 +113,16 @@ Every major decision made in developing this product, so future work (human or A
 **Chosen approach:** A live, staged threshold-crossing escalation immediately followed by a scripted correct-answer-then-refusal pair on the same case/screen.
 **Reason:** Demonstrates the product's actual stated philosophy (deterministic where possible, honestly uncertain where not) in under 30 seconds, without exposing an untested refusal gate to fully unscripted input.
 **Contingency:** Revisit the open-floor version only after D7 is resolved with a passing test score.
+
+---
+
+### D13 — Migration from Long-Lived Lane Branches to GitHub Flow
+
+**Problem:** Long-lived lane integration branches (`lane1`–`lane4`) introduce significant merge conflict risks during final integration phases, create redundant PR hops, and diverge over time as different lanes complete features.
+**Alternatives considered:** 
+1. Maintain the 4 long-lived lane branches and perform periodic weekly synchronization merges.
+2. Traditional Git Flow with a `develop` branch.
+3. Git Flow with direct task merges into lane branches and lane merges to develop.
+**Chosen approach:** GitHub Flow directly to `main` with short-lived feature branches (`lane{N}/task-name`).
+**Reason:** Direct merges to `main` (backed by status-checked consolidated CI) enforce continuous integration, preventing "big-bang" integration conflicts in the final week. Task branches remain short-lived (under 2 days), encouraging rapid cycles, clear scope, and immediate regression visibility.
+**Trade-offs:** Puts higher emphasis on the reliability of the consolidated CI pipeline on the `main` branch. A broken `main` is visible to all developers, but mitigated by a strict "revert first, diagnose second" recovery strategy.

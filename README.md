@@ -3,9 +3,7 @@
 > Statutory-deadline-aware investigation tracking for Karnataka State Police  
 > Built for KSP Datathon 2026 (PS1 — Intelligent Conversational AI)
 
-[![CI Backend](https://github.com/acchasujal/CaseClock/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/acchasujal/CaseClock/actions/workflows/ci-backend.yml)
-[![CI Frontend](https://github.com/acchasujal/CaseClock/actions/workflows/ci-frontend.yml/badge.svg)](https://github.com/acchasujal/CaseClock/actions/workflows/ci-frontend.yml)
-[![CI Integration](https://github.com/acchasujal/CaseClock/actions/workflows/ci-integration.yml/badge.svg)](https://github.com/acchasujal/CaseClock/actions/workflows/ci-integration.yml)
+[![CI](https://github.com/acchasujal/CaseClock/actions/workflows/ci.yml/badge.svg)](https://github.com/acchasujal/CaseClock/actions/workflows/ci.yml)
 
 ---
 
@@ -21,30 +19,47 @@ Read [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) for full context. Read
 
 ```
 CaseClock/
-├── backend/        # Lane 1 — FastAPI, Clock/Dependency/Escalation engines, Auth, API
-├── frontend/       # Lane 2 — React app (Worklist, Case Detail, Escalation, Rollup)
-├── graph/          # Lane 3 — Aggregation, Similarity, Synthetic data generator
-├── ai/             # Lane 4 — Copilot, Refusal gate, Catalyst deployment
-├── shared/
-│   ├── contracts/  # API contract types (Python + TypeScript) — owned by Lane 4
-│   └── constants/  # clock_types.py — offence-category → clock-type mapping
-├── tests/          # Integration + scale tests
-├── scripts/        # Seed data, refusal testset runner, deploy verifier
-├── deployment/     # Catalyst AppSail + Slate configs
-├── docs/           # All project documentation (13 docs)
-└── .github/        # CI workflows, issue templates, PR template, CODEOWNERS
+├── backend/
+│   ├── app/
+│   │   ├── api/            # Route handlers
+│   │   ├── core/
+│   │   │   ├── clock/      # Legal Clock Engine (LOAD BEARING)
+│   │   │   ├── dependency/ # Dependency Tracker
+│   │   │   ├── escalation/ # Escalation Rule Engine
+│   │   │   ├── graph/      # Graph traversals, aggregation, similarity (Lane 3)
+│   │   │   ├── copilot/    # NL grounding, refusal gate (Lane 4)
+│   │   │   └── auth/
+│   │   ├── db/             # Storage adapter (Catalyst Data Store)
+│   │   ├── catalyst/       # Catalyst SDK wrappers — QuickML, SmartBrowz, Zia
+│   │   └── main.py
+│   └── tests/
+│       ├── unit/
+│       ├── integration/
+│       └── refusal_testset/
+├── frontend/               # Lane 2 — React app (Worklist, Case Detail, Escalation, Rollup)
+├── shared/                 # Cross-lane contracts & constants
+│   ├── contracts/          # API contract types (Python + TypeScript) — owned by Lane 4
+│   └── constants/          # clock_types.py — offence-category → clock-type mapping (Lane 1)
+├── tests/
+│   └── scale/              # 1-2 lakh record load tests only
+├── scripts/                # Seed data, refusal testset runner, deploy verifier
+├── deployment/             # Catalyst AppSail + Slate configs
+├── docs/                   # Consolidated project documentation
+└── .github/                # CI workflows, issue templates, PR template, CODEOWNERS
 ```
 
 ---
 
 ## Lane Ownership
 
-| Lane | Owns | Branch |
+Lanes represent **ownership domains**, not Git branches. Development uses **GitHub Flow** with short-lived feature branches targeting `main` directly. Ownership boundaries remain lane-based regardless of branch names.
+
+| Lane | Owns | Key Directories/Files |
 |---|---|---|
-| 1 — Backend Core | `backend/`, `shared/constants/` | `lane1` |
-| 2 — Frontend | `frontend/` | `lane2` |
-| 3 — Graph Intelligence | `graph/` | `lane3` |
-| 4 — AI + Architecture + Integration | `ai/`, `shared/contracts/`, `deployment/`, `.github/` | `lane4` |
+| 1 — Backend Core | Clock/Dependency/Escalation, Auth, APIs, Constants | `backend/app/core/clock/`, `backend/app/core/dependency/`, `backend/app/core/escalation/`, `backend/app/core/auth/`, `shared/constants/` |
+| 2 — Frontend | React UI, dashboard, timeline, charts, analytics | `frontend/` |
+| 3 — Graph Intelligence | Aggregations, similarity, pattern/risk/forecasting | `backend/app/core/graph/` |
+| 4 — AI + Architecture + Integration | Copilot, refusal gate, contracts, Catalyst deployment, CI/CD | `backend/app/core/copilot/`, `backend/app/catalyst/`, `shared/contracts/`, `deployment/`, `.github/`, `docs/` |
 
 ---
 
@@ -71,11 +86,8 @@ npm run dev
 
 ### Run tests
 ```bash
-# Backend unit tests
-pytest backend/tests/unit/ -v
-
-# All tests (integration)
-pytest backend/tests/ graph/tests/ ai/tests/ -v
+# Run all backend unit and integration tests
+pytest backend/tests/ -v
 ```
 
 ---
@@ -115,8 +127,8 @@ Current deployment URL: *to be added after M0 walking skeleton is live.*
 | [`PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | Why the product exists |
 | [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System architecture |
 | [`TASK.md`](docs/TASK.md) | What is actually built (source of truth) |
-| [`EXECUTION_RULES.md`](docs/EXECUTION_RULES.md) | How to work on this repo |
+| [`EXECUTION_RULES.md`](docs/EXECUTION_RULES.md) | How to work on this repo (ops + AI rules) |
 | [`DECISION_LOG.md`](docs/DECISION_LOG.md) | Architecture decisions and trade-offs |
 | [`FEATURE_REGISTRY.md`](docs/FEATURE_REGISTRY.md) | Feature status and scope labels |
-| [`TEAM_PLAYBOOK.md`](docs/TEAM_PLAYBOOK.md) | Daily operations |
-| [`HACKATHON_MASTER_GUIDE.md`](docs/HACKATHON_MASTER_GUIDE.md) | Submission strategy |
+| [`HACKATHON_MASTER_GUIDE.md`](docs/HACKATHON_MASTER_GUIDE.md) | Submission strategy (frozen) |
+| [`PROTOTYPE_SUBMISSION_GUIDE.md`](docs/PROTOTYPE_SUBMISSION_GUIDE.md) | Deliverable list |
