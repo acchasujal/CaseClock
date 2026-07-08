@@ -14,6 +14,9 @@ Owns the node/edge model representing cases, people, offences, locations, office
 
 **Conceptual node types:** Case, Person (role-typed via edges: accused/victim/complainant/witness), Section, Act, CrimeHead/SubHead, Location, Officer, Unit, Court, Dependency, ClockInstance, EscalationEvent, ConversationLog. Finals-only: FinancialAccount, Transaction.
 
+> **Schema evolution note (D15):** The implementation (`backend/app/core/graph/entities.py`, `graph_schema.py` v1.1) also includes `Evidence` as a first-class node with a `CASE_HAS_EVIDENCE` stored edge. This addition was made during Lane 3 graph foundation work and is logged in `DECISION_LOG.md` D15. The implementation is authoritative over this conceptual list — always check the code for the current node roster.
+
+
 **Conceptual edge types:** role edges (ACCUSED_IN, VICTIM_IN, COMPLAINANT_IN, WITNESS_IN), CHARGED_UNDER (Case→Section), BELONGS_TO_ACT (Section→Act), OCCURRED_IN (Case→Location), INVESTIGATED_BY (Case→Officer), BELONGS_TO_UNIT (Officer→Unit), CASE_HAS_DEPENDENCY / CASE_HAS_CLOCK (Case→Dependency/ClockInstance), and two **derived, not stored** edges: CO_ACCUSED_WITH (computed from shared Case membership) and, only if a real shared identifier exists in the schema, LINKED_TO — this must never be fabricated if no such field exists.
 
 **Open question, unresolved:** Whether the storage layer is a genuine graph database or a relational adjacency/edge-list table depends on what Zoho Catalyst actually supports. This must be verified before the architecture slide of the pitch deck asserts a specific technology (e.g., do not claim "Neo4j" unless actually integrated).
