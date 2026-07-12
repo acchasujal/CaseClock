@@ -2,13 +2,15 @@
 
 ## Capability
 
-Validate Catalyst AppSail as the deployment target for:
+Validate Catalyst deployment services for the CaseClock application.
 
-- Minimal backend service
-- Minimal frontend hosting
-- Frontend to backend communication over HTTPS
+Validated deployment architecture:
 
-This spike does **not** implement CaseClock business logic. It validates the deployment platform only.
+- Backend hosted using **Catalyst AppSail**
+- Frontend hosted using **Catalyst Slate (React + Vite)**
+- Secure frontend ↔ backend communication over HTTPS
+
+This spike validates the deployment platform only. No CaseClock business logic was implemented.
 
 ---
 
@@ -16,12 +18,12 @@ This spike does **not** implement CaseClock business logic. It validates the dep
 
 🟢 COMPLETE
 
-Backend and frontend deployment validation completed successfully.
+Deployment validation completed successfully.
 
 Validated:
 
-- ✅ Backend deployment
-- ✅ Frontend deployment
+- ✅ Backend deployment (AppSail)
+- ✅ Frontend deployment (Slate)
 - ✅ Frontend ↔ Backend communication
 - ✅ HTTPS communication
 - ✅ Routing
@@ -45,13 +47,13 @@ Remaining optional observations:
 | Item | Value |
 |------|-------|
 | Runtime | Node.js 22 (Managed Runtime) |
+| Hosting | Catalyst AppSail |
 | Deployment Method | Catalyst CLI |
 | Startup Command | `node index.js` |
-| Build Directory | `.` |
 | Deployment Status | ✅ Success |
-| Backend AppSail URL | https://caseclock-backend-50043773125.development.catalystappsail.in |
+| Backend URL | https://caseclock-backend-50043773125.development.catalystappsail.in |
 
-Implemented endpoints:
+Implemented endpoints
 
 ```text
 GET /health
@@ -68,15 +70,15 @@ POST /echo
 | Deployment succeeds | ✅ PASS | Successfully deployed using Catalyst CLI |
 | `/health` reachable | ✅ PASS | Returns expected JSON |
 | `/hello` returns JSON | ✅ PASS | Returns expected JSON |
-| `/echo` accepts POST JSON | ✅ PASS | Successfully echoed request body using `Invoke-RestMethod` |
-| Environment variable readable | ✅ PASS | Application successfully bound to `X_ZOHO_CATALYST_LISTEN_PORT` |
-| Routing works | ✅ PASS | Multiple routes reachable |
+| `/echo` accepts POST JSON | ✅ PASS | Successfully echoed request body |
+| Environment variable readable | ✅ PASS | Bound to `X_ZOHO_CATALYST_LISTEN_PORT` |
+| Routing works | ✅ PASS | Multiple endpoints reachable |
 | Request handling works | ✅ PASS | HTTP 200 responses |
-| API latency measured | ⏳ Pending | Not yet measured |
+| API latency measured | ⏳ Pending | Not measured |
 
 ---
 
-## Observed Responses
+## Sample Responses
 
 ### GET /health
 
@@ -119,14 +121,30 @@ Response
 
 # Frontend Proof of Concept
 
+### Deployment Details
+
+| Item | Value |
+|------|-------|
+| Framework | React + Vite |
+| Hosting | Catalyst Slate |
+| Deployment Method | Catalyst CLI |
+| Deployment Status | ✅ Success |
+| Deployment | Live |
+| Build | Production |
+
+---
+
+## Frontend Validation Results
+
 | Check | Result | Evidence |
 |---|---|---|
-| Frontend application created | ✅ PASS | Minimal React/Vite application |
-| Frontend loads successfully | ✅ PASS | Application renders correctly |
+| React + Vite detected | ✅ PASS | Auto-detected by Slate |
+| Frontend deployment | ✅ PASS | Successfully deployed |
+| HTTPS page loads | ✅ PASS | Live application accessible |
 | Static assets load | ✅ PASS | Verified |
-| Routing works | ✅ PASS | Root route loads correctly |
-| Frontend can call backend | ✅ PASS | Backend status displayed as `ok` |
-| Error handling tested | ✅ PASS | Initial CORS issue reproduced and resolved |
+| Routing works | ✅ PASS | Root page rendered |
+| Frontend communicates with backend | ✅ PASS | Backend status displayed as `ok` |
+| Error handling | ✅ PASS | CORS issue identified and resolved |
 
 ---
 
@@ -134,12 +152,12 @@ Response
 
 | Check | Result | Evidence |
 |---|---|---|
-| Browser API call succeeds | ✅ PASS | `/health` returned expected JSON |
+| Browser API call succeeds | ✅ PASS | `/health` successfully fetched |
+| HTTPS → HTTPS communication | ✅ PASS | Verified |
+| JSON parsed correctly | ✅ PASS | React displayed backend status |
 | CORS configured correctly | ✅ PASS | Express `cors` middleware enabled |
-| HTTPS to HTTPS communication | ✅ PASS | Successfully verified |
-| JSON response parsed | ✅ PASS | React displayed backend status |
-| Backend errors observable | ✅ PASS | Initial CORS failure documented |
-| Latency acceptable | ⏳ Pending | Not measured |
+| Backend reachable from deployed frontend | ✅ PASS | Backend status displayed successfully |
+| Latency measured | ⏳ Pending | Not measured |
 
 ---
 
@@ -147,12 +165,13 @@ Response
 
 ## Deployment
 
-- Catalyst CLI deployment completed successfully.
-- Managed Runtime (Node.js 22) works without additional configuration.
-- Startup command `node index.js` worked correctly.
-- Public HTTPS endpoint was generated automatically.
-- Backend routing functioned as expected.
-- Application successfully bound to the Catalyst-provided listening port using:
+Backend deployment using Catalyst AppSail completed successfully.
+
+Frontend deployment using Catalyst Slate automatically detected the existing React + Vite project and built it successfully.
+
+Catalyst deployment required no modifications to the React or Express application structure.
+
+The backend successfully listened on the Catalyst-provided port using:
 
 ```javascript
 process.env.X_ZOHO_CATALYST_LISTEN_PORT
@@ -162,18 +181,14 @@ process.env.X_ZOHO_CATALYST_LISTEN_PORT
 
 ## CORS
 
-During frontend integration testing, browser requests initially failed.
+During frontend integration, browser requests initially failed because the backend did not expose CORS headers.
 
 Firefox reported:
 
 ```text
 Cross-Origin Request Blocked:
-The Same Origin Policy disallows reading the remote resource.
-Reason:
 Access-Control-Allow-Origin missing.
 ```
-
-The backend itself remained healthy and returned HTTP 200 responses.
 
 Resolution:
 
@@ -183,17 +198,17 @@ const cors = require("cors");
 app.use(cors());
 ```
 
-After redeploying the backend, frontend-to-backend communication succeeded.
+After redeploying the backend, communication succeeded.
 
-This was an application configuration issue rather than an AppSail platform limitation.
+This was an application configuration issue rather than a Catalyst limitation.
 
 ---
 
 ## Frontend Integration
 
-The frontend successfully retrieved backend data using HTTPS.
+The deployed React application successfully communicated with the deployed AppSail backend.
 
-Displayed result:
+Observed output:
 
 ```text
 CaseClock Catalyst AppSail Spike
@@ -203,24 +218,27 @@ Backend Status
 ok
 ```
 
-This validates:
+Validated:
 
-- React frontend deployment
-- Browser networking
-- HTTPS communication
-- JSON parsing
+- React + Vite hosting
+- Catalyst Slate deployment
+- HTTPS networking
 - Backend accessibility
+- JSON parsing
+- Cross-origin communication
 
 ---
 
 # Known Limitations
 
-Remaining optional observations:
+Not evaluated during this spike:
 
-- Cold start behaviour after idle timeout
-- API latency measurements
+- Cold start behaviour
+- API latency
+- Load testing
+- Concurrent request performance
 
-No Catalyst-specific deployment blockers were identified during this spike.
+No Catalyst-specific deployment blockers were encountered.
 
 ---
 
@@ -228,36 +246,39 @@ No Catalyst-specific deployment blockers were identified during this spike.
 
 ## Result
 
-✅ AppSail is suitable for hosting the CaseClock application.
+✅ Catalyst deployment architecture is suitable for CaseClock.
 
 Validated capabilities:
 
-- Backend deployment
-- Frontend deployment
-- HTTPS hosting
-- Routing
+- Catalyst AppSail backend hosting
+- Catalyst Slate frontend hosting
+- HTTPS communication
 - Environment variables
+- Routing
 - Browser ↔ Backend communication
-- JSON request handling
 - Express applications
-- React frontend hosting
+- React + Vite applications
 
-No changes to:
+No modifications were required to:
 
 - Graph schema
 - DTOs
-- Folder structure
 - API contracts
+- Folder structure
 - Overall architecture
-
-were required.
 
 ---
 
 # Recommendation
 
-Proceed with AppSail as the deployment platform for both frontend and backend services.
+Recommended deployment architecture:
+
+- **Backend:** Catalyst AppSail
+- **Frontend:** Catalyst Slate
+- **PDF Export:** SmartBrowz
+
+Catalyst successfully supports the proposed architecture for CaseClock.
 
 The only issue encountered during validation was missing CORS headers in the Express backend. This was resolved by enabling Express CORS middleware and does not represent a Catalyst platform limitation.
 
-No architectural changes are required based on the results of this spike.
+No architectural changes are required based on this spike.

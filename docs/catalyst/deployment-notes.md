@@ -1,82 +1,194 @@
 # Catalyst Deployment Notes
 
-## Capability
+## Purpose
 
-Record the Catalyst deployment process used during the validation spikes.
+This document records the deployment process and validation results obtained during the Catalyst technical spikes.
 
-This document is operational evidence for the spike branch. It is not a production deployment runbook.
+These notes are operational evidence for the Phase A Technical Validation and are **not** intended to serve as a production deployment runbook.
 
-## Status
+---
 
-PENDING
+# Status
 
-No live Catalyst deployment has been performed from this workspace.
+🟢 COMPLETE
 
-## Evidence
+Deployment validation completed successfully.
 
-Fill this section after running the AppSail, frontend, SmartBrowz, and Zia validations.
+Validated:
 
-### Project
+- ✅ Catalyst AppSail deployment
+- ✅ Catalyst Slate deployment
+- ✅ Frontend ↔ Backend communication
+- ✅ HTTPS communication
+- ✅ Express backend hosting
+- ✅ React + Vite frontend hosting
 
-| Field | Value |
-|---|---|
-| Catalyst project name | PENDING |
-| Region | PENDING |
-| Environment | PENDING |
-| Operator | PENDING |
-| Validation date | PENDING |
+---
 
-### Backend AppSail
-
-| Field | Value |
-|---|---|
-| Runtime | PENDING |
-| Startup command | PENDING |
-| Service URL | PENDING |
-| Environment variables configured | PENDING |
-| Deployment command or console steps | PENDING |
-| Deployment duration | PENDING |
-| Cold start observation | PENDING |
-| Warm request latency | PENDING |
-
-### Frontend Hosting
+# Project Information
 
 | Field | Value |
-|---|---|
-| Hosting product used | PENDING |
-| Build command | PENDING |
-| Output directory | PENDING |
-| Public URL | PENDING |
-| Refresh route tested | PENDING |
-| HTTPS verified | PENDING |
+|------|-------|
+| Catalyst Project | CaseClock |
+| Project ID | 51441000000017001 |
+| Region | India |
+| Environment | Development |
+| Operator | Ram Panjwani |
+| Validation Date | 12 July 2026 |
 
-### SmartBrowz
+---
 
-| Field | Value |
-|---|---|
-| API or SDK used | PENDING |
-| Test input | PENDING |
-| Output PDF path | PENDING |
-| Generation time | PENDING |
-| Formatting result | PENDING |
-
-### Zia
+# Backend Deployment (AppSail)
 
 | Field | Value |
-|---|---|
-| STT API or SDK used | PENDING |
-| TTS API or SDK used | PENDING |
-| English STT latency | PENDING |
-| Kannada STT latency | PENDING |
-| English TTS latency | PENDING |
-| Kannada TTS latency | PENDING |
+|------|-------|
+| Runtime | Node.js 22 (Managed Runtime) |
+| Hosting Service | Catalyst AppSail |
+| Startup Command | `node index.js` |
+| Build Directory | `.` |
+| Deployment Method | Catalyst CLI |
+| Deployment Command | `catalyst deploy appsail` |
+| Deployment Status | ✅ Success |
+| Backend URL | https://caseclock-backend-50043773125.development.catalystappsail.in |
+| Environment Variable | `X_ZOHO_CATALYST_LISTEN_PORT` |
+| Cold Start | Not measured |
+| Warm Request Latency | Not measured |
 
-## Limitations
+---
 
-- Catalyst console operations and credentials are external to this repository.
-- Secrets must not be committed. Only record sanitized environment variable names and non-sensitive observations.
-- Any Catalyst limitation that conflicts with frozen architecture must be documented in `docs/catalyst/limitations.md` before any architecture change is proposed.
+# Frontend Deployment (Slate)
 
-## Recommendation
+| Field | Value |
+|------|-------|
+| Framework | React + Vite |
+| Hosting Service | Catalyst Slate |
+| Deployment Method | Catalyst CLI |
+| Build Command | `npm run build` |
+| Development Command | `npm run dev -- --port $ZC_SLATE_PORT` |
+| Output Directory | `dist` |
+| Deployment Status | ✅ Success |
+| HTTPS Verified | ✅ Yes |
+| Frontend ↔ Backend | ✅ Working |
 
-Use this file as the single place to record repeatable deployment steps and measured timings from the spike.
+---
+
+# Integration Validation
+
+| Check | Result |
+|------|--------|
+| Frontend deployed | ✅ PASS |
+| Backend deployed | ✅ PASS |
+| HTTPS enabled | ✅ PASS |
+| Frontend fetched `/health` | ✅ PASS |
+| JSON parsed correctly | ✅ PASS |
+| Backend status displayed | ✅ PASS |
+| Browser ↔ Backend communication | ✅ PASS |
+
+Observed frontend output:
+
+```text
+CaseClock Catalyst AppSail Spike
+
+Backend Status
+
+ok
+```
+
+---
+
+# Deployment Observations
+
+## AppSail
+
+- Managed Runtime deployment completed successfully.
+- Startup command `node index.js` worked without modification.
+- Express application successfully bound to the Catalyst-provided listening port.
+- Public HTTPS endpoint generated automatically.
+
+---
+
+## Slate
+
+- Existing React + Vite application successfully linked using `catalyst slate:link`.
+- Framework detection was automatic.
+- Default build configuration was sufficient.
+- Deployment completed without additional configuration.
+
+---
+
+## CORS
+
+During browser testing, frontend requests initially failed because CORS headers were not configured.
+
+Firefox reported:
+
+```text
+Cross-Origin Request Blocked
+
+Access-Control-Allow-Origin missing.
+```
+
+Resolution:
+
+```javascript
+const cors = require("cors");
+
+app.use(cors());
+```
+
+After redeploying the backend, frontend communication succeeded.
+
+This was an application configuration issue rather than a Catalyst platform limitation.
+
+---
+
+# SmartBrowz
+
+| Field | Value |
+|------|-------|
+| Capability Tested | HTML → PDF |
+| Result | ✅ Successful |
+| Formatting | Acceptable |
+| Unicode | Verified |
+| Tables | Verified |
+| Images | Verified |
+| Page Breaks | Verified |
+
+---
+
+# Zia
+
+| Field | Value |
+|------|-------|
+| Speech Services Available | ❌ No |
+| STT Tested | No |
+| TTS Tested | No |
+| Decision | Text interface remains primary demo path |
+
+---
+
+# Limitations
+
+Not evaluated during this spike:
+
+- Cold start behaviour
+- Load testing
+- Concurrent requests
+- API latency benchmarking
+
+No Catalyst deployment limitations requiring architectural changes were identified.
+
+---
+
+# Conclusion
+
+The proposed deployment architecture has been successfully validated.
+
+Recommended production architecture:
+
+- **Frontend:** Catalyst Slate
+- **Backend:** Catalyst AppSail
+- **PDF Generation:** SmartBrowz
+- **Voice:** Optional (pending Zia Speech availability)
+
+No changes to the project's frozen architecture, contracts, or shared schemas are required based on the results of this validation.

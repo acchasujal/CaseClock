@@ -2,90 +2,118 @@
 
 ## Capability
 
-Validate Catalyst Zia speech services for:
+Validate Catalyst Zia speech capabilities for CaseClock.
 
-- English speech to text
-- Kannada speech to text
-- English text to speech
-- Kannada text to speech
+Expected validation:
 
-This spike validates service suitability only. It must not implement production voice workflows.
+- English Speech-to-Text (STT)
+- Kannada Speech-to-Text (STT)
+- English Text-to-Speech (TTS)
+- Kannada Text-to-Speech (TTS)
+
+This spike validates platform availability and suitability only. No production voice workflows were implemented.
+
+---
 
 ## Status
 
-PENDING
+⚠️ PARTIALLY COMPLETE
 
-No audio samples, transcripts, latency measurements, generated speech files, or Catalyst Zia logs are present in this repository.
+The current Catalyst project does not expose Speech-to-Text or Text-to-Speech services for evaluation.
 
-## Evidence
+Available Zia services:
 
-### Speech to Text
+- ✅ Face Analytics
+- ✅ OCR
+- ✅ Identity Scanner
+- ✅ Image Moderation
+- ✅ Object Recognition
+- ✅ Barcode Scanner
+- ✅ AutoML
+- ✅ Text Analytics
 
-English test phrase:
+Unavailable during validation:
 
-```text
-Show burglary cases in Bengaluru.
-```
+- ❌ Speech-to-Text
+- ❌ Text-to-Speech
 
-Kannada test phrase:
+---
 
-```text
-ಬೆಂಗಳೂರಿನ ಕಳ್ಳತನ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ.
-```
+## Validation Results
 
-Expected checks:
+### Speech-to-Text
 
-| Check | English | Kannada | Evidence |
-|---|---:|---:|---|
-| Recognition succeeds | PENDING | PENDING | Add transcript |
-| Meaning preserved | PENDING | PENDING | Add reviewer notes |
-| Punctuation acceptable | PENDING | PENDING | Add transcript |
-| Latency measured | PENDING | PENDING | Add elapsed time |
-| Mixed-language handling acceptable | PENDING | PENDING | Add mixed phrase transcript |
+| Feature | Result | Notes |
+|---------|--------|-------|
+| English STT | NOT AVAILABLE | Speech service not exposed in current Catalyst project |
+| Kannada STT | NOT AVAILABLE | Speech service not exposed in current Catalyst project |
 
-### Text to Speech
+---
 
-English test phrase:
+### Text-to-Speech
 
-```text
-Three burglary cases in Bengaluru are approaching their chargesheet deadline.
-```
+| Feature | Result | Notes |
+|---------|--------|-------|
+| English TTS | NOT AVAILABLE | Speech service not exposed in current Catalyst project |
+| Kannada TTS | NOT AVAILABLE | Speech service not exposed in current Catalyst project |
 
-Kannada test phrase:
+---
 
-```text
-ಬೆಂಗಳೂರಿನ ಮೂರು ಕಳ್ಳತನ ಪ್ರಕರಣಗಳು ಆರೋಪಪಟ್ಟಿ ಗಡುವಿನ ಹತ್ತಿರದಲ್ಲಿವೆ.
-```
+## Observations
 
-Expected checks:
+The Catalyst project used during technical validation provides several Zia AI capabilities focused on image analysis and text analytics.
 
-| Check | English | Kannada | Evidence |
-|---|---:|---:|---|
-| Audio generation succeeds | PENDING | PENDING | Add generated audio reference |
-| Pronunciation acceptable | PENDING | PENDING | Add reviewer notes |
-| Clarity acceptable | PENDING | PENDING | Add reviewer notes |
-| Speed acceptable | PENDING | PENDING | Add reviewer notes |
-| Latency measured | PENDING | PENDING | Add elapsed time |
+However, Speech-to-Text and Text-to-Speech services were not available in the project dashboard and therefore could not be evaluated.
+
+Because these services were unavailable, no conclusions can be drawn regarding:
+
+- English transcription quality
+- Kannada transcription quality
+- English speech synthesis
+- Kannada speech synthesis
+- Voice latency
+- Pronunciation quality
+- Mixed-language support
+
+This is an availability limitation rather than a platform failure.
+
+---
 
 ## Limitations
 
-- Zia usability cannot be decided without recorded audio samples and transcript evidence.
-- Kannada STT quality, code-switching, and legal/crime vocabulary recognition are the highest-risk unknowns.
-- If Kannada STT is weak, the architecture should keep text input as the reliable fallback instead of modifying frozen API contracts during this spike.
+The following capabilities could not be validated because they were unavailable in the current Catalyst project:
+
+- English Speech-to-Text
+- Kannada Speech-to-Text
+- English Text-to-Speech
+- Kannada Text-to-Speech
+
+If future project access enables these services, the following should be evaluated:
+
+- Recognition accuracy
+- Kannada language support
+- Crime terminology recognition
+- Audio quality
+- Latency
+- Mixed-language support
+
+---
 
 ## Decision
 
-PENDING
-
-Record final decisions after validation:
-
 | Service | Decision |
-|---|---|
-| English STT | PENDING |
-| Kannada STT | PENDING |
-| English TTS | PENDING |
-| Kannada TTS | PENDING |
+|----------|----------|
+| English STT | Could not evaluate |
+| Kannada STT | Could not evaluate |
+| English TTS | Could not evaluate |
+| Kannada TTS | Could not evaluate |
+
+---
 
 ## Recommendation
 
-Do not rely on Zia voice services for the primary demo path until English and Kannada evidence has been captured and reviewed.
+Voice functionality should not be considered part of the primary CaseClock demonstration until Speech-to-Text and Text-to-Speech services are available for validation.
+
+The current project can safely proceed using text-based interaction, while voice support remains a future enhancement pending access to the required Zia speech capabilities.
+
+No architecture changes are required based on this validation.

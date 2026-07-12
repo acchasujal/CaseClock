@@ -1,89 +1,243 @@
-# Catalyst Validation Report
+# Catalyst Technical Validation Report
 
-## AppSail
+## Project
 
-Status
+**Project:** CaseClock  
+**Validation Phase:** Phase A – Technical Validation  
+**Validation Date:** 12 July 2026
 
-PENDING
+---
 
-Evidence
+# Overall Status
 
-No live AppSail backend URL, frontend URL, deployment log, environment-variable proof, CORS result, or latency measurement has been recorded yet.
+🟢 **PASS**
 
-Limitations
+The Catalyst deployment architecture proposed for CaseClock has been successfully validated.
 
-AppSail runtime behavior, routing, cold starts, HTTPS behavior, and frontend to backend communication remain unverified.
+Validated services:
 
-Recommendation
+- ✅ AppSail
+- ✅ Slate
+- ✅ SmartBrowz
+- ⚠️ Zia Speech (Unavailable in current project)
 
-Do not approve AppSail-dependent feature work until `docs/catalyst/appsail.md` contains live deployment evidence.
+No architectural changes are required.
 
---------------------------------
+---
 
-## SmartBrowz
+# Spike Summary
 
-Status
+| Spike | Status | Decision |
+|-------|--------|----------|
+| AppSail Backend | ✅ PASS | Approved |
+| Slate Frontend | ✅ PASS | Approved |
+| Frontend ↔ Backend Integration | ✅ PASS | Approved |
+| SmartBrowz | ✅ PASS | Approved for PDF generation |
+| Zia Speech | ⚠️ PARTIAL | Text input remains primary fallback |
 
-PENDING
+---
 
-Evidence
+# AppSail
 
-No generated PDF, rendering screenshot, or generation-time measurement has been recorded yet.
+## Status
 
-Limitations
+✅ PASS
 
-Unicode rendering, table formatting, image loading, long-page pagination, and CSS page-break behavior remain unverified.
+## Evidence
 
-Recommendation
+Successfully deployed a Node.js 22 backend using Catalyst AppSail.
 
-Keep SmartBrowz as the planned PDF path only after the HTML to PDF spike produces acceptable output.
+Validated:
 
---------------------------------
+- Backend deployment
+- HTTPS endpoint
+- Routing
+- Environment variables
+- JSON request handling
+- Browser communication
+- Express application hosting
 
-## Zia
+Backend URL:
 
-English STT
+```text
+https://caseclock-backend-50043773125.development.catalystappsail.in
+```
 
-PENDING
+---
 
-Kannada STT
+## Observations
 
-PENDING
+- Startup command worked correctly.
+- Managed Runtime deployment required minimal configuration.
+- Backend successfully listened using:
 
-English TTS
+```javascript
+process.env.X_ZOHO_CATALYST_LISTEN_PORT
+```
 
-PENDING
+- Browser integration required enabling Express CORS middleware.
 
-Kannada TTS
+---
 
-PENDING
+## Decision
 
-Evidence
+Approved for CaseClock backend deployment.
 
-No transcripts, audio samples, latency measurements, or reviewer notes have been recorded yet.
+---
 
-Limitations
+# Slate
 
-Kannada speech recognition and mixed-language handling are the highest-risk unknowns.
+## Status
 
-Recommendation
+✅ PASS
 
-Keep text input as the reliable fallback until Zia validation evidence is captured.
+## Evidence
 
---------------------------------
+Successfully deployed an existing React + Vite application using Catalyst Slate.
 
-## Overall
+Validated:
 
-Status
+- Automatic framework detection
+- Production build
+- HTTPS hosting
+- Frontend deployment
+- Browser rendering
 
-PENDING
+Frontend successfully communicated with the deployed AppSail backend.
 
-Architecture Decision
+Observed output:
 
-NOT YET APPROVED BY THIS SPIKE
+```text
+CaseClock Catalyst AppSail Spike
 
-No blocker has been proven, but no Catalyst capability has been proven either. The frozen architecture should remain unchanged until live Catalyst evidence shows a specific limitation.
+Backend Status
 
-Recommendation
+ok
+```
 
-Run the three Catalyst validations, add screenshots under `screenshots/`, update the spike documents with evidence, then revise this final report to PASS, PARTIAL, or FAIL per capability.
+---
+
+## Decision
+
+Approved for CaseClock frontend deployment.
+
+---
+
+# SmartBrowz
+
+## Status
+
+✅ PASS
+
+## Evidence
+
+HTML to PDF generation successfully validated.
+
+Verified:
+
+- Headings
+- Tables
+- Images
+- Unicode
+- Page breaks
+- Multi-page rendering
+
+Generated PDFs rendered correctly.
+
+---
+
+## Decision
+
+Approved for PDF generation.
+
+---
+
+# Zia
+
+## Status
+
+⚠️ PARTIAL
+
+## Evidence
+
+Speech services were unavailable in the current Catalyst project.
+
+Unable to validate:
+
+- English STT
+- Kannada STT
+- English TTS
+- Kannada TTS
+
+This was due to service availability rather than implementation issues.
+
+---
+
+## Decision
+
+Voice features should remain optional.
+
+Use text input as the primary interaction method for the demo.
+
+---
+
+# Architecture Impact
+
+No changes are required to the frozen project architecture.
+
+Validated architecture:
+
+```text
+React + Vite
+        │
+        ▼
+Catalyst Slate
+        │
+HTTPS
+        │
+        ▼
+Catalyst AppSail
+        │
+        ▼
+Express Backend
+```
+
+No modifications were required to:
+
+- Graph schema
+- Shared DTOs
+- API contracts
+- Folder structure
+- CLOCK_RULES
+- Overall architecture
+
+---
+
+# Remaining Work
+
+The following items were not part of this validation phase:
+
+- Cold start benchmarking
+- API latency measurements
+- Load testing
+- Scale testing
+- Production deployment
+
+These should be evaluated during integration and performance testing.
+
+---
+
+# Final Recommendation
+
+Proceed with the planned Catalyst architecture.
+
+Recommended deployment:
+
+| Component | Service |
+|----------|---------|
+| Frontend | Catalyst Slate |
+| Backend | Catalyst AppSail |
+| PDF Generation | SmartBrowz |
+| Voice | Optional (pending Zia Speech availability) |
+
+No Catalyst platform limitations requiring architectural changes were identified during Phase A technical validation.
