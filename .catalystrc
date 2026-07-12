@@ -1,0 +1,30 @@
+{
+  "defaults": {
+    "project": 1,
+    "env": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "51441000000017001",
+      "name": "CaseClock",
+      "domain": {
+        "id": "50043773125",
+        "name": "caseclock-60077090566.development"
+      },
+      "timezone": "Asia/Kolkata",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60077090566",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}
