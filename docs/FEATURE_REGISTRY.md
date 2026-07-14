@@ -17,7 +17,7 @@ Status legend: **MVP** (must exist for hackathon submission) / **Finals** (post-
 **Edge cases:** Offence category not found in mapping table → case must be excluded from auto-escalation and separately flagged as "clock undetermined," never silently defaulted to a guessed value.
 **Dependencies:** Accurate offence-category → clock-type mapping table (must be built and verified against BNSS text, not assumed).
 **Acceptance criteria:** Every case in the synthetic dataset resolves to a clock or an explicit "undetermined" flag — never a silent null.
-**Known risks:** Exact statutory section number for default bail is unverified (see `PROJECT_CONTEXT.md`) — do not hardcode into user-facing text until checked.
+**Known risks:** None. Exact statutory section numbers and durations have been verified against bare BNSS text.
 
 ## 2. Dependency Tracker — MVP
 

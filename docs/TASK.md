@@ -37,11 +37,11 @@ See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at th
 | Item                                | Status                                                              |
 | ----------------------------------- | ------------------------------------------------------------------- |
 | Repository scaffold                 | DONE (Bootstrap complete, files structured)                         |
-| Catalyst capability verification    | IN PROGRESS (QuickML DONE — see `docs/spikes/quickml.md` and DECISION_LOG D14; AppSail/Data Store/SmartBrowz NOT STARTED) |
-| Graph schema implementation         | DONE (graph foundation models, enums, edges, and schema normalized; Evidence node added in v1.1 — see DECISION_LOG D15) |
-| Legal Clock Engine                  | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked) |
-| Dependency Tracker                  | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked) |
-| Escalation Rule Engine              | NOT STARTED (Storage logic blocked by Catalyst, core engine unblocked) |
+| Catalyst capability verification    | DONE (QuickML, AppSail, Slate, SmartBrowz verified; Zia Speech unavailable — see spikes and D14) |
+| Graph schema & algorithms           | DONE (Foundation models and 134 analytical/traversal tests integrated and verified) |
+| Legal Clock Engine                  | NOT STARTED (Core engine ready for integration, blocked by storage integration) |
+| Dependency Tracker                  | NOT STARTED (Core tracker ready for integration, blocked by storage integration) |
+| Escalation Rule Engine              | NOT STARTED (Core engine ready for integration, blocked by storage integration) |
 | Synthetic data generator            | DONE (synthetic_data module generates and exports JSON/CSV)         |
 | Conversational layer + refusal gate | NOT STARTED (Integration blocked by Catalyst, core logic unblocked) |
 | Refusal-gate test set execution     | NOT STARTED                                                         |

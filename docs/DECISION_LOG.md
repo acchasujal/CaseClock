@@ -161,3 +161,18 @@ Every major decision made in developing this product, so future work (human or A
 
 **Contract impact:** No change to `shared/contracts/api.py` — `CaseSummaryResponse.clock` remains a single `ClockInstanceResponse`. This decision documents the selection rule, not a contract change.
 
+---
+
+### D17 — Verified Legal Sections and Duration for Clocks
+
+**Problem:** Clock references and durations for the statutory clocks in `shared/constants/clock_types.py` were previously unverified and contained stub values (e.g. 30 days for document supply). Legal inaccuracies could compromise the validity of the Case Clock calculations and system integrity.
+
+**Decision:** Researched and verified the bare act text of the Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023. We updated the clock rules and marked them `[VERIFIED]`:
+- **Default Bail**: Section 187(3) BNSS, which mandates 90 days for serious offences (death, life, or >=10 years imprisonment) and 60 days for other offences.
+- **Document Supply**: Section 230 BNSS, which mandates a strict limit of 14 days from date the accused is produced or appears in court (previously mapped as 30 days).
+- **Further Investigation**: Section 193(9) BNSS, which mandates a 90-day completion limit for further investigation (previously mapped as 30 days).
+
+**Reason:** True compliance with BNSS requires using exact statutory durations and legal citations. Assuring this correctness protects the credibility of the platform with the judging panel and future government purchasers.
+
+**Contract impact:** Updated the durations and reference strings inside `shared/constants/clock_types.py`. Updated existing test assertions to match.
+
