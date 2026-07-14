@@ -29,6 +29,7 @@ from backend.app.core.graph.algorithms.utils import (
     prop_str,
     safe_str,
 )
+from backend.app.core.graph.algorithms.entity_resolution import resolve_person
 
 # ── Entity / edge type literals ───────────────────────────────────────────────
 
@@ -489,4 +490,138 @@ def detect_district_hotspots(
             )
 
     results.sort(key=lambda r: r.case_count, reverse=True)
+    return results
+
+
+# ── Pattern: resolved repeat accused ──────────────────────────────────────────
+
+
+@dataclass
+class ResolvedRepeatAccusedResult:
+    """
+    A resolved person accused in multiple cases across duplicate nodes.
+
+    Attributes
+    ----------
+    canonical_person_name : str — canonical (longest) name found for the person
+    person_ids            : list of physical Person node IDs grouped under this entity
+    case_ids              : union of case node IDs the person is accused in
+    case_count            : number of unique cases (len(case_ids))
+    reason                : human-readable explanation
+    """
+
+    canonical_person_name: str
+    person_ids: list[str]
+    case_ids: list[str]
+    case_count: int
+    reason: str
+
+
+def detect_repeat_accused_resolved(
+    store: GraphStore,
+    min_cases: int = 2,
+    confidence_threshold: float = 0.70,
+) -> list[ResolvedRepeatAccusedResult]:
+    """
+    Detect repeat accused persons by clustering Person nodes using Entity Resolution.
+    
+    This clusters individuals who have multiple Person nodes in the graph due to
+    spelling variations, alias usage, or other data entry differences.
+
+    Parameters
+    ----------
+    store                : GraphStore
+    min_cases            : minimum number of unique cases to flag (default 2)
+    confidence_threshold : threshold above which entities are grouped together
+
+    Returns
+    -------
+    list[ResolvedRepeatAccusedResult]
+        Sorted by case_count descending.
+    """
+    # 1. Collect all Person nodes that have ACCUSED_IN edges
+    accused_persons: set[str] = set()
+    person_cases: dict[str, set[str]] = {}
+    for edge in get_edges_of_type(store, _ACCUSED_IN):
+        pid = edge.source_id
+        cid = edge.target_id
+        accused_persons.add(pid)
+        person_cases.setdefault(pid, set()).add(cid)
+
+    # 2. Cluster Person nodes
+    visited: set[str] = set()
+    clusters: list[list[str]] = []
+
+    for pid in sorted(accused_persons):
+        if pid in visited:
+            continue
+
+        node = store.nodes.get(pid)
+        if not node:
+            continue
+
+        # Initialize cluster with current person
+        cluster = [pid]
+        visited.add(pid)
+
+        # Build query for entity resolution
+        query = {
+            "full_name": node.properties.get("full_name", ""),
+            "phone_number": node.properties.get("phone_number", ""),
+            "address_text": node.properties.get("address_text", ""),
+            "aliases": node.properties.get("aliases", []),
+        }
+
+        # Find other candidate matches in the store
+        matches = resolve_person(
+            store,
+            query,
+            confidence_threshold=confidence_threshold,
+            candidate_limit=50,
+        )
+        for match in matches:
+            mid = match.matched_node_id
+            if (
+                mid in accused_persons
+                and mid not in visited
+                and match.confidence >= confidence_threshold
+            ):
+                cluster.append(mid)
+                visited.add(mid)
+
+        clusters.append(cluster)
+
+    # 3. For each cluster, calculate the union of case_ids and build results
+    results: list[ResolvedRepeatAccusedResult] = []
+    for cluster in clusters:
+        union_case_ids: set[str] = set()
+        for pid in cluster:
+            union_case_ids.update(person_cases.get(pid, set()))
+
+        if len(union_case_ids) >= min_cases:
+            # Pick canonical name
+            canonical_name = ""
+            for pid in cluster:
+                p_node = store.nodes.get(pid)
+                if p_node:
+                    p_name = p_node.properties.get("full_name", "")
+                    if len(p_name) > len(canonical_name):
+                        canonical_name = p_name
+            if not canonical_name:
+                canonical_name = "Unknown Accused"
+
+            results.append(
+                ResolvedRepeatAccusedResult(
+                    canonical_person_name=canonical_name,
+                    person_ids=sorted(cluster),
+                    case_ids=sorted(union_case_ids),
+                    case_count=len(union_case_ids),
+                    reason=(
+                        f"Resolved accused '{canonical_name}' (via {len(cluster)} entity nodes) "
+                        f"is accused in {len(union_case_ids)} case(s)"
+                    ),
+                )
+            )
+
+    results.sort(key=lambda r: (-r.case_count, r.canonical_person_name))
     return results

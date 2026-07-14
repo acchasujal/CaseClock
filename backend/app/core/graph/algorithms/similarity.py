@@ -20,6 +20,7 @@ No database calls.  No ML.  No embeddings.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Sequence
@@ -36,6 +37,7 @@ from backend.app.core.graph.algorithms.utils import (
     prop_str,
     safe_str,
 )
+from backend.app.core.graph.algorithms.entity_resolution import phonetic_normalize
 
 # ── Edge / entity type string literals ───────────────────────────────────────
 
@@ -106,6 +108,8 @@ class _CaseFeatures:
     crime_sub_head_ids: frozenset[str]
     section_ids: frozenset[str]
     accused_ids: frozenset[str]
+    accused_names: frozenset[str]
+    accused_phones: frozenset[str]
     police_station: str
     district: str
     phone_cluster_ids: frozenset[str]
@@ -149,6 +153,8 @@ def _extract_case_features(store: GraphStore, case_id: str) -> _CaseFeatures | N
     phone_clusters: set[str] = set()
     vehicle_clusters: set[str] = set()
     address_clusters: set[str] = set()
+    accused_names: set[str] = set()
+    accused_phones: set[str] = set()
     for pid in accused_ids:
         pnode = get_node(store, pid)
         if pnode is None:
@@ -162,6 +168,13 @@ def _extract_case_features(store: GraphStore, case_id: str) -> _CaseFeatures | N
             vehicle_clusters.add(vc)
         if ac:
             address_clusters.add(ac)
+            
+        full_name = prop_str(pnode, "full_name")
+        if full_name:
+            accused_names.add(phonetic_normalize(full_name))
+        phone = prop_str(pnode, "phone_number")
+        if phone:
+            accused_phones.add(re.sub(r'\D', '', phone))
 
     # Timestamp
     reported_at_raw = prop(case_node, "reported_at")
@@ -180,6 +193,8 @@ def _extract_case_features(store: GraphStore, case_id: str) -> _CaseFeatures | N
         crime_sub_head_ids=crime_sub_head_ids,
         section_ids=section_ids,
         accused_ids=accused_ids,
+        accused_names=frozenset(accused_names),
+        accused_phones=frozenset(accused_phones),
         police_station=police_station,
         district=district,
         phone_cluster_ids=frozenset(phone_clusters),
@@ -239,8 +254,13 @@ def _score_pair(
     # Section: at least one shared
     _add("shared_section", bool(a.section_ids & b.section_ids))
 
-    # Accused: at least one person in common
-    _add("shared_accused", bool(a.accused_ids & b.accused_ids))
+    # Accused: at least one person in common (by node_id, phonetic name, or digits-only phone)
+    shared_acc_flag = (
+        bool(a.accused_ids & b.accused_ids)
+        or bool(a.accused_names & b.accused_names)
+        or bool(a.accused_phones & b.accused_phones)
+    )
+    _add("shared_accused", shared_acc_flag)
 
     # Police station: exact match (both non-empty)
     _add(
