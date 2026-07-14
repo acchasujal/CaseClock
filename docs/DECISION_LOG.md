@@ -176,3 +176,24 @@ Every major decision made in developing this product, so future work (human or A
 
 **Contract impact:** Updated the durations and reference strings inside `shared/constants/clock_types.py`. Updated existing test assertions to match.
 
+---
+
+### D18 — Long-Term Hackathon Branch Strategy Migration
+
+**Problem:** Inconsistent and redundant branches (like empty duplicates and old lane branches) created coordination overhead and threatened git history hygiene.
+
+**Decision:** Formally migrated the repository branch strategy to a structured Git Flow:
+- **`main`**: Permanent branch representing production-ready, stable code.
+- **`develop`**: Permanent branch representing continuous integration.
+- **Feature Branches**: Domain-scoped, short-lived branches created from `develop` and merged back to `develop` via PRs:
+  - `feature/backend-*`
+  - `feature/frontend-*`
+  - `feature/graph-*`
+  - `feature/ai-*`
+
+All obsolete branches (`feature/backend-clock-engine`, `feature/catalyst-spikes`, `feature/copilot-parser`, `feature/frontend-shell`, `feature/graph-algorithms`, `lane3-graph-foundation`) were verified as fully merged, cleaned of junk/committed dependencies (like `node_modules`), and deleted locally and remotely.
+
+**Reason:** Keeps history clean and provides isolated environments for the 4 developer lanes without "big bang" merge conflicts.
+
+**Contract impact:** None. Git metadata update only.
+
