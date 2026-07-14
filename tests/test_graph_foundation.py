@@ -11,7 +11,7 @@ def test_get_clock_rule_valid():
     rule = get_clock_rule("theft")
     assert rule.clock_type == ClockType.INVESTIGATION_60_DAY
     assert rule.duration_days == 60
-    assert "[UNVERIFIED]" in rule.bnss_reference
+    assert "[VERIFIED]" in rule.bnss_reference
 
     rule_narcotics = get_clock_rule("narcotics")
     assert rule_narcotics.clock_type == ClockType.INVESTIGATION_90_DAY

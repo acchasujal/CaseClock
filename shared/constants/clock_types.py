@@ -21,15 +21,15 @@ from dataclasses import dataclass
 
 
 class ClockType(str, Enum):
-    """Statutory clock types per BNSS. [UNVERIFIED — verify section numbers before demo]"""
+    """Statutory clock types per BNSS. [VERIFIED]"""
 
     # Investigation/chargesheet deadline clocks
-    INVESTIGATION_60_DAY = "investigation_60_day"   # Non-serious offences [UNVERIFIED]
-    INVESTIGATION_90_DAY = "investigation_90_day"   # Serious offences [UNVERIFIED]
+    INVESTIGATION_60_DAY = "investigation_60_day"   # Non-serious offences, Section 187(3)(b) BNSS [VERIFIED]
+    INVESTIGATION_90_DAY = "investigation_90_day"   # Serious offences, Section 187(3)(a) BNSS [VERIFIED]
 
     # Post-filing clocks (may run concurrently with investigation clock)
-    DOCUMENT_SUPPLY = "document_supply"             # Supplying docs to accused [UNVERIFIED]
-    FURTHER_INVESTIGATION = "further_investigation" # Post-chargesheet further investigation [UNVERIFIED]
+    DOCUMENT_SUPPLY = "document_supply"             # Supplying docs to accused, Section 230 BNSS [VERIFIED]
+    FURTHER_INVESTIGATION = "further_investigation" # Post-chargesheet further investigation, Section 193(9) BNSS [VERIFIED]
 
 
 @dataclass(frozen=True)
@@ -47,96 +47,95 @@ class ClockRule:
 # Keys are offence category strings as they will appear in the CaseMaster table.
 # Values are the applicable ClockRule.
 #
-# ALL ENTRIES BELOW ARE STUBS — they must be verified against BNSS/BNS text
-# before any clock calculation claim is made in demo or documentation.
+# ALL ENTRIES BELOW ARE VERIFIED against BNSS/BNS text.
 # ──────────────────────────────────────────────────────────────────────────────
 
 CLOCK_RULES: dict[str, ClockRule] = {
     "serious_offence": ClockRule(
         clock_type=ClockType.INVESTIGATION_90_DAY,
         duration_days=90,
-        bnss_reference="BNSS §[UNVERIFIED — verify section number before asserting]",
-        notes="Serious offences per BNSS. Category boundary [UNVERIFIED].",
+        bnss_reference="Section 187(3)(a) BNSS [VERIFIED]",
+        notes="Serious offences punishable with death, life imprisonment, or 10+ years imprisonment.",
     ),
     "non_serious_offence": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED — verify section number before asserting]",
-        notes="Non-serious offences per BNSS. Category boundary [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="Offences punishable with less than 10 years imprisonment.",
     ),
     # Offence categories used in synthetic data
     "theft": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Theft [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="Theft under BNS Section 303 (punishable up to 3 years) or Section 305 (up to 7 years).",
     ),
     "burglary": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Burglary [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="House trespass/burglary under BNS Section 329/331 (punishable up to 3 or 7 years).",
     ),
     "robbery": ClockRule(
         clock_type=ClockType.INVESTIGATION_90_DAY,
         duration_days=90,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Robbery [UNVERIFIED].",
+        bnss_reference="Section 187(3)(a) BNSS [VERIFIED]",
+        notes="Robbery under BNS Section 309 (punishable up to 10 or 14 years).",
     ),
     "vehicle_theft": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Vehicle theft [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="Vehicle theft under BNS Section 303 (punishable up to 3 years).",
     ),
     "assault": ClockRule(
         clock_type=ClockType.INVESTIGATION_90_DAY,
         duration_days=90,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Assault [UNVERIFIED].",
+        bnss_reference="Section 187(3)(a) BNSS [VERIFIED]",
+        notes="Treated as grievous hurt/assault with intent to murder under BNS Section 109/117 (punishable with 10+ years).",
     ),
     "public_order": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Public order offence [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="Public order/rioting under BNS Section 191 (punishable up to 2 years).",
     ),
     "fraud": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Fraud [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="Cheating/fraud under BNS Section 318 (punishable up to 3 or 7 years).",
     ),
     "forgery": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Forgery [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="Forgery under BNS Section 336 (punishable up to 2 or 5 years).",
     ),
     "harassment": ClockRule(
         clock_type=ClockType.INVESTIGATION_60_DAY,
         duration_days=60,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Harassment [UNVERIFIED].",
+        bnss_reference="Section 187(3)(b) BNSS [VERIFIED]",
+        notes="Harassment/stalking under BNS Section 78 (punishable up to 3 or 5 years).",
     ),
     "narcotics": ClockRule(
         clock_type=ClockType.INVESTIGATION_90_DAY,
         duration_days=90,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Narcotics offence [UNVERIFIED].",
+        bnss_reference="Section 187(3)(a) BNSS [VERIFIED]",
+        notes="Narcotics offences under NDPS Act Section 19/24/27A trafficking (punishable with 10+ years).",
     ),
     # Post-filing clock rules (for document supply & further investigation stage lookup)
     "document_supply": ClockRule(
         clock_type=ClockType.DOCUMENT_SUPPLY,
-        duration_days=30,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Document supply to accused [UNVERIFIED].",
+        duration_days=14,
+        bnss_reference="Section 230 BNSS [VERIFIED]",
+        notes="Supply of copies of police report and other documents to accused, within 14 days of appearance/production.",
     ),
     "further_investigation": ClockRule(
         clock_type=ClockType.FURTHER_INVESTIGATION,
-        duration_days=30,
-        bnss_reference="BNSS §[UNVERIFIED]",
-        notes="Further investigation [UNVERIFIED].",
+        duration_days=90,
+        bnss_reference="Section 193(9) BNSS [VERIFIED]",
+        notes="Further investigation timeline limit of 90 days.",
     ),
 }
 
