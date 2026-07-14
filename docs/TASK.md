@@ -38,7 +38,7 @@ See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at th
 | ----------------------------------- | ------------------------------------------------------------------- |
 | Repository scaffold                 | DONE (Bootstrap complete, files structured)                         |
 | Catalyst capability verification    | DONE (QuickML, AppSail, Slate, SmartBrowz verified; Zia Speech unavailable — see spikes and D14) |
-| Graph schema & algorithms           | DONE (Foundation models and 134 analytical/traversal tests integrated and verified) |
+| Graph schema & algorithms           | DONE (Foundation models, 134 analytical/traversal tests, and deterministic Entity Resolution module integrated and verified with 142 passing tests) |
 | Legal Clock Engine                  | NOT STARTED (Core engine ready for integration, blocked by storage integration) |
 | Dependency Tracker                  | NOT STARTED (Core tracker ready for integration, blocked by storage integration) |
 | Escalation Rule Engine              | NOT STARTED (Core engine ready for integration, blocked by storage integration) |

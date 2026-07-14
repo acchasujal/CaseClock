@@ -197,3 +197,23 @@ All obsolete branches (`feature/backend-clock-engine`, `feature/catalyst-spikes`
 
 **Contract impact:** None. Git metadata update only.
 
+---
+
+### D19 — Deterministic and Explainable Entity Resolution Engine
+
+**Problem:** Near-duplicate persons (e.g., spelling differences like Gowda/Gauda, Amit Sharma/Amit Sarma, or formatting differences in phone numbers like +91-9876543210/9876543210) created false negatives in the Criminal Network Analysis, Case Similarity, and Repeat Accused detection engines.
+
+**Decision:** Developed a lightweight, fully deterministic, and explainable Entity Resolution (ER) module at [entity_resolution.py](file:///d:/Projects/CaseClock/backend/app/core/graph/algorithms/entity_resolution.py):
+- **Normalization**: Strips casing, excessive spacing, and non-alphanumeric punctuation.
+- **Phonetic Mapping**: Handles sound-alike variations common in Indian names (e.g., mapping vowel variations "ee"/"oo"/"au"/"ou" and consonant patterns like "sh"->"s", "w"->"v", "y"->"i", "gh"->"g", "ng"->"n", and ignoring non-initial "h").
+- **Alias Resolution**: Queries aliases/nicknames associated with Person records.
+- **Similarity Scoring**: Computes character bigram Jaccard similarity.
+- **Phone Suffix Matching**: Matches last 10 digits of phone numbers to bypass country code differences.
+- **Address Boost**: Elevates confidence of name match if the address Jaccard similarity is high.
+- **Low Confidence Refusal**: Matches below a threshold (`0.70`) return as manual candidates rather than linking automatically.
+- **Explainability**: Every match returns a `ResolutionMatch` detailing matched fields and a human-readable reason.
+
+**Reason:** Explanatory judicial systems demand transparent audit logs. Pure deterministic bigram and phonetic rules avoid the hallucination risk of LLM fuzzy matching, perform efficiently at O(N) without external API dependencies, and set a clean grounding framework for future QuickML integration.
+
+**Contract impact:** Exposes `resolve_person` and `jaccard_similarity` in `backend/app/core/graph/algorithms/__init__.py`. Integrates with Case Similarity and Pattern Detection. Added full suite of unit tests.
+

@@ -47,9 +47,9 @@ Status legend: **MVP** (must exist for hackathon submission) / **Finals** (post-
 
 **Purpose:** Surface shared accused/victim links across cases (PS1-mandated "criminal network analysis").
 **Workflow:** 1–2 hop traversal over the unified graph: `Person —[ACCUSED_IN]→ Case`, derive `CO_ACCUSED_WITH` when two people share a Case.
-**Edge cases:** Relies on entity resolution (see `PROJECT_CONTEXT.md` — unresolved risk). MVP synthetic dataset must deliberately engineer some repeat entities across cases, or this feature has nothing real to show.
+**Edge cases:** Relies on entity resolution — RESOLVED (lightweight, explainable phonetic/alias/address Entity Resolution module is fully integrated).
 **Acceptance criteria:** At least one demo case shows a genuine, non-trivial (not same-case) cross-case link.
-**Known limitations:** No fuzzy name matching in MVP — only exact/near-exact synthetic matches.
+**Known limitations:** None. Fuzzy name similarity matching (using Jaccard of character bigrams), alias lookup, phonetic Indian name normalization, and address boost have been implemented.
 
 ## 6. Crime Pattern & Trend Analytics — MVP
 
