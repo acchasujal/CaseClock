@@ -17,7 +17,7 @@ from backend.app.core.graph.algorithms.entity_resolution import (
 from backend.app.core.graph.algorithms.pattern_detection import (
     detect_repeat_accused_resolved,
 )
-from tests.graph.helpers import _FakeNode, _FakeEdge, make_store
+from helpers import _FakeNode, _FakeEdge, make_store
 
 
 def test_normalization():

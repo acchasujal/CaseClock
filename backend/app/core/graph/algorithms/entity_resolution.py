@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Sequence
-from backend.app.core.graph.algorithms.utils import GraphStore, safe_str
+from typing import Any
+from backend.app.core.graph.algorithms.utils import GraphStore
 
 
 @dataclass(frozen=True)

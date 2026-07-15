@@ -31,7 +31,6 @@ from backend.app.core.graph.algorithms.utils import (
     get_node,
     neighbor_ids,
     neighbors,
-    prop_str,
     safe_str,
 )
 

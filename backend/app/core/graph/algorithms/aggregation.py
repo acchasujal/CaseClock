@@ -21,9 +21,7 @@ from backend.app.core.graph.algorithms.utils import (
     GraphStore,
     get_edges_of_type,
     iter_nodes_by_type,
-    prop_int,
     prop_str,
-    safe_str,
 )
 
 # ── Edge / entity type string literals ───────────────────────────────────────

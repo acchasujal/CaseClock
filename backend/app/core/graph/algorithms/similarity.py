@@ -26,10 +26,7 @@ from datetime import datetime, timezone
 from typing import Sequence
 
 from backend.app.core.graph.algorithms.utils import (
-    AdjEdge,
     GraphStore,
-    NodeRecord,
-    get_edges_of_type,
     get_node,
     neighbor_ids,
     nodes_of_type,

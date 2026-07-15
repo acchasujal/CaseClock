@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from backend.app.core.graph.algorithms.utils import GraphStore, iter_nodes_by_type, safe_str
+from backend.app.core.graph.algorithms.utils import GraphStore
 
 
 # ── Return type ───────────────────────────────────────────────────────────────

@@ -34,7 +34,7 @@ except ImportError:  # pragma: no cover
     nx = None  # type: ignore[assignment]
     _NX_AVAILABLE = False
 
-from backend.app.core.graph.algorithms.utils import GraphStore, NodeRecord, prop_str, safe_str
+from backend.app.core.graph.algorithms.utils import GraphStore, safe_str
 
 
 # ── NetworkX bridge ───────────────────────────────────────────────────────────
