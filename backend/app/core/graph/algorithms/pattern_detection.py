@@ -139,6 +139,23 @@ class DistrictHotspotResult:
     reason: str
 
 
+@dataclass
+class TemporalHotspotResult:
+    """
+    A date with a disproportionately high case count.
+
+    Attributes
+    ----------
+    date        : str
+    case_count  : int
+    reason      : human-readable summary
+    """
+
+    date: str
+    case_count: int
+    reason: str
+
+
 # ── Pattern: repeat accused ───────────────────────────────────────────────────
 
 
@@ -488,6 +505,61 @@ def detect_district_hotspots(
             )
 
     results.sort(key=lambda r: r.case_count, reverse=True)
+    return results
+
+
+# ── Pattern: temporal hotspots ────────────────────────────────────────────────
+
+
+def detect_temporal_hotspots(
+    store: GraphStore,
+    min_cases: int = 3,
+) -> list[TemporalHotspotResult]:
+    """
+    Detect dates with ``min_cases`` or more cases registered.
+
+    Single pass over Case nodes.
+
+    Parameters
+    ----------
+    store     : GraphStore
+    min_cases : minimum case count to flag a date (default 3)
+
+    Returns
+    -------
+    list[TemporalHotspotResult]
+        Sorted by case_count descending.
+    """
+    from datetime import datetime
+
+    date_counts: dict[str, int] = {}
+    for node in iter_nodes_by_type(store, "Case"):
+        reported_at = prop_str(node, "reported_at")
+        if not reported_at or reported_at.lower() == "none":
+            continue
+
+        is_iso = False
+        try:
+            datetime.fromisoformat(reported_at)
+            is_iso = True
+        except ValueError:
+            pass
+
+        date_key = reported_at[:10] if is_iso else reported_at
+        date_counts[date_key] = date_counts.get(date_key, 0) + 1
+
+    results: list[TemporalHotspotResult] = []
+    for date, count in date_counts.items():
+        if count >= min_cases:
+            results.append(
+                TemporalHotspotResult(
+                    date=date,
+                    case_count=count,
+                    reason=f"Date '{date}' has {count} cases (threshold: {min_cases})",
+                )
+            )
+
+    results.sort(key=lambda r: (-r.case_count, r.date))
     return results
 
 

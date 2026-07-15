@@ -16,6 +16,7 @@ from backend.app.core.graph.algorithms.pattern_detection import (
     detect_repeat_address,
     detect_high_workload_officers,
     detect_dependency_hotspots,
+    detect_temporal_hotspots,
 )
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.serializers import serialize_dataclass
@@ -55,7 +56,29 @@ class HotspotService:
     # INDIVIDUAL HOTSPOT CATEGORIES
     # ═══════════════════════════════════════════════════════════════════════
 
-  
+    def get_temporal_hotspots(self, min_cases: int = 3) -> dict[str, Any]:
+        """
+        Time-based crime spikes.
+
+        Used by: Dashboard → "Temporal Hotspots"
+        """
+        store = self._repo.store
+        spikes = detect_temporal_hotspots(store, min_cases=min_cases)
+        spike_count = len(spikes)
+
+        if spike_count > 10:
+            alert_level = "red"
+        elif spike_count > 0:
+            alert_level = "amber"
+        else:
+            alert_level = "green"
+
+        return {
+            "category": "temporal",
+            "alert_level": alert_level,
+            "spikes": [serialize_dataclass(s) for s in spikes],
+            "spike_count": spike_count,
+        }
 
     def get_dependency_hotspots(self) -> dict[str, Any]:
         """
