@@ -90,23 +90,47 @@ class GraphService:
     def get_co_accused_network(self, person_id: str) -> dict[str, Any]:
         """
         Return all co-accused for a person (1-hop via shared cases).
-        
+
         Used by: Network Analysis → Co-accused view
         """
         store = self._repo.store
-        co_accused = get_co_accused(store, person_id)
 
+        # Step 1: Find all cases where this person is accused.
+        person_cases = [
+            edge.target_id
+            for edge in store.adj.get(person_id, [])
+        if edge.edge_type == "ACCUSED_IN"
+    ]
+
+        # Step 2: Collect co-accused across those cases.
+        co_accused_map: dict[str, list] = {}
+
+        for case_id in person_cases:
+            accused = get_co_accused(store, case_id)
+
+            for person in accused:
+                if person.node_id == person_id:
+                    continue  # Don't include the original person
+
+            co_accused_map.setdefault(person.node_id, []).append(
+                store.nodes[case_id]
+            )
+
+    # Step 3: Build JSON response.
         return {
-            "person_id": person_id,
-            "co_accused": [
-                {
-                    "person_id": p.node_id,
-                    "shared_cases": [serialize_node(c) for c in cases],
-                }
-                for p, cases in co_accused
-            ],
-            "co_accused_count": len(co_accused),
-        }
+        "person_id": person_id,
+        "co_accused": [
+            {
+                "person_id": pid,
+                "shared_cases": [
+                    serialize_node(case)
+                    for case in shared_cases
+                ],
+            }
+            for pid, shared_cases in co_accused_map.items()
+        ],
+        "co_accused_count": len(co_accused_map),
+     }
 
     
 
