@@ -99,8 +99,8 @@ class GraphService:
         person_cases = [
             edge.target_id
             for edge in store.adj.get(person_id, [])
-        if edge.edge_type == "ACCUSED_IN"
-    ]
+            if edge.edge_type == "ACCUSED_IN"
+        ]
 
         # Step 2: Collect co-accused across those cases.
         co_accused_map: dict[str, list] = {}
@@ -112,25 +112,25 @@ class GraphService:
                 if person.node_id == person_id:
                     continue  # Don't include the original person
 
-            co_accused_map.setdefault(person.node_id, []).append(
-                store.nodes[case_id]
-            )
+                co_accused_map.setdefault(person.node_id, []).append(
+                    store.nodes[case_id]
+                )
 
-    # Step 3: Build JSON response.
+        # Step 3: Build JSON response.
         return {
-        "person_id": person_id,
-        "co_accused": [
-            {
-                "person_id": pid,
-                "shared_cases": [
-                    serialize_node(case)
-                    for case in shared_cases
-                ],
-            }
-            for pid, shared_cases in co_accused_map.items()
-        ],
-        "co_accused_count": len(co_accused_map),
-     }
+            "person_id": person_id,
+            "co_accused": [
+                {
+                    "person_id": pid,
+                    "shared_cases": [
+                        serialize_node(case)
+                        for case in shared_cases
+                    ],
+                }
+                for pid, shared_cases in co_accused_map.items()
+            ],
+            "co_accused_count": len(co_accused_map),
+        }
 
     
 

@@ -109,7 +109,13 @@ class OffenderService:
                         crime_heads.add(prop_str(head, "head_name") or e.target_id)
 
         # Get co-accused network
-        co_accused = get_co_accused(store, person_id)
+        co_accused_map: dict[str, list[str]] = {}
+        for case_id in case_ids:
+            accused = get_co_accused(store, case_id)
+            for p in accused:
+                if p.node_id == person_id:
+                    continue
+                co_accused_map.setdefault(p.node_id, []).append(case_id)
 
         return {
             "person_id": person_id,
@@ -131,13 +137,13 @@ class OffenderService:
                 "station_count": len(police_stations),
                 "district_count": len(districts),
             },
-            "co_accused_count": len(co_accused),
+            "co_accused_count": len(co_accused_map),
             "co_accused": [
                 {
-                    "person_id": p.node_id,
+                    "person_id": pid,
                     "shared_case_count": len(cases),
                 }
-                for p, cases in co_accused
+                for pid, cases in co_accused_map.items()
             ],
             # Templated summary — no AI-generated prose
             "summary": self._generate_factual_summary(
@@ -145,7 +151,7 @@ class OffenderService:
                 case_count=len(case_ids),
                 sections=sections,
                 stations=police_stations,
-                co_accused_count=len(co_accused),
+                co_accused_count=len(co_accused_map),
             ),
         }
 

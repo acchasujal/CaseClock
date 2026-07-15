@@ -212,12 +212,12 @@ def test_get_co_accused_network():
     assert result["person_id"] == person1.id
     assert result["co_accused_count"] == 1
 
-    print(result)
-
-    print("person1:", person1.id)
-    print("person2:", person2.id)
+   
 
     co = result["co_accused"][0]
 
     assert co["person_id"] == person2.id
     assert len(co["shared_cases"]) == 1
+
+
+
