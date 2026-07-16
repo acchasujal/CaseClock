@@ -203,7 +203,7 @@ All obsolete branches (`feature/backend-clock-engine`, `feature/catalyst-spikes`
 
 **Problem:** Near-duplicate persons (e.g., spelling differences like Gowda/Gauda, Amit Sharma/Amit Sarma, or formatting differences in phone numbers like +91-9876543210/9876543210) created false negatives in the Criminal Network Analysis, Case Similarity, and Repeat Accused detection engines.
 
-**Decision:** Developed a lightweight, fully deterministic, and explainable Entity Resolution (ER) module at [entity_resolution.py](file:///d:/Projects/CaseClock/backend/app/core/graph/algorithms/entity_resolution.py):
+**Decision:** Developed a lightweight, fully deterministic, and explainable Entity Resolution (ER) module at [entity_resolution.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/entity_resolution.py):
 - **Normalization**: Strips casing, excessive spacing, and non-alphanumeric punctuation.
 - **Phonetic Mapping**: Handles sound-alike variations common in Indian names (e.g., mapping vowel variations "ee"/"oo"/"au"/"ou" and consonant patterns like "sh"->"s", "w"->"v", "y"->"i", "gh"->"g", "ng"->"n", and ignoring non-initial "h").
 - **Alias Resolution**: Queries aliases/nicknames associated with Person records.
@@ -216,4 +216,26 @@ All obsolete branches (`feature/backend-clock-engine`, `feature/catalyst-spikes`
 **Reason:** Explanatory judicial systems demand transparent audit logs. Pure deterministic bigram and phonetic rules avoid the hallucination risk of LLM fuzzy matching, perform efficiently at O(N) without external API dependencies, and set a clean grounding framework for future QuickML integration.
 
 **Contract impact:** Exposes `resolve_person` and `jaccard_similarity` in `backend/app/core/graph/algorithms/__init__.py`. Integrates with Case Similarity and Pattern Detection. Added full suite of unit tests.
+
+---
+
+### D20 — Graph Intelligence Architectural Pattern
+
+**Problem:** Standardizing the backend data flow to prevent duplicate abstractions, avoid circular dependencies, ensure explainability, and maintain isolation between database logic and pure graph algorithms.
+
+**Decision:** Formulated and implemented the following architectural principles:
+- **Unified GraphStore**: Built a simple, memory-efficient [GraphStore](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/utils.py) that acts as the single source of truth for the investigation graph, avoiding fragmented storage models.
+- **Data Pipeline Flow**: Standardized the flow strictly as: [GraphRepository](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/repositories/graph_repository.py) &rarr; [GraphLoader](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py) &rarr; `GraphStore` &rarr; Services &rarr; Algorithms.
+- **Database Isolation**: Graph algorithms are completely decoupled from database mechanics; they operate solely on the in-memory `GraphStore`.
+- **Ownership Separation**: 
+  - [GraphRepository](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/repositories/graph_repository.py) owns raw data queries and staging into memory.
+  - [GraphLoader](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py) owns graph index construction and referential validation.
+- **Orchestration-Only Services**: Services are thin layers that perform orchestration, invoke core algorithms, and serialize domain models into JSON-friendly formats.
+- **Deterministic Algorithms**: All analytical and traversal algorithms are completely deterministic and rule-based to ensure absolute explainability for legal auditing.
+- **DTO Serializers**: [serializers.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/serializers.py) acts as a clean Data Transfer Object (DTO) mapping layer, ensuring services return serializable python dictionaries instead of raw graph objects.
+- **Consolidated Pattern Detection**: Intentionally avoided introducing a redundant `PatternDetectionService`. Instead, pattern detection algorithms are owned by the [pattern_detection](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py) module and orchestrated directly by [HotspotService](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/hotspot_service.py) and [OffenderService](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/offender_service.py) to prevent code duplication.
+
+**Reason:** Promotes high coherence, low coupling, and predictable memory patterns. Keeps the API responses uniform and isolates high-frequency graph traversals from blocking database operations.
+
+**Contract impact:** None. Backend internal structure alignment only. Exposes new route mappings and unit testing coverage across all integrated modules.
 

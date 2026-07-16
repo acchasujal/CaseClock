@@ -6,114 +6,67 @@ Status legend: **MVP** (must exist for hackathon submission) / **Finals** (post-
 
 ---
 
-## 1. Legal Clock Engine — MVP
+## Graph Infrastructure
 
-**Purpose:** Compute which statutory clock(s) apply to a case and how many days remain.
-**Users:** IO (primary), SHO/SP (rollup).
-**Business value:** Converts an invisible, memory-dependent deadline into a visible, system-owned fact.
-**Inputs:** Offence category/section, FIR date, current date, case stage.
-**Outputs:** One or more active `ClockInstance` records with deadline and days-remaining.
-**Workflow:** On case ingestion, look up offence category in the clock-rules mapping table; instantiate applicable clock(s) — investigation/chargesheet (60/90 day), and post-filing clocks (document-supply, further-investigation) once case reaches that stage.
-**Edge cases:** Offence category not found in mapping table → case must be excluded from auto-escalation and separately flagged as "clock undetermined," never silently defaulted to a guessed value.
-**Dependencies:** Accurate offence-category → clock-type mapping table (must be built and verified against BNSS text, not assumed).
-**Acceptance criteria:** Every case in the synthetic dataset resolves to a clock or an explicit "undetermined" flag — never a silent null.
-**Known risks:** None. Exact statutory section numbers and durations have been verified against bare BNSS text.
+- **Graph Repository**: Bridges persistent database models with the in-memory graph. Exposes node and relation queries in [graph_repository.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/repositories/graph_repository.py).
+- **Graph Loader**: Constructs the unified in-memory graph representation from flat node and edge records in [graph_loader.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py).
+- **Graph Validation**: Structural and referential checks (missing endpoints, orphans, empty/duplicate keys, self-loops) to guarantee graph integrity before analytical computation inside [GraphLoader.validate_graph](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py#L68-L170).
+- **GraphStore**: Memory-efficient unified property graph data structure using fast O(1) indices for nodes and adjacency edge lists in [GraphStore](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/utils.py#L58-L76).
 
-## 2. Dependency Tracker — MVP
+---
 
-**Purpose:** Track named, specific outstanding evidentiary items per case (FSL, CDR, witness statement, supervisory sign-off), replacing a single opaque "risk score" (a prior design explicitly rejected — see `DECISION_LOG.md`).
-**Users:** IO (updates status), SHO/SP (views blockers).
-**Inputs:** Dependency type, requested date, status (pending/returned), owner.
-**Outputs:** Per-case list of named blockers with staleness indicator.
-**Workflow:** IO logs a dependency when requested; status updates manually (not assumed automatable, given documented low digital-literacy adoption risk) or via synthetic-data simulation for demo purposes.
-**Edge cases:** Case with no logged dependency but flagged at-risk → must show "reason undetermined," never a fabricated reason.
-**Acceptance criteria:** Every at-risk case shows at least one named, real dependency or an explicit undetermined flag.
+## Graph Analytics
 
-## 3. Escalation Rule Engine — MVP
+- **Similarity Search**: Retrieves the top-k most similar cases to a given anchor case based on a weighted sum of matching structural and property features in [find_similar_cases](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/similarity.py#L361-L405).
+- **Case Comparison**: Direct side-by-side comparison of two cases, computing an explainable similarity score and documenting matching contributions in [compute_case_similarity](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/similarity.py#L309-L359).
+- **Batch Similarity**: Computes a pairwise similarity matrix for a set of cases, returning all positively matching pairs sorted by score descending in [batch_similarity_matrix](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/similarity.py#L407-L442).
+- **Repeat Offender Detection**: Identifies individuals accused in multiple distinct cases, returning histories sorted by case count descending in [detect_repeat_accused](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L162-L201).
+- **Resolved Repeat Offenders**: Uses Entity Resolution to group spelling variations and alias profiles of same individuals, flagging repeat offenders across resolved entities in [detect_repeat_accused_resolved](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L590-L697).
+- **Entity Resolution**: A deterministic, rule-based matching engine that normalizes strings, maps Indian phonetic variations, matches aliases, applies bigram Jaccard similarity, and boosts confidence based on address match in [resolve_person](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/entity_resolution.py#L117-L287).
 
-**Purpose:** Deterministically notify the correct supervisor when a case crosses a risk threshold (days remaining + unresolved dependency + staleness).
-**Users:** SHO/SP (recipients), IO (source case).
-**Workflow:** Rule-based trigger (not LLM-based) fires when configured conditions align; auto-drafts a plain-language escalation note addressed by correct rank (per organizer's stated DGP/IGP/DIG/SP hierarchy).
-**Edge cases:** Clock mapping missing for a case → excluded from auto-escalation, flagged separately (never mis-escalated on a guessed clock).
-**Acceptance criteria:** Escalation event is logged immutably in the audit log; the live demo threshold-crossing must be reproducible, not a one-off scripted animation.
+---
 
-## 4. Risk-Ranked Worklist — MVP
+## Network Analysis
 
-**Purpose:** Sort an IO's cases by risk + staleness instead of FIR number/date.
-**Users:** IO (daily use).
-**Acceptance criteria:** Ranking updates when dependency status changes; ties broken by days-remaining.
+- **Neighbor Search**: Safely retrieves immediate (1-hop) neighbors of a node by direction (in, out, or both) and optional edge type filters in [neighbors](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/utils.py#L194-L236) / [get_neighbors](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L325-L344).
+- **Subgraph Extraction**: BFS extraction of a node-induced subgraph up to a depth cap, collecting all matching nodes and connecting edges for visualization in [get_subgraph](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L346-L403).
+- **Related Cases**: Traverses bidirectional `LINKED_TO` edges to identify connected case clusters in [get_related_cases](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L134-L166).
+- **Co-Accused Detection**: Extracts other accused persons associated with the same Case node via `ACCUSED_IN` incoming links in [get_co_accused](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L168-L201).
+- **Officer Case Traversal**: Follows `INVESTIGATED_BY` edges in reverse to find all cases assigned to a specific investigating officer in [get_officer_cases](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L232-L260).
+- **Dependency Chain**: Extracts outstanding investigation dependencies (blockers) linked to a Case node in [get_dependency_chain](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L262-L288).
+- **Clock Traversal**: Retrieves all statutory clock instances associated with a Case node, sorted by remaining duration in [get_clock_instances](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L290-L320).
+- **Evidence Traversal**: Traverses Case-to-Evidence edges (`CASE_HAS_EVIDENCE`) to retrieve linked physical or forensic evidence items in [get_evidence_for_case](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L428-L454).
+- **Section Traversal**: Resolves specific statutory section charges (`CHARGED_UNDER`) associated with a Case in [get_sections_for_case](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py#L456-L481).
 
-## 5. Criminal Network Analysis — MVP (co-accused only), Finals (broader link types)
+---
 
-**Purpose:** Surface shared accused/victim links across cases (PS1-mandated "criminal network analysis").
-**Workflow:** 1–2 hop traversal over the unified graph: `Person —[ACCUSED_IN]→ Case`, derive `CO_ACCUSED_WITH` when two people share a Case.
-**Edge cases:** Relies on entity resolution — RESOLVED (lightweight, explainable phonetic/alias/address Entity Resolution module is fully integrated).
-**Acceptance criteria:** At least one demo case shows a genuine, non-trivial (not same-case) cross-case link.
-**Known limitations:** None. Fuzzy name similarity matching (using Jaccard of character bigrams), alias lookup, phonetic Indian name normalization, and address boost have been implemented.
+## Hotspot Analysis
 
-## 6. Crime Pattern & Trend Analytics — MVP
+- **Temporal Hotspots**: Flags dates with statistically abnormal case registration frequency based on daily counts in [detect_temporal_hotspots](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L514-L564).
+- **District Hotspots**: Identifies geographic districts where registered cases exceed specified thresholds in [detect_district_hotspots](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L472-L509).
+- **Dependency Hotspots**: Pinpoints cases with high quantities of pending investigation blockers in [detect_dependency_hotspots](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L409-L467).
+- **Officer Workload**: Flags investigating officers whose assigned caseload exceeds thresholds, facilitating resource reallocation in [detect_high_workload_officers](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L362-L404).
+- **Shared Phone Clusters**: Detects groups of individuals sharing the same phone cluster attribute across multiple cases in [detect_repeat_phone](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L207-L232).
+- **Shared Vehicle Clusters**: Identifies groups of accused/complainants linked via shared vehicle registration IDs in [detect_repeat_vehicle](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L237-L262).
+- **Shared Address Clusters**: Identifies groups of individuals linked to identical home/business addresses in [detect_repeat_address](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py#L267-L292).
 
-**Purpose:** Aggregate cases by crime type × district × time (PS1-mandated "crime pattern discovery").
-**Workflow:** Grouped aggregation query over the same `Case` nodes used by the clock engine — no separate analytics store.
-**Acceptance criteria:** District rollup screen shows at least one real, non-trivial pattern in synthetic data (e.g., a seasonal spike).
+---
 
-## 7. Socio-Demographic Insight — MVP (shallow, explicitly labeled)
+## Statistics & Aggregation
 
-**Purpose:** Aggregate available demographic attributes (age, gender — the only fields the organizer schema actually provides) against case type/location.
-**Known limitation:** Organizer schema has no income/education/migration fields. This feature must be presented as shallow-but-honest, not implied to be deep sociological correlation analysis — a documented judging-panel risk if overclaimed.
+- **Crime Summary**: Comprehensive multi-dimensional rollup summarizing total cases, stage distributions, risk bands, and offence categories in [case_counts](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/aggregation.py#L154-L178).
+- **Crime by District**: Counts cases grouped by geographic district in [crime_count_by_district](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/aggregation.py#L66-L84).
+- **Crime by Police Station**: Counts cases registered per local police station in [crime_count_by_station](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/aggregation.py#L86-L104).
+- **Crime by Offence Category**: Groups case frequency based on type of offense category in [crime_count_by_offence_category](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/aggregation.py#L134-L151).
+- **Graph Statistics**: Derives high-level topology metrics: density, node/edge distributions, average node degree, and isolated nodes count in [compute_graph_statistics](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/statistics.py#L89-L156).
+- **Connected Components**: Computes weakly-connected components of the graph to identify isolated network units using a path-compressed Union-Find algorithm in [_UnionFind](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/statistics.py#L54-L84) and [connected_components](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/clustering.py#L100-L121).
 
-## 8. Offender Profiling / Lead Prioritization — MVP (rule-based, narrowly framed)
+---
 
-**Purpose:** Surface repeat-offender signal (count of prior `ACCUSED_IN` edges, section diversity, recency) as an investigative lead signal — never a guilt or reoffense-risk inference.
-**Acceptance criteria:** Output text is templated from graph facts only ("3 prior FIRs, same section category") — never open-ended generated prose about the person. This is an anti-hallucination and fairness requirement, not a style preference.
+## Testing
 
-## 9. Case Similarity Discovery — MVP (structured similarity only)
-
-**Purpose:** Find similar past cases by shared section combination, location, and time window.
-**Workflow:** Rule-based feature match (Jaccard/cosine over structured attributes) — explicitly not a deep embedding model, so it stays explainable.
-**Acceptance criteria:** Every similarity result displays the specific shared features that produced the ranking.
-
-## 10. Conversational Copilot (English) — MVP
-
-**Purpose:** Grounded natural-language query over the graph, satisfying PS1's core conversational-AI requirement.
-**Workflow:** NL input → deterministic grounding/verification gate → query execution → path-annotated response, OR refusal if confidence is low.
-**Acceptance criteria:** A held-out test set (10–15 questions, answerable + ambiguous) is run and scored before any demo claim about refusal reliability is made. **This has not yet been done as of this writing — see `TASK.md`.**
-
-## 11. Kannada Language Support — Finals (thin wrapper, explicitly labeled)
-
-**Purpose:** Satisfy PS1's explicit bilingual requirement.
-**Known limitation:** Implemented as a translation-layer wrapper around the English grounded-query engine, not deep bilingual NLU. Must be labeled as such in the deck to avoid overclaiming.
-
-## 12. Voice Interaction — Finals
-
-**Purpose:** Satisfy PS1's explicit voice-interaction requirement.
-**Workflow:** Browser-native speech-to-text/text-to-speech wrapped around the existing NL layer — no new reasoning component.
-
-## 13. Conversation History PDF Export — MVP (trivial)
-
-**Purpose:** Satisfy PS1's explicit requirement to save conversation history in PDF, locally.
-**Workflow:** Store `ConversationLog` per session; render and export on demand.
-
-## 14. Role-Based Access (shallow) — MVP (3 roles), Roadmap (full ABAC)
-
-**Purpose:** Satisfy PS1's explicit RBAC/governance requirement.
-**MVP scope:** Three roles — IO/SHO/SP — gating which screens and case scopes are visible. Not full attribute-based access control.
-
-## 15. Audit Log — MVP (basic), Roadmap (full compliance-grade)
-
-**Purpose:** Immutable log of views/edits/escalations — supports explainability and governance requirements.
-**MVP scope:** Append-only log of key events (escalation fired, case viewed, copilot query + answer/refusal).
-
-## 16. Financial Transaction Link Analysis — Finals (explicitly labeled synthetic stub)
-
-**Purpose:** Satisfy PS1's explicit financial-crime-link requirement.
-**Known limitation:** Organizer-provided schema contains no financial/transaction entities at all. This feature requires wholly synthetic `FinancialAccount`/`Transaction` nodes built for demo purposes only. Must be labeled on-slide as "synthetic extension, not real KSP data" — the single highest overclaiming risk in the entire feature set if mislabeled.
-
-## 17. Crime Forecasting / Early Warning — Finals (rule-based threshold alert only)
-
-**Purpose:** Satisfy PS1's explicit forecasting/early-warning requirement.
-**Known limitation:** Implemented as a threshold-crossing alert on trend aggregation (e.g., case count in a subcategory exceeds a rolling baseline), explicitly NOT a predictive ML model, due to well-documented feedback-loop bias risks in predictive policing generally. Must be narrated honestly in the demo as a deliberate choice, not a limitation to hide.
-
-## Excluded from MVP (Roadmap only — see `PROJECT_CONTEXT.md` Non-Goals)
-
-Prosecutor workflow, mobile app, offline mode, full ABAC, cross-case pattern-linkage copilot (deliberately excluded even from roadmap discussion due to legal-exposure risk from false linkage), real entity resolution, real Kannada NLU depth.
+Summary of implemented unit and integration test coverage verifying the entire graph architecture:
+- **Repository**: Evaluated in [test_graph_repository.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_graph_repository.py), covering query routing, single node loading, and role filter matches.
+- **Loader**: Evaluated in [test_graph_loader.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_graph_loader.py), validating index construction, adjacency listings, and comprehensive constraint checks (orphans, missing nodes, duplicate IDs).
+- **Services**: Evaluated in service-specific files ([test_graph_service.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_graph_service.py), [test_similarity_service.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_similarity_service.py), [test_network_service.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_network_service.py), [test_hotspot_service.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_hotspot_service.py), [test_offender_service.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_offender_service.py), [test_serializers.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_serializers.py)), verifying that all service methods return serialized, dictionary-mapped JSON data structures.
+- **Algorithms**: Evaluated in algorithm test suites ([test_similarity.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_similarity.py), [test_traversals.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_traversals.py), [test_pattern_detection.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_pattern_detection.py), [test_aggregation.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_aggregation.py), [test_entity_resolution.py](file:///c:/Users/dyara/CaseClock/tests/graph/test_entity_resolution.py), [test_graph_foundation.py](file:///c:/Users/dyara/CaseClock/tests/test_graph_foundation.py)), asserting deterministic calculation correctness with 100% success rate across 193 total passing tests.

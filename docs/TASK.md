@@ -30,21 +30,42 @@ The project is organized around four engineering lanes, not developer headcount 
 
 See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at the start and end of every work session — mark items done, add blockers, never let this file go stale relative to actual repository state.
 
-## Status Key
+## Completed
 
-`NOT STARTED` / `IN PROGRESS` / `BLOCKED (reason)` / `DONE (verified how)`
+- **Repository scaffold**: Initial folder structure scaffolded. Colapsed graph and copilot directories into the backend. Authoritative contracts and CI pipelines consolidated.
+- **Synthetic Graph Generation**: Fully functional [synthetic_data](file:///c:/Users/dyara/CaseClock/synthetic_data/) module that generates nodes and edges for cases, persons, officers, dependencies, evidence, and clocks.
+- **Graph Infrastructure**:
+  - **Graph Repository**: [graph_repository.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/repositories/graph_repository.py) implemented as a bridge between persistent database and in-memory GraphStore.
+  - **Graph Loader**: [graph_loader.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py) constructed to parse node/edge records.
+  - **Graph Validation**: Reference, structure, and type checks implemented inside [GraphLoader](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py).
+- **Graph & Analytical Algorithms**:
+  - **Graph Algorithms**: Low-level indices and graph construction helper utilities implemented in [utils.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/utils.py).
+  - **Similarity Algorithms**: Deterministic similarity match and Jaccard distance calculation in [similarity.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/similarity.py).
+  - **Traversal Algorithms**: BFS, multi-hop lookups, dependency and clock traversals in [traversals.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py).
+  - **Pattern Detection Algorithms**: Repeat accused, shared phone/vehicle/address clusters, high-workload officers, and hotspots in [pattern_detection.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py).
+  - **Aggregation & Statistics**: District, station, and category rollups in [aggregation.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/aggregation.py); graph metrics, density, and component sizes in [statistics.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/statistics.py).
+  - **Clustering Algorithms**: NetworkX-based component detection, degree and betweenness centralities in [clustering.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/clustering.py).
+  - **Entity Resolution**: Deterministic, phonetic normalization, Jaccard bigram scoring, and boost rules implemented in [entity_resolution.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/entity_resolution.py).
+- **Graph Intelligence Services**:
+  - **Graph Service**: [graph_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/graph_service.py) coordinates subgraphs, co-accused, summaries, and central figures.
+  - **Similarity Service**: [similarity_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/similarity_service.py) coordinates similar case lookups, direct comparisons, and pairwise matrices.
+  - **Network Service**: [network_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/network_service.py) exposes single-node lookups and case/person/officer traversals.
+  - **Hotspot Service**: [hotspot_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/hotspot_service.py) combines temporal, spatial, and network alerts into dashboard-ready payloads.
+  - **Offender Service**: [offender_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/offender_service.py) handles repeat offender tracking, resolved offender profiles, and factual summaries.
+- **Service Integration**: Exposing all services via FastAPI routers in [graph_routes.py](file:///c:/Users/dyara/CaseClock/backend/app/api/graph_routes.py) factory.
+- **Unit Tests**: Full test suite verifying loader, repository, services, and algorithms with 193 passing tests (100% success rate).
 
-| Item                                | Status                                                              |
-| ----------------------------------- | ------------------------------------------------------------------- |
-| Repository scaffold                 | DONE (Bootstrap complete, files structured)                         |
-| Catalyst capability verification    | DONE (QuickML, AppSail, Slate, SmartBrowz verified; Zia Speech unavailable — see spikes and D14) |
-| Graph schema & algorithms           | DONE (Foundation models, 134 analytical/traversal tests, and deterministic Entity Resolution module integrated and verified with 142 passing tests) |
-| Legal Clock Engine                  | NOT STARTED (Core engine ready for integration, blocked by storage integration) |
-| Dependency Tracker                  | NOT STARTED (Core tracker ready for integration, blocked by storage integration) |
-| Escalation Rule Engine              | NOT STARTED (Core engine ready for integration, blocked by storage integration) |
-| Synthetic data generator            | DONE (synthetic_data module generates and exports JSON/CSV)         |
-| Conversational layer + refusal gate | NOT STARTED (Integration blocked by Catalyst, core logic unblocked) |
-| Refusal-gate test set execution     | NOT STARTED                                                         |
-| Scale test (1–2 lakh records)       | NOT STARTED                                                         |
-| Frontend shell                      | NOT STARTED                                                         |
-| Catalyst deployment                 | NOT STARTED                                                         |
+## In Progress
+
+- **Lane 4 — AI + Architecture + Integration**: Bootstrapping, configuration, CI setup, and QuickML intent parsing capability spike completed; API tool calling and pipeline integration are actively in progress.
+
+## Remaining
+
+- **Legal Clock Engine**: Core calculation engine ready, blocked by database persistence integration.
+- **Dependency Tracker**: Core tracker ready, blocked by database persistence integration.
+- **Escalation Rule Engine**: Core logic ready, blocked by database persistence integration.
+- **Conversational Layer + Refusal Gate**: Core intent parser spiked; final integration with refusal gate and Catalyst endpoints remaining.
+- **Refusal-Gate Test Set**: Execution and scoring of the 10-15 test questions.
+- **Scale Test (1-2 Lakh Records)**: Scalability execution and latency validation.
+- **Frontend Shell**: React app shell structure and screen layouts.
+- **Catalyst Deployment**: AppSail, Data Store, and smart components deployment configuration.
