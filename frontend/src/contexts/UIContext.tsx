@@ -9,7 +9,7 @@ interface UIContextType {
   setEscalateDrawerOpen: (isOpen: boolean) => void
 }
 
-const UIContext = createContext<UIContextType | undefined>(undefined)
+export const UIContext = createContext<UIContextType | undefined>(undefined)
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [tableDensity, setTableDensity] = useState<TableDensity>('dense')

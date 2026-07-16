@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { apiFetch } from '@/lib/apiClient'
 
 export interface NetworkNode {
   id: string
@@ -29,15 +30,8 @@ export interface NetworkResponse {
 export function useCaseNetwork(caseId?: string) {
   return useQuery<NetworkResponse>({
     queryKey: ['case-network', caseId],
-    queryFn: async () => {
-      if (!caseId) throw new Error('Case ID is required')
-      const response = await fetch(`/cases/${caseId}/network`)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch case network: ${response.statusText}`)
-      }
-      return response.json()
-    },
-    enabled: !!caseId,
+    queryFn: () => apiFetch<NetworkResponse>(`/cases/${caseId}/network`),
+    enabled: Boolean(caseId),
     staleTime: 0,
   })
 }

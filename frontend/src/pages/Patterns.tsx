@@ -265,8 +265,8 @@ export default function Patterns() {
             <div className="text-h1 font-bold text-status-danger mt-1 font-mono">{kpiData.breaches}</div>
           </div>
           <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
-            <div className="text-caption font-semibold text-neutral-600 uppercase font-bold text-rose-500">High Risk Clocks</div>
-            <div className="text-h1 font-bold text-rose-500 mt-1 font-mono">{kpiData.highRisk}</div>
+            <div className="text-caption font-semibold text-status-danger uppercase font-bold">High Risk Clocks</div>
+            <div className="text-h1 font-bold text-status-danger mt-1 font-mono">{kpiData.highRisk}</div>
           </div>
           <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
             <div className="text-caption font-semibold text-status-info uppercase">Active Dependencies</div>
@@ -277,7 +277,7 @@ export default function Patterns() {
               <div className="text-caption font-semibold text-neutral-400 uppercase">Avg Resolution</div>
               <div className="text-small font-semibold text-neutral-500 mt-2 leading-tight">Unavailable in current prototype</div>
             </div>
-            <div className="text-caption text-neutral-400 italic mt-1 text-[10px]">Requires CaseDetail schema</div>
+            <div className="text-caption text-neutral-400 italic mt-1">Requires CaseDetail schema</div>
           </div>
         </div>
       )}
@@ -315,7 +315,7 @@ export default function Patterns() {
             <div className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-status-success mr-2" /> Green: &gt; 14 days remaining</div>
             <div className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-status-warning mr-2" /> Amber: 7-14 days remaining</div>
             <div className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-status-danger mr-2" /> Red: &lt; 7 days remaining</div>
-            <div className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-rose-600 mr-2" /> Overdue: Deadline passed</div>
+            <div className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-status-danger mr-2" /> Overdue: Deadline passed</div>
           </div>
         </div>
 
@@ -371,7 +371,7 @@ export default function Patterns() {
           <div className="mt-6 p-4 border border-dashed border-neutral-300 rounded-radius-sm bg-neutral-50 text-center">
             <AlertCircle className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
             <p className="text-caption font-semibold text-neutral-500">Unavailable in current prototype</p>
-            <p className="text-[10px] text-neutral-400 mt-1">Requires Officer schema integration</p>
+            <p className="text-caption text-neutral-400 mt-1">Requires Officer schema integration</p>
           </div>
         </div>
 
@@ -386,7 +386,7 @@ export default function Patterns() {
           <div className="mt-6 p-4 border border-dashed border-neutral-300 rounded-radius-sm bg-neutral-50 text-center">
             <AlertCircle className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
             <p className="text-caption font-semibold text-neutral-500">Unavailable in current prototype</p>
-            <p className="text-[10px] text-neutral-400 mt-1">Requires CaseDetail aggregation</p>
+            <p className="text-caption text-neutral-400 mt-1">Requires CaseDetail aggregation</p>
           </div>
         </div>
 

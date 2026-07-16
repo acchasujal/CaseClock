@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { useUI } from '@/contexts/UIContext'
+import { resolveObjectPath } from '@/lib/utils'
 import { LoadingSkeleton } from './LoadingSkeleton'
 import { EmptyState } from './EmptyState'
 
@@ -15,6 +16,8 @@ interface DataTableProps<T> {
   isLoading: boolean
   onRowClick?: (row: T) => void
   emptyMessage?: string
+  /** Accessible label for the table. Defaults to "Data table". */
+  ariaLabel?: string
 }
 
 export function DataTable<T extends { id: string }>({
@@ -22,7 +25,8 @@ export function DataTable<T extends { id: string }>({
   data,
   isLoading,
   onRowClick,
-  emptyMessage = "No records found.",
+  emptyMessage = 'No records found.',
+  ariaLabel = 'Data table',
 }: DataTableProps<T>) {
   const { tableDensity } = useUI()
   const rowRefs = useRef<Array<HTMLTableRowElement | null>>([])
@@ -38,23 +42,21 @@ export function DataTable<T extends { id: string }>({
 
   const rowHeightClass = tableDensity === 'dense' ? 'h-10 py-1' : 'h-14 py-3'
 
-  // Resolve object paths (e.g. 'clock.days_remaining')
-  const getCellValue = (item: T, path: string) => {
-    return path.split('.').reduce((acc: unknown, part) => {
-      if (acc === null || acc === undefined) return undefined
-      return (acc as Record<string, unknown>)[part]
-    }, item as unknown)
-  }
-
   return (
     <div className="w-full overflow-x-auto rounded-radius-md border border-neutral-200 bg-neutral-50">
-      <table className="w-full border-collapse text-left text-body text-neutral-800" aria-label="Case records">
+      <table
+        className="w-full border-collapse text-left text-body text-neutral-800"
+        role="grid"
+        aria-label={ariaLabel}
+        aria-rowcount={data.length}
+      >
         <thead className="border-b border-neutral-200 bg-neutral-100 text-small font-semibold text-neutral-600">
-          <tr>
+          <tr role="row">
             {columns.map((column, index) => (
               <th
                 key={index}
                 scope="col"
+                role="columnheader"
                 className="px-4 py-3 font-semibold uppercase tracking-wider"
               >
                 {column.header}
@@ -62,15 +64,18 @@ export function DataTable<T extends { id: string }>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-200">
+        <tbody className="divide-y divide-neutral-200" role="rowgroup">
           {data.map((row, rowIndex) => (
             <tr
               key={row.id}
               ref={(element) => { rowRefs.current[rowIndex] = element }}
+              role="row"
+              aria-rowindex={rowIndex + 1}
               onClick={() => onRowClick?.(row)}
               tabIndex={onRowClick ? 0 : undefined}
-              aria-current={onRowClick && selectedRowId === row.id ? 'true' : undefined}
+              aria-selected={onRowClick && selectedRowId === row.id ? 'true' : undefined}
               onFocus={() => setSelectedRowId(row.id)}
+              onBlur={() => setSelectedRowId(null)}
               onKeyDown={(event) => {
                 if (!onRowClick || event.target !== event.currentTarget) return
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -86,16 +91,17 @@ export function DataTable<T extends { id: string }>({
               }}
               className={`transition-colors duration-fast hover:bg-neutral-100/50 focus-visible:bg-neutral-100 focus-visible:outline-none ${
                 onRowClick ? 'cursor-pointer' : ''
-              }`}
+              } ${selectedRowId === row.id ? 'bg-neutral-100/30' : ''}`}
             >
               {columns.map((column, colIdx) => {
                 const cellContent = column.cell
                   ? column.cell(row)
-                  : String(getCellValue(row, column.accessorKey) ?? '')
+                  : String(resolveObjectPath(row, column.accessorKey) ?? '')
 
                 return (
                   <td
                     key={colIdx}
+                    role="gridcell"
                     className={`px-4 text-small align-middle transition-all duration-fast ${rowHeightClass}`}
                   >
                     {cellContent}

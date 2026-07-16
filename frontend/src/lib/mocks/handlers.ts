@@ -4,7 +4,8 @@ import type {
   CaseDetailResponse, 
   EscalationResponse, 
   CopilotQueryResponse,
-  DependencyResponse
+  DependencyResponse,
+  DependencyStatus
 } from '@shared/contracts/api'
 
 // In-memory mock database state

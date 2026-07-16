@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorklist } from '@/hooks/useWorklist'
 import { DataTable, type ColumnDef } from '@/components/DataTable'
@@ -9,10 +9,15 @@ import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 import { ErrorState } from '@/components/ErrorState'
+import { clockStatusToRisk } from '@/lib/utils'
 import type { CaseSummaryResponse } from '@shared/contracts/api'
 import { ShieldAlert } from 'lucide-react'
 
 const PAGE_SIZE = 15
+
+// Shared select class to avoid repetition
+const SELECT_CLASS =
+  'block w-full rounded-radius-sm border border-neutral-300 bg-neutral-50 px-3 py-1.5 text-small text-neutral-900 focus:border-status-info focus:ring-1 focus:ring-status-info'
 
 export default function Worklist() {
   const navigate = useNavigate()
@@ -24,15 +29,9 @@ export default function Worklist() {
   const [clockStatusFilter, setClockStatusFilter] = useState('all')
   const [riskFilter, setRiskFilter] = useState('all')
   const [sortBy, setSortBy] = useState('risk_rank')
-  
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
-  
-  // Keyboard Navigation State
-  const [selectedRowIndex, setSelectedRowIndex] = useState(-1)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-
 
   // Extract unique stations dynamically for filter dropdown
   const uniqueStations = useMemo(() => {
@@ -45,24 +44,14 @@ export default function Worklist() {
     if (!cases) return []
 
     return cases.filter((c) => {
-      // 1. Search Query (FIR Number or Offence Category)
-      const matchesSearch = 
+      const matchesSearch =
         c.fir_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.offence_category.toLowerCase().includes(searchQuery.toLowerCase())
 
-      // 2. Station Name Filter
       const matchesStation = stationFilter === 'all' || c.station_name === stationFilter
-
-      // 3. Clock Status Filter
       const matchesClock = clockStatusFilter === 'all' || c.clock.status === clockStatusFilter
 
-      // 4. Risk Level Filter (Mapped from clock status to avoid frontend risk calculation logic)
-      let riskLevel = 'LOW'
-      if (c.clock.status === 'red' || c.clock.status === 'overdue') {
-        riskLevel = 'HIGH'
-      } else if (c.clock.status === 'amber') {
-        riskLevel = 'MEDIUM'
-      }
+      const riskLevel = clockStatusToRisk(c.clock.status)
       const matchesRisk = riskFilter === 'all' || riskLevel === riskFilter
 
       return matchesSearch && matchesStation && matchesClock && matchesRisk
@@ -72,13 +61,10 @@ export default function Worklist() {
   // Sorting Logic
   const sortedCases = useMemo(() => {
     const list = [...filteredCases]
-    
+
     list.sort((a, b) => {
-      if (sortBy === 'risk_rank') {
-        return a.risk_rank - b.risk_rank
-      }
+      if (sortBy === 'risk_rank') return a.risk_rank - b.risk_rank
       if (sortBy === 'days_remaining') {
-        // Sort breached / overdue first, then lowest days left
         if (a.clock.status === 'overdue' && b.clock.status !== 'overdue') return -1
         if (b.clock.status === 'overdue' && a.clock.status !== 'overdue') return 1
         return a.clock.days_remaining - b.clock.days_remaining
@@ -99,43 +85,11 @@ export default function Worklist() {
     return sortedCases.slice(start, start + PAGE_SIZE)
   }, [sortedCases, currentPage])
 
-  // Keyboard Event Handlers
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only navigate if table is populated and not currently typing in search input
-      if (paginatedCases.length === 0 || document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TR') {
-        return
-      }
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setSelectedRowIndex((prev) => 
-          prev === -1 ? 0 : Math.min(prev + 1, paginatedCases.length - 1)
-        )
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelectedRowIndex((prev) => 
-          prev === -1 ? 0 : Math.max(prev - 1, 0)
-        )
-      } else if (e.key === 'Enter') {
-        if (selectedRowIndex >= 0 && selectedRowIndex < paginatedCases.length) {
-          e.preventDefault()
-          const targetCase = paginatedCases[selectedRowIndex]
-          navigate(`/case/${targetCase.id}`)
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [paginatedCases, selectedRowIndex, navigate])
-
-  // Reset focus inside container on row selection
-  useEffect(() => {
-    if (selectedRowIndex !== -1 && containerRef.current) {
-      containerRef.current.focus()
-    }
-  }, [selectedRowIndex])
+  // Reset page on filter change
+  const handleFilterChange = <T,>(setter: (value: T) => void) => (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+    setter(e.target.value as T)
+    setCurrentPage(1)
+  }
 
   // Handle Loading State
   if (isLoading) {
@@ -154,44 +108,34 @@ export default function Worklist() {
   if (error) {
     return (
       <div className="py-12">
-        <ErrorState 
-          message={error instanceof Error ? error.message : "Failed to load the active case worklist. Please verify server connectivity."}
+        <ErrorState
+          message={error instanceof Error ? error.message : 'Failed to load the active case worklist. Please verify server connectivity.'}
           onRetry={refetch}
         />
       </div>
     )
   }
 
-  // Define table columns matching Design Spec and using semantic wrappers
+  // Define table columns
   const columns: ColumnDef<CaseSummaryResponse>[] = [
     {
       header: 'Priority',
       accessorKey: 'risk_rank',
       cell: (row) => (
-        <span className="font-bold text-neutral-600 font-mono">
-          #{row.risk_rank}
-        </span>
-      )
+        <span className="font-bold text-neutral-600 font-mono">#{row.risk_rank}</span>
+      ),
     },
     {
       header: 'Risk Level',
       accessorKey: 'clock.status',
-      cell: (row) => {
-        let riskLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW'
-        if (row.clock.status === 'red' || row.clock.status === 'overdue') {
-          riskLevel = 'HIGH'
-        } else if (row.clock.status === 'amber') {
-          riskLevel = 'MEDIUM'
-        }
-        return <RiskBadge level={riskLevel} />
-      }
+      cell: (row) => <RiskBadge level={clockStatusToRisk(row.clock.status)} />,
     },
     {
       header: 'Statutory Clock',
       accessorKey: 'clock.days_remaining',
       cell: (row) => (
         <ClockBadge daysRemaining={row.clock.days_remaining} status={row.clock.status} variant="compact" />
-      )
+      ),
     },
     {
       header: 'FIR Number',
@@ -200,112 +144,96 @@ export default function Worklist() {
         <span className="font-semibold text-neutral-900 font-mono hover:text-status-info transition-colors duration-fast">
           {row.fir_number}
         </span>
-      )
+      ),
     },
     {
       header: 'Station',
-      accessorKey: 'station_name'
+      accessorKey: 'station_name',
     },
     {
       header: 'Offence Category',
-      accessorKey: 'offence_category'
+      accessorKey: 'offence_category',
     },
     {
       header: 'Blockers',
       accessorKey: 'unresolved_dependency_count',
       cell: (row) => (
-        <StatusChip 
+        <StatusChip
           status={row.unresolved_dependency_count > 0 ? 'stale' : 'healthy'}
           label={row.unresolved_dependency_count > 0 ? `${row.unresolved_dependency_count} Pending` : 'Clear'}
         />
-      )
+      ),
     },
     {
       header: 'Assigned Officer',
       accessorKey: 'id',
       cell: () => (
-        <span className="text-caption text-neutral-400 italic">
-          N/A [Schema Gap]
-        </span>
-      )
+        <span className="text-caption text-neutral-400 italic">N/A [Schema Gap]</span>
+      ),
     },
     {
       header: 'Case Status',
       accessorKey: 'unresolved_dependency_count',
       cell: (row) => (
-        <StatusChip 
+        <StatusChip
           status={row.unresolved_dependency_count > 0 ? 'pending' : 'resolved'}
           label={row.unresolved_dependency_count > 0 ? 'Under Investigation' : 'Ready to File'}
         />
-      )
+      ),
     },
     {
       header: 'Last Updated',
       accessorKey: 'id',
       cell: () => (
-        <span className="text-caption text-neutral-400 font-mono">
-          N/A [Schema Gap]
-        </span>
-      )
+        <span className="text-caption text-neutral-400 font-mono">N/A [Schema Gap]</span>
+      ),
     },
     {
       header: 'Actions',
       accessorKey: 'id',
       cell: (row) => (
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="sm"
           onClick={(e) => {
             e.stopPropagation()
             navigate(`/case/${row.id}`)
           }}
+          aria-label={`View details for case ${row.fir_number}`}
         >
           View Details
         </Button>
-      )
-    }
+      ),
+    },
   ]
 
-  // Custom cell renderer override that adds keyboard-focus highlighting
-  const customColumns = columns.map((col) => ({
-    ...col,
-    cell: (row: CaseSummaryResponse) => {
-      const isSelected = paginatedCases[selectedRowIndex]?.id === row.id
-      return (
-        <div className={`transition-all duration-fast ${isSelected ? 'font-medium text-status-info' : ''}`}>
-          {col.cell ? col.cell(row) : String((row as unknown as Record<string, unknown>)[col.accessorKey] ?? '')}
-        </div>
-      )
-    }
-  }))
-
   return (
-    <div 
-      className="space-y-6 outline-none" 
-      ref={containerRef}
-      tabIndex={0}
-      aria-label="Investigation Worklist Command Center"
-    >
+    <div className="space-y-6">
       {/* Page Title Header */}
       <div>
-        <div className="flex flex-wrap items-center gap-2"><h1 className="text-h1 font-bold text-neutral-900">Risk-Ranked Worklist</h1><span className="rounded-radius-sm border border-neutral-300 bg-neutral-100 px-2 py-1 text-caption font-semibold text-neutral-700">Synthetic Data</span></div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-h1 font-bold text-neutral-900">Risk-Ranked Worklist</h1>
+          <span className="rounded-radius-sm border border-neutral-300 bg-neutral-100 px-2 py-1 text-caption font-semibold text-neutral-700">
+            Synthetic Data
+          </span>
+        </div>
         <p className="text-body text-neutral-500">
           Statutory-deadline investigation command center for Mysuru District
         </p>
       </div>
 
       {/* Filter and Search Action Bar */}
-      <div className="flex flex-col gap-4 rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 lg:flex-row lg:items-end">
+      <div
+        className="flex flex-col gap-4 rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 lg:flex-row lg:items-end"
+        role="search"
+        aria-label="Filter and search worklist"
+      >
         {/* Search Input */}
         <div className="flex-1">
           <Input
             label="Search cases"
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
-              setCurrentPage(1)
-              setSelectedRowIndex(-1)
-            }}
+            onChange={handleFilterChange<string>(setSearchQuery)}
             placeholder="Search by FIR or category..."
             className="w-full"
           />
@@ -319,18 +247,12 @@ export default function Worklist() {
           <select
             id="station-filter"
             value={stationFilter}
-            onChange={(e) => {
-              setStationFilter(e.target.value)
-              setCurrentPage(1)
-              setSelectedRowIndex(-1)
-            }}
-            className="block w-full rounded-radius-sm border border-neutral-300 bg-neutral-50 px-3 py-1.5 text-small text-neutral-900 focus:border-status-info focus:ring-1 focus:ring-status-info"
+            onChange={handleFilterChange<string>(setStationFilter)}
+            className={SELECT_CLASS}
           >
             <option value="all">All Stations</option>
             {uniqueStations.map((station) => (
-              <option key={station} value={station}>
-                {station}
-              </option>
+              <option key={station} value={station}>{station}</option>
             ))}
           </select>
         </div>
@@ -343,12 +265,8 @@ export default function Worklist() {
           <select
             id="clock-filter"
             value={clockStatusFilter}
-            onChange={(e) => {
-              setClockStatusFilter(e.target.value)
-              setCurrentPage(1)
-              setSelectedRowIndex(-1)
-            }}
-            className="block w-full rounded-radius-sm border border-neutral-300 bg-neutral-50 px-3 py-1.5 text-small text-neutral-900 focus:border-status-info focus:ring-1 focus:ring-status-info"
+            onChange={handleFilterChange<string>(setClockStatusFilter)}
+            className={SELECT_CLASS}
           >
             <option value="all">All Clocks</option>
             <option value="green">Healthy (Green)</option>
@@ -366,12 +284,8 @@ export default function Worklist() {
           <select
             id="risk-filter"
             value={riskFilter}
-            onChange={(e) => {
-              setRiskFilter(e.target.value)
-              setCurrentPage(1)
-              setSelectedRowIndex(-1)
-            }}
-            className="block w-full rounded-radius-sm border border-neutral-300 bg-neutral-50 px-3 py-1.5 text-small text-neutral-900 focus:border-status-info focus:ring-1 focus:ring-status-info"
+            onChange={handleFilterChange<string>(setRiskFilter)}
+            className={SELECT_CLASS}
           >
             <option value="all">All Risks</option>
             <option value="HIGH">High Risk</option>
@@ -388,12 +302,8 @@ export default function Worklist() {
           <select
             id="sort-by"
             value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value)
-              setCurrentPage(1)
-              setSelectedRowIndex(-1)
-            }}
-            className="block w-full rounded-radius-sm border border-neutral-300 bg-neutral-50 px-3 py-1.5 text-small text-neutral-900 focus:border-status-info focus:ring-1 focus:ring-status-info"
+            onChange={handleFilterChange<string>(setSortBy)}
+            className={SELECT_CLASS}
           >
             <option value="risk_rank">Risk Rank (Urgent First)</option>
             <option value="days_remaining">Days Left (Fewest First)</option>
@@ -405,44 +315,66 @@ export default function Worklist() {
       {/* Main Table Area */}
       <div className="space-y-4">
         {paginatedCases.length === 0 ? (
-          <div className="py-12 border border-dashed border-neutral-300 rounded-radius-md bg-neutral-50 text-center">
-            <ShieldAlert className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
+          <div
+            className="py-12 border border-dashed border-neutral-300 rounded-radius-md bg-neutral-50 text-center"
+            role="status"
+            aria-live="polite"
+          >
+            <ShieldAlert className="mx-auto h-12 w-12 text-neutral-400 mb-4" aria-hidden="true" />
             <h3 className="text-h2 font-semibold text-neutral-700">No cases match filters</h3>
             <p className="text-body text-neutral-500 mt-1 mb-6">
               Adjust search query or filter parameters to locate the active case files.
             </p>
-            <Button variant="secondary" onClick={() => {
-              setSearchQuery('')
-              setStationFilter('all')
-              setClockStatusFilter('all')
-              setRiskFilter('all')
-              setSortBy('risk_rank')
-            }}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setSearchQuery('')
+                setStationFilter('all')
+                setClockStatusFilter('all')
+                setRiskFilter('all')
+                setSortBy('risk_rank')
+                setCurrentPage(1)
+              }}
+            >
               Clear Filters
             </Button>
           </div>
         ) : (
           <div className="relative">
+            {/* Keyboard shortcut hint for sighted users */}
+            <div className="hidden lg:flex justify-end mb-1">
+              <p className="text-caption text-neutral-400 italic">
+                Use{' '}
+                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">↑</kbd>{' '}
+                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">↓</kbd>{' '}
+                to navigate,{' '}
+                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">Enter</kbd>{' '}
+                to open — or press{' '}
+                <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">?</kbd>{' '}
+                for all shortcuts
+              </p>
+            </div>
             <DataTable
-              columns={customColumns}
+              columns={columns}
               data={paginatedCases}
               isLoading={false}
               onRowClick={(row) => navigate(`/case/${row.id}`)}
+              ariaLabel={`Investigation worklist — ${paginatedCases.length} cases, page ${currentPage} of ${totalPages}`}
             />
-            {/* Keyboard shortcut hint */}
-            <div className="hidden lg:block text-caption text-neutral-400 mt-2 italic text-right">
-              Use <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">↑</kbd> <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">↓</kbd> keys to navigate, <kbd className="bg-neutral-200 px-1 rounded-radius-sm text-neutral-600 font-mono">Enter</kbd> to open.
-            </div>
           </div>
         )}
       </div>
 
       {/* Pagination Bar */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
-          <div className="text-small text-neutral-500">
-            Showing page <span className="font-bold text-neutral-800">{currentPage}</span> of{' '}
-            <span className="font-bold text-neutral-800">{totalPages}</span> ({sortedCases.length} total cases)
+        <nav
+          className="flex items-center justify-between border-t border-neutral-200 pt-4"
+          aria-label="Worklist pagination"
+        >
+          <div className="text-small text-neutral-500" aria-live="polite" aria-atomic="true">
+            Page <span className="font-bold text-neutral-800">{currentPage}</span> of{' '}
+            <span className="font-bold text-neutral-800">{totalPages}</span>{' '}
+            ({sortedCases.length} total cases)
           </div>
           <div className="flex space-x-2">
             <Button
@@ -450,6 +382,7 @@ export default function Worklist() {
               size="sm"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              aria-label="Previous page"
             >
               Previous
             </Button>
@@ -458,11 +391,12 @@ export default function Worklist() {
               size="sm"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              aria-label="Next page"
             >
               Next
             </Button>
           </div>
-        </div>
+        </nav>
       )}
     </div>
   )
