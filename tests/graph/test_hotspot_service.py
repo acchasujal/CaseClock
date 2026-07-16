@@ -185,3 +185,30 @@ def test_empty_graph():
     assert result["dependency"]["alert_level"] == "green"
     assert result["workload"]["alert_level"] == "green"
     assert result["network"]["alert_level"] == "green"
+
+def test_get_district_hotspots():
+    case1 = make_case(district="Bengaluru")
+    case2 = make_case(district="Mysuru")
+
+    store = make_store(
+        [case1, case2],
+        [],
+    )
+
+    service = HotspotService(GraphRepository(store))
+
+    result = service.get_district_hotspots("Bengaluru")
+
+    assert result["district"] == "Bengaluru"
+
+    assert "temporal_spikes" in result
+    assert "dependency_hotspots" in result
+    assert "alert_summary" in result
+
+    assert isinstance(result["temporal_spikes"], list)
+    assert isinstance(result["dependency_hotspots"], list)
+
+    assert result["alert_summary"]["temporal"] == len(result["temporal_spikes"])
+    assert result["alert_summary"]["dependency"] == len(
+        result["dependency_hotspots"]
+    )

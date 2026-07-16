@@ -16,6 +16,7 @@ from backend.app.core.graph.algorithms.pattern_detection import (
     detect_repeat_address,
     detect_high_workload_officers,
     detect_dependency_hotspots,
+    detect_district_hotspots,
     detect_temporal_hotspots,
 )
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
@@ -50,11 +51,28 @@ class HotspotService:
             "dependency": self.get_dependency_hotspots(),
             "workload": self.get_workload_hotspots(),
             "network": self.get_network_hotspots(),
+            "district": self.get_district_crime_hotspots(),
         }
 
     # ═══════════════════════════════════════════════════════════════════════
     # INDIVIDUAL HOTSPOT CATEGORIES
     # ═══════════════════════════════════════════════════════════════════════
+
+    def get_district_crime_hotspots(self, min_cases: int = 50) -> dict[str, Any]:
+        """
+        Districts with a disproportionately high case count.
+
+        Used by: Map layer / District drill-down → "Crime Hotspot" heat overlay
+        """
+        store = self._repo.store
+        hotspots = detect_district_hotspots(store, min_cases=min_cases)
+
+        return {
+            "category": "district",
+            "alert_level": "red" if len(hotspots) > 5 else "amber" if hotspots else "green",
+            "hotspots": [serialize_dataclass(h) for h in hotspots],
+            "hotspot_count": len(hotspots),
+        }
 
     def get_temporal_hotspots(self, min_cases: int = 3) -> dict[str, Any]:
         """
