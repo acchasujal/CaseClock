@@ -132,6 +132,61 @@ class GraphService:
             "co_accused_count": len(co_accused_map),
         }
 
+    def find_paths_between(self, source_id: str, target_id: str, max_depth: int = 4) -> dict[str, Any]:
+        """
+        Find one shortest path between two graph nodes using bidirectional edge traversal.
+
+        This backs the graph router's /paths endpoint. It returns a small JSON
+        payload instead of raw graph internals so route callers get a stable shape.
+        """
+        store = self._repo.store
+        if source_id not in store.nodes or target_id not in store.nodes:
+            return {
+                "source_id": source_id,
+                "target_id": target_id,
+                "path_found": False,
+                "nodes": [],
+                "edges": [],
+            }
+
+        queue: list[tuple[str, list[str], list[Any]]] = [(source_id, [source_id], [])]
+        visited: set[str] = {source_id}
+
+        while queue:
+            current_id, path_ids, path_edges = queue.pop(0)
+            if len(path_ids) - 1 >= max_depth:
+                continue
+
+            incident_edges = [
+                *store.adj.get(current_id, []),
+                *store.radj.get(current_id, []),
+            ]
+            for edge in incident_edges:
+                next_id = edge.target_id if edge.source_id == current_id else edge.source_id
+                if next_id in visited:
+                    continue
+                next_path_ids = [*path_ids, next_id]
+                next_path_edges = [*path_edges, edge]
+                if next_id == target_id:
+                    return {
+                        "source_id": source_id,
+                        "target_id": target_id,
+                        "path_found": True,
+                        "depth": len(next_path_ids) - 1,
+                        "nodes": [serialize_node(store.nodes[node_id]) for node_id in next_path_ids],
+                        "edges": [serialize_edge(path_edge) for path_edge in next_path_edges],
+                    }
+                visited.add(next_id)
+                queue.append((next_id, next_path_ids, next_path_edges))
+
+        return {
+            "source_id": source_id,
+            "target_id": target_id,
+            "path_found": False,
+            "nodes": [],
+            "edges": [],
+        }
+
     
 
     # ═══════════════════════════════════════════════════════════════════════

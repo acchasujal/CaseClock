@@ -30,13 +30,15 @@ export async function apiFetch<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+  const url = path.startsWith('http') ? path : `${baseUrl}${path}`
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     // Future: Authorization: `Bearer ${getToken()}`
     ...(options?.headers as Record<string, string> | undefined),
   }
 
-  const response = await fetch(path, {
+  const response = await fetch(url, {
     ...options,
     headers,
   })

@@ -28,12 +28,14 @@ jobs:
         run: pip install -r backend/requirements.txt
 
       - name: Run all tests before deploy
-        run: python -m pytest backend/tests/ graph/tests/ ai/tests/ -v --tb=short
+        run: python -m pytest -v --tb=short
 
       - name: Install frontend deps and build
         run: |
           cd frontend
           npm ci
+          npm run lint
+          npm run test:run
           npm run build
 
       # Catalyst deploy steps — fill in actual Catalyst CLI commands once M1 spike is complete

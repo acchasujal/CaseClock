@@ -5,7 +5,7 @@ import './styles/index.css'
 
 async function enableMocking() {
   // Only run MSW in non-production mode
-  if (import.meta.env.PROD) {
+  if (import.meta.env.PROD || import.meta.env.VITE_ENABLE_MOCKS === 'false') {
     return
   }
   
