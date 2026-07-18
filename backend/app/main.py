@@ -2,20 +2,27 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.core_routes import create_core_router
 from backend.app.api.graph_routes import create_graph_router
+from backend.app.db.catalyst import CatalystBackendRepository
 from backend.app.db.in_memory import InMemoryBackendRepository
 
 
-def create_app(repository: InMemoryBackendRepository | None = None) -> FastAPI:
-    repository = repository or InMemoryBackendRepository(
-        state_path=Path("artifacts/runtime_state/backend_state.json")
-    )
+def create_repository() -> Any:
+    if os.getenv("CASECLOCK_REPOSITORY", "local").lower() == "catalyst":
+        return CatalystBackendRepository()
+    return InMemoryBackendRepository(state_path=Path("artifacts/runtime_state/backend_state.json"))
+
+
+def create_app(repository: Any | None = None) -> FastAPI:
+    repository = repository or create_repository()
     app = FastAPI(
         title="CaseClock Backend",
         version="0.1.0",

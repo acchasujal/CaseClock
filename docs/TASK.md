@@ -12,7 +12,7 @@ The project is organized around four engineering lanes, not developer headcount 
 
 | Lane                                             | Owner focus                                                                                              | Current status                           |
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Lane 1 — Backend Core                            | Clock/Dependency/Escalation engines, DB, Auth, APIs                                                      | IN PROGRESS (FastAPI + in-memory backend APIs working) |
+| Lane 1 — Backend Core                            | Clock/Dependency/Escalation engines, DB, Auth, APIs                                                      | IN PROGRESS (FastAPI APIs + Catalyst Data Store adapter working in tests) |
 | Lane 2 — Frontend                                | React app, all screens                                                                                   | IN PROGRESS (React shell builds; still mock-first by default) |
 | Lane 3 — Graph Intelligence                      | Aggregation, Similarity, Pattern/Risk/Forecasting (rule-based only, per D5)                              | GRAPH FOUNDATION REVIEW COMPLETE         |
 | Lane 4 — AI + Architecture + Integration (Sujal) | Copilot, refusal gate, synthetic data, API contracts, Catalyst deployment, CI/CD, cross-lane integration | IN PROGRESS (Bootstrap + Ops Setup done) |
@@ -39,9 +39,9 @@ See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at th
 | Repository scaffold                 | DONE (Bootstrap complete, files structured)                         |
 | Catalyst capability verification    | DONE (QuickML, AppSail, Slate, SmartBrowz verified; Zia Speech unavailable — see spikes and D14) |
 | Graph schema & algorithms           | DONE (Foundation models, 134 analytical/traversal tests, and deterministic Entity Resolution module integrated and verified with 142 passing tests) |
-| Legal Clock Engine                  | IN PROGRESS (Deterministic engine implemented and API-tested against synthetic data; Catalyst persistence pending) |
-| Dependency Tracker                  | IN PROGRESS (Dependency normalization/update API implemented with in-memory adapter; Catalyst persistence pending) |
-| Escalation Rule Engine              | IN PROGRESS (Rule-based escalation generation implemented and API-tested; Catalyst persistence/audit log pending) |
+| Legal Clock Engine                  | IN PROGRESS (Deterministic engine implemented and API-tested against synthetic and Catalyst-shaped data; BNSS section verification pending) |
+| Dependency Tracker                  | IN PROGRESS (Dependency normalization/update API implemented with in-memory and Catalyst Data Store adapters; live SDK auth verification pending) |
+| Escalation Rule Engine              | IN PROGRESS (Rule-based escalation generation implemented; Catalyst escalation/audit write adapter added and fake-SDK tested) |
 | Synthetic data generator            | DONE (synthetic_data module generates and exports JSON/CSV)         |
 | Conversational layer + refusal gate | NOT STARTED (Integration blocked by Catalyst, core logic unblocked) |
 | Refusal-gate test set execution     | NOT STARTED                                                         |
@@ -61,4 +61,8 @@ See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at th
 - Fixed graph route integration by adding `GraphService.find_paths_between`.
 - Fixed CI/release workflows so tests and builds fail the workflow instead of being ignored.
 - Added focused backend API and clock-engine tests.
-- Verification: `python -m pytest -v --tb=short` passes with 179 tests; `npm ci`, `npm run test:run`, and `npm run build` pass in `frontend/`.
+- Imported Catalyst Data Store seed data in development: `cases` (500), `clock_instances` (667), `dependencies` (150), `graph_nodes` (3554), and `graph_edges` (5000 development-limit rows), all with zero import failures.
+- Added `CatalystBackendRepository` at `backend/app/db/catalyst.py` to load Catalyst Data Store rows into the same backend API shape, update dependency status, and persist audit/escalation rows where Catalyst writes are available.
+- Added `CASECLOCK_REPOSITORY=local|catalyst` backend switch and documented SDK env placeholders in `configs/.env.example`.
+- Added fake-SDK Catalyst repository tests so CI verifies the adapter without live Catalyst credentials.
+- Verification: `python -m pytest -q` passes with 181 tests; touched-file ruff passes. Full repository ruff still reports pre-existing lint issues in older graph tests.

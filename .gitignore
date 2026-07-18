@@ -53,3 +53,9 @@ Thumbs.db
 tests/scale/results/*.json
 ai/tests/refusal_testset/results/*.json
 artifacts/runtime_state/
+artifacts/catalyst_import/
+artifacts/catalyst_import_ready/
+artifacts/catalyst_import_retry/
+artifacts/catalyst_import_upload/
+Import_*.zip
+import_report_*/
