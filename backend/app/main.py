@@ -9,8 +9,16 @@ Wires together:
 
 from __future__ import annotations
 
-import logging
+import sys
 from pathlib import Path
+
+# Add project root to sys.path to allow absolute 'backend' imports
+# when running uvicorn from the backend directory
+root_dir = Path(__file__).resolve().parents[2]
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
+
+import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

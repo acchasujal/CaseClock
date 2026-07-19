@@ -20,6 +20,7 @@ from shared.contracts.api import (
     CaseDetailResponse,
     CaseSummaryResponse,
     ClockInstanceResponse,
+    ClockStatus,
     CopilotQueryResponse,
     DependencyResponse,
     DependencyStatus,
@@ -204,6 +205,64 @@ class InMemoryBackendRepository:
             key=lambda item: (item.resolved, item.triggered_at),
             reverse=True,
         )
+
+    def get_district_rollup(self, district: str) -> dict[str, Any]:
+        district_normalized = district.strip().lower()
+        district_case_ids = []
+        for case_id in self.case_ids:
+            case_node = self.nodes.get(case_id)
+            if case_node and case_node.get("district", "").strip().lower() == district_normalized:
+                district_case_ids.append(case_id)
+                
+        total_cases = len(district_case_ids)
+        red_clocks = 0
+        amber_clocks = 0
+        stale_dependencies = 0
+        
+        station_data: dict[str, dict[str, int]] = {}
+        
+        for case_id in district_case_ids:
+            case_node = self.nodes[case_id]
+            station_name = str(case_node.get("police_station", "Unknown station"))
+            station_entry = station_data.setdefault(station_name, {"total": 0, "critical": 0})
+            station_entry["total"] += 1
+            
+            clocks = self._case_clocks(case_id, case_node)
+            is_case_critical = False
+            for clock in clocks:
+                if clock.status == ClockStatus.RED:
+                    red_clocks += 1
+                    is_case_critical = True
+                elif clock.status == ClockStatus.OVERDUE:
+                    is_case_critical = True
+                elif clock.status == ClockStatus.AMBER:
+                    amber_clocks += 1
+            
+            dependencies = self._case_dependencies(case_id)
+            for dep in dependencies:
+                if dep.status != DependencyStatus.RESOLVED and dep.days_stale > 0:
+                    stale_dependencies += 1
+                    
+            if is_case_critical:
+                station_entry["critical"] += 1
+                
+        station_rankings = [
+            {
+                "station_name": name,
+                "total": stats["total"],
+                "critical": stats["critical"],
+            }
+            for name, stats in station_data.items()
+        ]
+        station_rankings.sort(key=lambda s: (-s["critical"], -s["total"], s["station_name"]))
+        
+        return {
+            "total_cases": total_cases,
+            "red_clocks": red_clocks,
+            "amber_clocks": amber_clocks,
+            "stale_dependencies": stale_dependencies,
+            "station_rankings": station_rankings,
+        }
 
     def case_network(self, case_id: str) -> dict[str, Any] | None:
         if case_id not in self.nodes:

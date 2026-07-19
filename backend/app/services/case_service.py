@@ -156,3 +156,19 @@ class CaseService:
             request_id=request_id,
         )
         return result
+
+    def get_district_rollup(
+        self,
+        district: str,
+        principal: Principal,
+        request_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Return the exception-only operational overview of police stations in a district."""
+        result = self._repo.get_district_rollup(district)
+        self._audit.record(
+            AuditEventType.WORKLIST_VIEWED,
+            actor_id=principal.user_id,
+            district=district,
+            request_id=request_id,
+        )
+        return result

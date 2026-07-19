@@ -62,6 +62,62 @@ export default function Patterns() {
     }
   }, [cases, escalations])
 
+  // 1b. Enhanced Derived Stats for KPI Card contexts and Recommendation Panel
+  const derivedStats = useMemo(() => {
+    if (!cases || !escalations) return null
+
+    const overdueByStation: Record<string, number> = {}
+    const redByStation: Record<string, number> = {}
+    const blockedByStation: Record<string, number> = {}
+    
+    cases.forEach(c => {
+      if (c.clock.status === 'overdue') {
+        overdueByStation[c.station_name] = (overdueByStation[c.station_name] || 0) + 1
+      }
+      if (c.clock.status === 'red') {
+        redByStation[c.station_name] = (redByStation[c.station_name] || 0) + 1
+      }
+      if (c.unresolved_dependency_count > 0) {
+        blockedByStation[c.station_name] = (blockedByStation[c.station_name] || 0) + c.unresolved_dependency_count
+      }
+    })
+
+    const topBreachedStation = Object.entries(overdueByStation).reduce((a, b) => a[1] > b[1] ? a : b, ['None', 0])[0]
+    const topRedStation = Object.entries(redByStation).reduce((a, b) => a[1] > b[1] ? a : b, ['None', 0])[0]
+    const topBlockedStation = Object.entries(blockedByStation).reduce((a, b) => a[1] > b[1] ? a : b, ['None', 0])[0]
+
+    const escalatedByStation: Record<string, number> = {}
+    escalations.forEach(esc => {
+      if (!esc.resolved) {
+        const matchedCase = cases.find(c => c.id === esc.case_id)
+        if (matchedCase) {
+          escalatedByStation[matchedCase.station_name] = (escalatedByStation[matchedCase.station_name] || 0) + 1
+        }
+      }
+    })
+    const topEscalatedStation = Object.entries(escalatedByStation).reduce((a, b) => a[1] > b[1] ? a : b, ['None', 0])[0]
+
+    // Determine top violation station for supervisory recommendation
+    const stationViolations: Record<string, number> = {}
+    cases.forEach(c => {
+      if (c.clock.status === 'red' || c.clock.status === 'overdue') {
+        stationViolations[c.station_name] = (stationViolations[c.station_name] || 0) + 1
+      }
+    })
+    const topViolationStationEntry = Object.entries(stationViolations).reduce((a, b) => a[1] > b[1] ? a : b, ['None', 0])
+    const recommendationStation = topViolationStationEntry[0]
+    const recommendationCount = topViolationStationEntry[1]
+
+    return {
+      topBreachedStation,
+      topRedStation,
+      topBlockedStation,
+      topEscalatedStation,
+      recommendationStation,
+      recommendationCount
+    }
+  }, [cases, escalations])
+
   // 2. Clock Health Distributions
   const clockHealthData = useMemo(() => {
     if (!cases) return []
@@ -240,44 +296,68 @@ export default function Patterns() {
   }
 
   return (
-    <div className="space-y-8 outline-none" tabIndex={0} aria-label="Patterns and Analytics Dashboard">
+    <div className="space-y-6 outline-none" tabIndex={0} aria-label="Patterns and Analytics Dashboard">
       {/* Title Block */}
-      <div>
-        <h1 className="text-h1 font-bold text-neutral-900">Patterns & Analytics</h1>
-        <p className="text-body text-neutral-500">
-          Executive operational intelligence dashboard for district investigation control
-        </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-neutral-200 pb-4">
+        <div>
+          <h1 className="text-h1 font-bold text-neutral-900">Patterns &amp; Analytics</h1>
+          <p className="text-body text-neutral-500">
+            Executive operational intelligence dashboard for district investigation control
+          </p>
+        </div>
       </div>
 
-      {/* KPI Cards Row */}
-      {kpiData && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
-          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
-            <div className="text-caption font-semibold text-neutral-500 uppercase">Total Active Cases</div>
-            <div className="text-h1 font-bold text-neutral-800 mt-1 font-mono">{kpiData.totalActive}</div>
+      {/* Deterministic Operational Recommendations Panel */}
+      {derivedStats && derivedStats.recommendationStation !== 'None' && (
+        <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-status-danger shrink-0 mt-0.5" />
+          <div className="text-small text-neutral-800">
+            <span className="font-bold text-neutral-900">Operational Recommendation:</span>{' '}
+            Station <span className="font-bold">{derivedStats.recommendationStation}</span> registers{' '}
+            <span className="font-bold text-status-danger">{derivedStats.recommendationCount}</span> critical statutory violations (Red/Overdue clocks). Immediate supervisory review and blocker resolution are recommended.
           </div>
-          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
-            <div className="text-caption font-semibold text-status-warning uppercase">Escalations</div>
-            <div className="text-h1 font-bold text-status-warning mt-1 font-mono">{kpiData.totalEscalations}</div>
+        </div>
+      )}
+
+      {/* KPI Cards Row (Stripe/Linear style) */}
+      {kpiData && derivedStats && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
+            <div className="text-caption font-semibold text-neutral-500 uppercase tracking-wide">Total Active Cases</div>
+            <div className="text-h1 font-bold text-neutral-800 mt-2 font-mono">{kpiData.totalActive}</div>
+            <div className="mt-2 text-caption text-neutral-400">Active criminal investigations</div>
           </div>
-          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
-            <div className="text-caption font-semibold text-status-danger uppercase">Statutory Breaches</div>
-            <div className="text-h1 font-bold text-status-danger mt-1 font-mono">{kpiData.breaches}</div>
-          </div>
-          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
-            <div className="text-caption font-semibold text-status-danger uppercase font-bold">High Risk Clocks</div>
-            <div className="text-h1 font-bold text-status-danger mt-1 font-mono">{kpiData.highRisk}</div>
-          </div>
-          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
-            <div className="text-caption font-semibold text-status-info uppercase">Active Dependencies</div>
-            <div className="text-h1 font-bold text-status-info mt-1 font-mono">{kpiData.activeDependencies}</div>
-          </div>
-          <div className="rounded-radius-md border border-neutral-200 bg-neutral-100 p-4 shadow-sm relative flex flex-col justify-between">
-            <div>
-              <div className="text-caption font-semibold text-neutral-400 uppercase">Avg Resolution</div>
-              <div className="text-small font-semibold text-neutral-500 mt-2 leading-tight">Unavailable in current prototype</div>
+          
+          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
+            <div className="text-caption font-semibold text-status-warning uppercase tracking-wide">Escalated Cases</div>
+            <div className="text-h1 font-bold text-status-warning mt-2 font-mono">{kpiData.totalEscalations}</div>
+            <div className="mt-2 text-caption text-neutral-500 truncate">
+              Top: <span className="font-semibold text-neutral-700">{derivedStats.topEscalatedStation}</span>
             </div>
-            <div className="text-caption text-neutral-400 italic mt-1">Requires CaseDetail schema</div>
+          </div>
+
+          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
+            <div className="text-caption font-semibold text-status-danger uppercase tracking-wide">Statutory Breaches</div>
+            <div className="text-h1 font-bold text-status-danger mt-2 font-mono">{kpiData.breaches}</div>
+            <div className="mt-2 text-caption text-neutral-500 truncate">
+              Highest: <span className="font-semibold text-neutral-700">{derivedStats.topBreachedStation}</span>
+            </div>
+          </div>
+
+          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
+            <div className="text-caption font-semibold text-status-danger uppercase tracking-wide font-bold">High Risk Clocks</div>
+            <div className="text-h1 font-bold text-status-danger mt-2 font-mono">{kpiData.highRisk}</div>
+            <div className="mt-2 text-caption text-neutral-500 truncate">
+              Highest: <span className="font-semibold text-neutral-700">{derivedStats.topRedStation}</span>
+            </div>
+          </div>
+
+          <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-xs">
+            <div className="text-caption font-semibold text-status-info uppercase tracking-wide">Active Dependencies</div>
+            <div className="text-h1 font-bold text-status-info mt-2 font-mono">{kpiData.activeDependencies}</div>
+            <div className="mt-2 text-caption text-neutral-500 truncate">
+              Highest: <span className="font-semibold text-neutral-700">{derivedStats.topBlockedStation}</span>
+            </div>
           </div>
         </div>
       )}
@@ -370,8 +450,8 @@ export default function Patterns() {
           </div>
           <div className="mt-6 p-4 border border-dashed border-neutral-300 rounded-radius-sm bg-neutral-50 text-center">
             <AlertCircle className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
-            <p className="text-caption font-semibold text-neutral-500">Unavailable in current prototype</p>
-            <p className="text-caption text-neutral-400 mt-1">Requires Officer schema integration</p>
+            <p className="text-caption font-semibold text-neutral-500">Awaiting continuous event capture</p>
+            <p className="text-caption text-neutral-400 mt-1">Operational analytics require historical investigation history</p>
           </div>
         </div>
 
@@ -385,8 +465,8 @@ export default function Patterns() {
           </div>
           <div className="mt-6 p-4 border border-dashed border-neutral-300 rounded-radius-sm bg-neutral-50 text-center">
             <AlertCircle className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
-            <p className="text-caption font-semibold text-neutral-500">Unavailable in current prototype</p>
-            <p className="text-caption text-neutral-400 mt-1">Requires CaseDetail aggregation</p>
+            <p className="text-caption font-semibold text-neutral-500">Awaiting continuous case detail synchronization</p>
+            <p className="text-caption text-neutral-400 mt-1">Evidence trails become available after audit capture</p>
           </div>
         </div>
 

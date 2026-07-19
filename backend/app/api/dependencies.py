@@ -21,6 +21,9 @@ from backend.app.auth.principal import Principal
 from backend.app.auth.verifier import make_verifier
 from backend.app.config import Settings, get_settings
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.services.audit_service import AuditService
+from backend.app.services.case_service import CaseService
+from backend.app.services.copilot_service import CopilotService
 
 
 def get_settings_dep() -> Settings:
@@ -67,3 +70,26 @@ def get_request_id(request: Request) -> str:
         request_id: str = Depends(get_request_id)
     """
     return getattr(request.state, "request_id", "unknown")
+
+
+def get_audit_service(
+    repo: InMemoryBackendRepository = Depends(get_repository)
+) -> AuditService:
+    """Provide AuditService instance."""
+    return AuditService(repo)
+
+
+def get_case_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> CaseService:
+    """Provide CaseService instance."""
+    return CaseService(repo, audit_svc)
+
+
+def get_copilot_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> CopilotService:
+    """Provide CopilotService instance."""
+    return CopilotService(repo, audit_svc)

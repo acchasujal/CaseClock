@@ -75,7 +75,7 @@ export default function Login() {
 
         {/* Footer */}
         <div className="text-caption text-neutral-500">
-          Karnataka State Police Datathon 2026. DPDP Compliant (Synthetic Data Demo).
+          Karnataka State Police Datathon 2026. DPDP Compliant (Synthetic Data).
         </div>
       </div>
     </div>

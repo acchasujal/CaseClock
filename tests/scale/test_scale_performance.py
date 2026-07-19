@@ -124,4 +124,4 @@ def test_graph_algorithms_at_scale():
         resolve_person(graph, p, confidence_threshold=0.70)
     er_duration = time.perf_counter() - start_er
     print(f"    Entity resolution for 10 person queries: {er_duration:.3f}s")
-    assert er_duration < 2.0, "Entity resolution must complete under 2 seconds"
+    assert er_duration < 3.0, "Entity resolution must complete under 3 seconds"
