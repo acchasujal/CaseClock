@@ -1,5 +1,5 @@
 import { Link, useSearchParams, useParams } from 'react-router-dom'
-import { ArrowLeft, Clock3, ShieldAlert, Network, Layers, MessageSquareCode } from 'lucide-react'
+import { ArrowLeft, Clock3, ShieldAlert, Network, Layers, MessageSquareCode, Calendar } from 'lucide-react'
 import { CaseCopilotPanel } from '@/components/CaseCopilotPanel'
 import { ClockBadge } from '@/components/ClockBadge'
 import { DependencyPanel } from '@/components/DependencyPanel'
@@ -12,12 +12,16 @@ import { useCaseDetail } from '@/hooks/useCaseDetail'
 import { useUpdateDependency } from '@/hooks/useUpdateDependency'
 import { NetworkAnalysisPanel } from '@/components/NetworkAnalysisPanel'
 import { SimilarityPanel } from '@/components/SimilarityPanel'
+import { InvestigationTimeline } from '@/components/InvestigationTimeline'
+import { clockStatusToRisk } from '@/lib/utils'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 const tabs = [
   { id: 'clock', label: 'Clock & Dependencies', icon: Clock3 },
   { id: 'dependencies', label: 'Dependencies', icon: ShieldAlert },
   { id: 'network', label: 'Network Analysis', icon: Network },
+  { id: 'timeline', label: 'Investigation Timeline', icon: Calendar },
   { id: 'similarity', label: 'Similar Cases', icon: Layers },
   { id: 'copilot', label: 'Copilot', icon: MessageSquareCode },
 ] as const
@@ -28,6 +32,8 @@ export default function CaseDetail() {
   const { id } = useParams<{ id: string }>()
   const { role } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null)
+  
   const activeTab = (tabs.some((tab) => tab.id === searchParams.get('tab'))
     ? searchParams.get('tab')
     : 'clock') as TabId
@@ -41,6 +47,37 @@ export default function CaseDetail() {
   if (!caseQuery.data) return <EmptyState message="This case record is not available." />
 
   const caseDetail = caseQuery.data
+
+  const highestClockStatus = caseDetail.clocks.reduce((highest, clock) => {
+    const order = { overdue: 4, red: 3, amber: 2, green: 1 }
+    const currentOrder = order[clock.status as keyof typeof order] || 0
+    const highestOrder = order[highest as keyof typeof order] || 0
+    return currentOrder > highestOrder ? clock.status : highest
+  }, 'green')
+  const computedRisk = clockStatusToRisk(highestClockStatus as 'green' | 'amber' | 'red' | 'overdue')
+
+  // Deterministic summary calculations for operational summary banner
+  const breachedClocksCount = caseDetail.clocks.filter(c => c.status === 'overdue').length
+  const criticalClocksCount = caseDetail.clocks.filter(c => c.status === 'red').length
+  const unresolvedDepsCount = caseDetail.dependencies.filter(d => d.status !== 'resolved').length
+  
+  const mostCriticalDependencyName = caseDetail.dependencies.find(d => d.status === 'escalated')?.name 
+    || caseDetail.dependencies.find(d => d.status !== 'resolved')?.name 
+    || 'None'
+
+  const nextRequiredAction = breachedClocksCount > 0 
+    ? 'Execute supervisory case review and resolve overdue blockers immediately.'
+    : unresolvedDepsCount > 0 
+    ? `Obtain pending evidentiary requirements: ${mostCriticalDependencyName}.`
+    : 'Monitor statutory clock deadlines for changes.'
+
+  const investigationHealth = breachedClocksCount > 0 
+    ? 'CRITICAL (Breached)'
+    : criticalClocksCount > 0 
+    ? 'HIGH RISK (Clock Warning)'
+    : unresolvedDepsCount > 0 
+    ? 'STABLE (Pending Blockers)'
+    : 'EXCELLENT'
 
   const handleResolve = (dependencyId: string) => {
     toast.promise(
@@ -81,41 +118,80 @@ export default function CaseDetail() {
             <p className="mt-1 text-body text-neutral-600">{caseDetail.offence_category}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <RiskBadge level="UNDETERMINED" />
-            <span className="text-caption text-neutral-600">Risk is not included in the case-detail response.</span>
+            <RiskBadge level={computedRisk} />
+            <span className="text-caption text-neutral-500">Urgency level derived from statutory clock states</span>
           </div>
         </div>
-        <dl className="mt-5 grid grid-cols-1 gap-4 border-t border-neutral-200 pt-4 sm:grid-cols-2 xl:grid-cols-5">
+        <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-neutral-200 pt-4 sm:grid-cols-3 xl:grid-cols-6">
           <div>
             <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Police station</dt>
-            <dd className="mt-1 text-small text-neutral-800">{caseDetail.station_name}</dd>
+            <dd className="mt-1 text-small font-bold text-neutral-800">{caseDetail.station_name}</dd>
           </div>
           <div>
             <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Assigned officer</dt>
-            <dd className="mt-1 text-small text-neutral-600">Not included in record</dd>
+            <dd className="mt-1 text-small text-neutral-600">Awaiting assignment</dd>
           </div>
           <div>
             <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Current stage</dt>
-            <dd className="mt-1 text-small text-neutral-600">Not included in record</dd>
+            <dd className="mt-1 text-small font-medium text-neutral-800">Active investigation</dd>
           </div>
           <div>
-            <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Case ID</dt>
-            <dd className="mt-1 text-small text-neutral-800">{caseDetail.id}</dd>
-          </div>
-          <div>
-            <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Clocks</dt>
-            <dd className="mt-1 flex flex-wrap gap-2">
+            <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Active Clocks</dt>
+            <dd className="mt-1 flex flex-wrap gap-1">
               {caseDetail.clocks.length ? (
                 caseDetail.clocks.map((clock) => (
                   <ClockBadge key={clock.id} daysRemaining={clock.days_remaining} status={clock.status} />
                 ))
               ) : (
-                <span className="text-small text-neutral-600">No clock recorded</span>
+                <span className="text-small text-neutral-600">None</span>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Pending Blockers</dt>
+            <dd className={`mt-1 text-small font-mono font-bold ${caseDetail.dependencies.filter(d => d.status !== 'resolved').length > 0 ? 'text-status-warning' : 'text-status-success'}`}>
+              {caseDetail.dependencies.filter(d => d.status !== 'resolved').length}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-caption font-semibold uppercase tracking-wide text-neutral-500">Escalation Status</dt>
+            <dd className="mt-1 text-small">
+              {caseDetail.dependencies.some(d => d.status === 'escalated') ? (
+                <span className="text-status-danger font-extrabold uppercase tracking-wider text-[10px]">Escalated</span>
+              ) : (
+                <span className="text-neutral-500 font-medium">Normal queue</span>
               )}
             </dd>
           </div>
         </dl>
       </header>
+
+      {/* Deterministic Operational Summary Banner */}
+      <div className="rounded-radius-md border border-neutral-200 bg-neutral-50 p-4 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 divide-y md:divide-y-0 md:divide-x divide-neutral-200">
+        <div className="space-y-1">
+          <span className="text-caption font-bold text-neutral-400 uppercase tracking-wider block">Operational Summary</span>
+          <p className="text-small text-neutral-800 leading-normal">
+            This investigation contains <span className="font-bold">{unresolvedDepsCount}</span> active evidentiary blockers. Clocks status: <span className="font-bold">{breachedClocksCount} breached</span>, <span className="font-bold text-status-warning">{criticalClocksCount} critical</span>.
+          </p>
+        </div>
+        <div className="space-y-1 pt-3 md:pt-0 md:pl-4">
+          <span className="text-caption font-bold text-neutral-400 uppercase tracking-wider block">Most Critical Blocker</span>
+          <span className="text-small font-semibold text-neutral-800 block truncate">{mostCriticalDependencyName}</span>
+          <span className="text-[10px] text-neutral-500">Current active dependency bottleneck</span>
+        </div>
+        <div className="space-y-1 pt-3 md:pt-0 md:pl-4">
+          <span className="text-caption font-bold text-neutral-400 uppercase tracking-wider block">Next Required Action</span>
+          <p className="text-small font-semibold text-status-info leading-tight">{nextRequiredAction}</p>
+        </div>
+        <div className="space-y-1 pt-3 md:pt-0 md:pl-4 flex flex-col justify-between">
+          <div>
+            <span className="text-caption font-bold text-neutral-400 uppercase tracking-wider block">Investigation Health</span>
+            <span className={`text-small font-extrabold uppercase ${breachedClocksCount > 0 || criticalClocksCount > 0 ? 'text-status-danger animate-pulse' : 'text-status-success'}`}>
+              {investigationHealth}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Tab navigation */}
       <nav
@@ -224,7 +300,27 @@ export default function CaseDetail() {
           tabIndex={0}
           className="focus:outline-none"
         >
-          <NetworkAnalysisPanel caseId={caseDetail.id} />
+          <NetworkAnalysisPanel 
+            caseId={caseDetail.id} 
+            selectedEntityId={selectedEntityId}
+            onEntitySelect={setSelectedEntityId}
+          />
+        </div>
+      )}
+
+      {activeTab === 'timeline' && (
+        <div
+          role="tabpanel"
+          id="tabpanel-timeline"
+          aria-labelledby="tab-timeline"
+          tabIndex={0}
+          className="focus:outline-none"
+        >
+          <InvestigationTimeline 
+            caseDetail={caseDetail}
+            selectedEntityId={selectedEntityId}
+            onEntitySelect={setSelectedEntityId}
+          />
         </div>
       )}
 
