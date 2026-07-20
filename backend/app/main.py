@@ -66,10 +66,14 @@ def create_app(
                 "Set STATE_PATH or integrate Catalyst Data Store (Phase 2)."
             )
 
-        repository = InMemoryBackendRepository(
-            artifact_path=artifact_path,
-            state_path=state_path,
-        )
+        if cfg.caseclock_repository.lower() == "catalyst":
+            from backend.app.db.catalyst import CatalystBackendRepository
+            repository = CatalystBackendRepository()
+        else:
+            repository = InMemoryBackendRepository(
+                artifact_path=artifact_path,
+                state_path=state_path,
+            )
 
     # ── FastAPI app ───────────────────────────────────────────────────────────
     app = FastAPI(
