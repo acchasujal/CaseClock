@@ -295,7 +295,14 @@ class GraphService:
         store = self._repo.store
         stats = compute_graph_statistics(store)
 
-        return serialize_dataclass(stats)
+        return {
+            "node_count": stats.num_nodes,
+            "edge_count": stats.num_edges,
+            "density": stats.density,
+            "average_degree": stats.average_degree,
+            "node_counts_by_type": stats.entity_distribution,
+            "edge_counts_by_type": stats.relationship_distribution,
+        }
 
     def get_connected_components(self) -> dict[str, Any]:
         """

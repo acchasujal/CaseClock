@@ -22,7 +22,15 @@
           "idx": 1,
           "id": "60077090566",
           "name": "Development",
-          "type": 3
+          "type": 3,
+          "env_status": "Active",
+          "project_details": {
+            "project_name": "CaseClock",
+            "id": "51441000000017001",
+            "project_type": "Live"
+          },
+          "is_default": true,
+          "action_required": false
         }
       ]
     }

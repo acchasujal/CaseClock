@@ -72,9 +72,9 @@ Lanes represent **ownership domains**, not Git branches. Development uses **GitH
 
 ### Backend
 ```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+# From repo root — shared/ is importable alongside backend/
+pip install -r backend/requirements.txt
+uvicorn app.main:app --reload --app-dir backend
 ```
 
 ### Frontend
@@ -86,8 +86,11 @@ npm run dev
 
 ### Run tests
 ```bash
-# Run all backend unit and integration tests
-pytest backend/tests/ -v
+# Run all backend tests (from repo root)
+pytest tests/ -v
+
+# Skip large-scale load tests
+pytest tests/ -v --ignore=tests/scale
 ```
 
 ---
@@ -114,11 +117,75 @@ Contract changes (`shared/contracts/`) require Lane 4 (Sujal) review. Clock/esca
 
 ## Deployment
 
-Mandatory on Zoho Catalyst (AppSail + Slate) per organizer eligibility rules.  
-Deployment configs: [`deployment/`](deployment/).  
-Current deployment URL: *to be added after M0 walking skeleton is live.*
+Mandatory on Zoho Catalyst (AppSail + Slate) per organizer eligibility rules.
+
+### Live Deployment (Development Environment)
+
+| Component | URL |
+|---|---|
+| **Frontend (Slate)** | https://caseclock-frontend-zaruqrfp.onslate.in |
+| **Backend (AppSail)** | https://caseclock-backend-50043773125.development.catalystappsail.in |
+| **Catalyst Project** | 51441000000017001 (CaseClock, Datacenter: India) |
+
+### Health Verification
+```bash
+# Backend health
+curl https://caseclock-backend-50043773125.development.catalystappsail.in/health
+
+# OpenAPI schema
+curl https://caseclock-backend-50043773125.development.catalystappsail.in/openapi.json
+```
+
+### Environment Variables (AppSail — caseclock-backend)
+
+Configured in Catalyst Console → AppSail → caseclock-backend → Configuration → Environment Variables:
+
+| Variable | Value | Notes |
+|---|---|---|
+| `ENVIRONMENT` | `production` | Enables production auth gate |
+| `CASECLOCK_REPOSITORY` | `local` | Use in-memory + synthetic data |
+| `CORS_ORIGINS` | `http://localhost:5173,...,https://caseclock-frontend-zaruqrfp.onslate.in` | Comma-separated allowed origins |
+
+> **Note:** `CORS_ORIGINS` is also set in `backend/app-config.json` `env_variables` for deployment tracking.
+
+### Manual Deploy Commands
+```bash
+# Verify active project before deploying
+catalyst project:list
+
+# Deploy backend only (after code changes)
+catalyst deploy --only appsail
+
+# Deploy frontend only (after frontend build)
+npm run build  # from frontend/
+catalyst deploy --only slate
+
+# Deploy both
+catalyst deploy --only appsail,slate
+```
+
+### Pre-Deploy Checklist
+1. `backend/shared/` must exist (copy of root `shared/` for AppSail PYTHONPATH)
+2. Frontend must be rebuilt with `npm run build` for `.env.production` to take effect
+3. Active Catalyst project must be `51441000000017001`
+
+### Docker (Local Development)
+```bash
+# Build from repo root
+docker build -t caseclock-backend -f backend/Dockerfile .
+
+# Run with development variables
+docker run --rm -p 8000:8000 \
+  -e ENVIRONMENT=development \
+  -e CORS_ORIGINS=http://localhost:5173 \
+  caseclock-backend
+
+# Verify
+curl http://localhost:8000/health
+```
 
 ---
+
 
 ## Docs
 

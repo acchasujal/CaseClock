@@ -1,5 +1,5 @@
 {
-  "name": "caseclock-frontend",
-  "id": "51441000000017001",
-  "source": "index.html"
+	"slate": {
+		"dev_command": "npm run dev -- --port $ZC_SLATE_PORT"
+	}
 }

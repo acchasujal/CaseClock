@@ -2,5 +2,10 @@
   "command": "python3 app/appsail_server.py",
   "buildPath": ".",
   "stack": "python_3_11",
-  "memory": 256
+  "memory": 256,
+  "env_variables": {
+    "CASECLOCK_REPOSITORY": "local",
+    "ENVIRONMENT": "production",
+    "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,https://caseclock-frontend-zaruqrfp.onslate.in"
+  }
 }
