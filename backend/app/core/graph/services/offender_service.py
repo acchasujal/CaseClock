@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from backend.app.core.graph.algorithms.pattern_detection import detect_repeat_accused
+from backend.app.core.graph.algorithms.pattern_detection import (
+    detect_repeat_accused,
+    detect_repeat_accused_resolved,
+)
 from backend.app.core.graph.algorithms.traversals import get_co_accused
 from backend.app.core.graph.algorithms.utils import prop_str, get_edges_of_type
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
@@ -45,6 +48,44 @@ class OffenderService:
                     "case_ids": r.case_ids,
                     "reason": r.reason,
                     "person": serialize_node(store.nodes.get(r.person_id)),
+                }
+                for r in results[:top_k]
+            ],
+        }
+
+    def get_repeat_offenders_resolved(
+        self,
+        min_cases: int = 2,
+        confidence_threshold: float = 0.70,
+        top_k: int = 50,
+    ) -> dict[str, Any]:
+        """
+        List repeat offenders using entity-resolution clustering.
+
+        Groups Person nodes that represent the same individual across spelling
+        variations and alias usage, then flags clusters with min_cases or more
+        unique cases.
+
+        Used by: Intelligence → Resolved Repeat Offender Tracking
+        """
+        store = self._repo.store
+        results = detect_repeat_accused_resolved(
+            store,
+            min_cases=min_cases,
+            confidence_threshold=confidence_threshold,
+        )
+
+        return {
+            "min_cases_threshold": min_cases,
+            "confidence_threshold": confidence_threshold,
+            "offender_count": len(results),
+            "offenders": [
+                {
+                    "canonical_person_name": r.canonical_person_name,
+                    "person_ids": r.person_ids,
+                    "case_count": r.case_count,
+                    "case_ids": r.case_ids,
+                    "reason": r.reason,
                 }
                 for r in results[:top_k]
             ],

@@ -1,12 +1,26 @@
-"""Frontend-compatible backend API routes for Dev 1 core workflows."""
+"""Frontend-compatible backend API routes for core CaseClock workflows.
+
+Route handlers are thin HTTP adapters: they validate inputs, call the
+repository, translate domain exceptions to HTTP responses, and return
+contract types.  No business logic lives here.
+"""
 
 from __future__ import annotations
-
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
+from backend.app.api.dependencies import (
+    get_request_id,
+    get_principal,
+    get_case_service,
+    get_copilot_service,
+    get_audit_service,
+)
+from backend.app.auth.principal import Principal
+from backend.app.services.case_service import CaseService
+from backend.app.services.copilot_service import CopilotService
+from backend.app.services.audit_service import AuditService
 from shared.contracts.api import (
     CaseDetailResponse,
     CaseSummaryResponse,
@@ -15,6 +29,7 @@ from shared.contracts.api import (
     DependencyResponse,
     DependencyStatus,
     EscalationResponse,
+    DistrictRollupResponse,
 )
 
 
@@ -22,29 +37,45 @@ class DependencyUpdateRequest(BaseModel):
     status: DependencyStatus
 
 
-def create_core_router(repository: Any) -> APIRouter:
-    router = APIRouter(tags=["backend-core"])
+def create_core_router() -> APIRouter:
+    """Return the core API router.
 
-    def get_repository() -> Any:
-        return repository
+    Phase 1: routes depend on ``get_repository`` from app.state so that tests
+    can supply an isolated in-memory repository.
+    """
+    router = APIRouter(tags=["backend-core"])
 
     @router.get("/health")
     def health() -> dict[str, str]:
-        return {"status": "ok", "service": "caseclock-backend"}
+        """Liveness probe.  Returns service name and version only."""
+        from backend.app.config import get_settings
+
+        cfg = get_settings()
+        return {
+            "status": "ok",
+            "service": "caseclock-backend",
+            "version": cfg.app_version,
+        }
 
     @router.get("/worklist", response_model=list[CaseSummaryResponse])
     def worklist(
-        role: str = Query("IO", pattern="^(IO|SHO|SP)$"),
-        repo: Any = Depends(get_repository),
+        role: str | None = Query(None, pattern="^(IO|SHO|SP)$"),
+        principal: Principal = Depends(get_principal),
+        case_svc: CaseService = Depends(get_case_service),
+        request_id: str = Depends(get_request_id),
     ) -> list[CaseSummaryResponse]:
-        return repo.list_worklist(role=role)
+        """Risk-ranked visible cases."""
+        return case_svc.list_worklist(principal=principal, request_id=request_id)
 
     @router.get("/cases/{case_id}", response_model=CaseDetailResponse)
     def case_detail(
         case_id: str,
-        repo: Any = Depends(get_repository),
+        principal: Principal = Depends(get_principal),
+        case_svc: CaseService = Depends(get_case_service),
+        request_id: str = Depends(get_request_id),
     ) -> CaseDetailResponse:
-        result = repo.get_case_detail(case_id)
+        """Full case object for the Case Detail screen."""
+        result = case_svc.get_case_detail(case_id, principal=principal, request_id=request_id)
         if result is None:
             raise HTTPException(status_code=404, detail="Case not found")
         return result
@@ -52,33 +83,49 @@ def create_core_router(repository: Any) -> APIRouter:
     @router.get("/cases/{case_id}/network")
     def case_network(
         case_id: str,
-        repo: Any = Depends(get_repository),
+        principal: Principal = Depends(get_principal),
+        case_svc: CaseService = Depends(get_case_service),
+        request_id: str = Depends(get_request_id),
     ) -> dict:
-        result = repo.case_network(case_id)
+        """React Flow graph around a case.  Depth-1 BFS; max 18 nodes."""
+        result = case_svc.get_case_network(case_id, principal=principal, request_id=request_id)
         if result is None:
             raise HTTPException(status_code=404, detail="Case not found")
         return result
 
     @router.get("/escalations", response_model=list[EscalationResponse])
     def escalations(
-        repo: Any = Depends(get_repository),
+        principal: Principal = Depends(get_principal),
+        case_svc: CaseService = Depends(get_case_service),
+        request_id: str = Depends(get_request_id),
     ) -> list[EscalationResponse]:
-        return repo.list_escalations()
+        """Visible unresolved/resolved escalation events."""
+        return case_svc.list_escalations(principal=principal, request_id=request_id)
 
     @router.get("/audit")
     def audit_events(
         limit: int = Query(100, ge=1, le=500),
-        repo: Any = Depends(get_repository),
+        principal: Principal = Depends(get_principal),
+        audit_svc: AuditService = Depends(get_audit_service),
     ) -> list[dict]:
-        return repo.list_audit_events(limit=limit)
+        """Append-only audit log.  SHO/SP only."""
+        if not principal.can_view_audit_log():
+            from backend.app.api.errors import ForbiddenError
+            raise ForbiddenError("Audit log access is restricted to SHO/SP roles.")
+        return audit_svc.list_events(limit=limit)
 
     @router.patch("/deps/{dependency_id}", response_model=DependencyResponse)
     def update_dependency(
         dependency_id: str,
         request: DependencyUpdateRequest,
-        repo: Any = Depends(get_repository),
+        principal: Principal = Depends(get_principal),
+        case_svc: CaseService = Depends(get_case_service),
+        request_id: str = Depends(get_request_id),
     ) -> DependencyResponse:
-        result = repo.update_dependency(dependency_id, request.status)
+        """Update dependency status.  Validates state transition; writes audit."""
+        result = case_svc.update_dependency(
+            dependency_id, request.status, principal=principal, request_id=request_id
+        )
         if result is None:
             raise HTTPException(status_code=404, detail="Dependency not found")
         return result
@@ -86,8 +133,24 @@ def create_core_router(repository: Any) -> APIRouter:
     @router.post("/copilot/query", response_model=CopilotQueryResponse)
     def copilot_query(
         request: CopilotQueryRequest,
-        repo: Any = Depends(get_repository),
+        principal: Principal = Depends(get_principal),
+        copilot_svc: CopilotService = Depends(get_copilot_service),
+        request_id: str = Depends(get_request_id),
     ) -> CopilotQueryResponse:
-        return repo.copilot_query(request.query, request.case_id)
+        """Deterministic copilot query.  Refuses prohibited inferences."""
+        return copilot_svc.handle_query(request, principal=principal, request_id=request_id)
+
+    @router.get("/rollup/{district}", response_model=DistrictRollupResponse)
+    def district_rollup(
+        district: str,
+        principal: Principal = Depends(get_principal),
+        case_svc: CaseService = Depends(get_case_service),
+        request_id: str = Depends(get_request_id),
+    ) -> DistrictRollupResponse:
+        """Exception-only operational overview of police stations in the district."""
+        if not principal.can_access_sp_features() and not principal.can_access_sho_features():
+            from backend.app.api.errors import ForbiddenError
+            raise ForbiddenError("District rollup access is restricted to supervisor roles.")
+        return case_svc.get_district_rollup(district, principal=principal, request_id=request_id)
 
     return router

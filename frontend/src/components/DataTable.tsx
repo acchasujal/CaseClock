@@ -7,7 +7,7 @@ import { EmptyState } from './EmptyState'
 export interface ColumnDef<T> {
   header: string
   accessorKey: string
-  cell?: (row: T) => React.ReactNode
+  cell?: (row: T, index: number) => React.ReactNode
 }
 
 interface DataTableProps<T> {
@@ -95,14 +95,22 @@ export function DataTable<T extends { id: string }>({
             >
               {columns.map((column, colIdx) => {
                 const cellContent = column.cell
-                  ? column.cell(row)
+                  ? column.cell(row, rowIndex)
                   : String(resolveObjectPath(row, column.accessorKey) ?? '')
+
+                // Detect overdue clocks dynamically to apply warning border on first column cell
+                const isOverdue = 
+                  ('clock' in row && (row.clock as Record<string, unknown>)?.status === 'overdue') || 
+                  ('clock_status' in row && (row as Record<string, unknown>).clock_status === 'overdue') ||
+                  ('status' in row && (row as Record<string, unknown>).status === 'overdue')
+
+                const borderClass = isOverdue && colIdx === 0 ? 'border-l-[4px] border-l-status-danger' : ''
 
                 return (
                   <td
                     key={colIdx}
                     role="gridcell"
-                    className={`px-4 text-small align-middle transition-all duration-fast ${rowHeightClass}`}
+                    className={`px-4 text-small align-middle transition-all duration-fast ${rowHeightClass} ${borderClass}`}
                   >
                     {cellContent}
                   </td>

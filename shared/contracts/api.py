@@ -131,3 +131,19 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: UserRole
+
+
+# ── District Rollup ────────────────────────────────────────────────────────────
+
+class StationRanking(BaseModel):
+    station_name: str
+    total: int
+    critical: int
+
+
+class DistrictRollupResponse(BaseModel):
+    total_cases: int
+    red_clocks: int
+    amber_clocks: int
+    stale_dependencies: int
+    station_rankings: list[StationRanking]

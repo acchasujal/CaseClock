@@ -110,3 +110,41 @@ def test_get_offender_profile_success():
     summary = result["summary"]
     assert f"Person {person1.id} appears as accused in 2 case(s)." in summary
     assert "Linked to 2 co-accused individual(s)." in summary
+
+def test_get_repeat_offenders_resolved():
+    case1 = make_case()
+    case2 = make_case()
+
+    person = make_person()
+
+    edges = [
+        _FakeEdge("ACCUSED_IN", person.id, case1.id),
+        _FakeEdge("ACCUSED_IN", person.id, case2.id),
+    ]
+
+    store = make_store(
+        [case1, case2, person],
+        edges,
+    )
+
+    service = OffenderService(GraphRepository(store))
+
+    result = service.get_repeat_offenders_resolved(
+        min_cases=2,
+        confidence_threshold=0.70,
+    )
+
+    assert result["min_cases_threshold"] == 2
+    assert result["confidence_threshold"] == 0.70
+
+    assert "offender_count" in result
+    assert "offenders" in result
+
+    if result["offender_count"] > 0:
+        offender = result["offenders"][0]
+
+        assert "canonical_person_name" in offender
+        assert "person_ids" in offender
+        assert "case_count" in offender
+        assert "case_ids" in offender
+        assert "reason" in offender

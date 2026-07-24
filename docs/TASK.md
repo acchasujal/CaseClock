@@ -30,9 +30,55 @@ The project is organized around four engineering lanes, not developer headcount 
 
 See `IMPLEMENTATION_PLAN.md` for the full build sequence. Update this file at the start and end of every work session — mark items done, add blockers, never let this file go stale relative to actual repository state.
 
-## Status Key
+## Completed
 
-`NOT STARTED` / `IN PROGRESS` / `BLOCKED (reason)` / `DONE (verified how)`
+- **Repository scaffold**: Initial folder structure scaffolded. Colapsed graph and copilot directories into the backend. Authoritative contracts and CI pipelines consolidated.
+- **Synthetic Graph Generation**: Fully functional [synthetic_data](file:///c:/Users/dyara/CaseClock/synthetic_data/) module that generates nodes and edges for cases, persons, officers, dependencies, evidence, and clocks.
+- **Graph Infrastructure**:
+  - **Graph Repository**: [graph_repository.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/repositories/graph_repository.py) implemented as a bridge between persistent database and in-memory GraphStore.
+  - **Graph Loader**: [graph_loader.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py) constructed to parse node/edge records.
+  - **Graph Validation**: Reference, structure, and type checks implemented inside [GraphLoader](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py).
+- **Graph & Analytical Algorithms**:
+  - **Graph Algorithms**: Low-level indices and graph construction helper utilities implemented in [utils.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/utils.py).
+  - **Similarity Algorithms**: Deterministic similarity match and Jaccard distance calculation in [similarity.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/similarity.py).
+  - **Traversal Algorithms**: BFS, multi-hop lookups, dependency and clock traversals in [traversals.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py).
+  - **Pattern Detection Algorithms**: Repeat accused, shared phone/vehicle/address clusters, high-workload officers, and hotspots in [pattern_detection.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py).
+  - **Aggregation & Statistics**: District, station, and category rollups in [aggregation.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/aggregation.py); graph metrics, density, and component sizes in [statistics.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/statistics.py).
+  - **Clustering Algorithms**: NetworkX-based component detection, degree and betweenness centralities in [clustering.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/clustering.py).
+  - **Entity Resolution**: Deterministic, phonetic normalization, Jaccard bigram scoring, and boost rules implemented in [entity_resolution.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/entity_resolution.py).
+- **Graph Intelligence Services**:
+  - **Graph Service**: [graph_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/graph_service.py) coordinates subgraphs, co-accused, summaries, and central figures.
+  - **Similarity Service**: [similarity_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/similarity_service.py) coordinates similar case lookups, direct comparisons, and pairwise matrices.
+  - **Network Service**: [network_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/network_service.py) exposes single-node lookups and case/person/officer traversals.
+  - **Hotspot Service**: [hotspot_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/hotspot_service.py) combines temporal, spatial, and network alerts into dashboard-ready payloads.
+  - **Offender Service**: [offender_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/offender_service.py) handles repeat offender tracking, resolved offender profiles, and factual summaries.
+- **Service Integration**: Exposing all services via FastAPI routers in [graph_routes.py](file:///c:/Users/dyara/CaseClock/backend/app/api/graph_routes.py) factory.
+- **Unit Tests**: Full test suite verifying loader, repository, services, and algorithms with 193 passing tests (100% success rate).
+
+## Completed
+
+- **Repository scaffold**: Initial folder structure scaffolded. Colapsed graph and copilot directories into the backend. Authoritative contracts and CI pipelines consolidated.
+- **Synthetic Graph Generation**: Fully functional [synthetic_data](file:///c:/Users/dyara/CaseClock/synthetic_data/) module that generates nodes and edges for cases, persons, officers, dependencies, evidence, and clocks.
+- **Graph Infrastructure**:
+  - **Graph Repository**: [graph_repository.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/repositories/graph_repository.py) implemented as a bridge between persistent database and in-memory GraphStore.
+  - **Graph Loader**: [graph_loader.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py) constructed to parse node/edge records.
+  - **Graph Validation**: Reference, structure, and type checks implemented inside [GraphLoader](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/graph_loader.py).
+- **Graph & Analytical Algorithms**:
+  - **Graph Algorithms**: Low-level indices and graph construction helper utilities implemented in [utils.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/utils.py).
+  - **Similarity Algorithms**: Deterministic similarity match and Jaccard distance calculation in [similarity.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/similarity.py).
+  - **Traversal Algorithms**: BFS, multi-hop lookups, dependency and clock traversals in [traversals.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/traversals.py).
+  - **Pattern Detection Algorithms**: Repeat accused, shared phone/vehicle/address clusters, high-workload officers, and hotspots in [pattern_detection.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/pattern_detection.py).
+  - **Aggregation & Statistics**: District, station, and category rollups in [aggregation.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/aggregation.py); graph metrics, density, and component sizes in [statistics.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/statistics.py).
+  - **Clustering Algorithms**: NetworkX-based component detection, degree and betweenness centralities in [clustering.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/clustering.py).
+  - **Entity Resolution**: Deterministic, phonetic normalization, Jaccard bigram scoring, and boost rules implemented in [entity_resolution.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/algorithms/entity_resolution.py).
+- **Graph Intelligence Services**:
+  - **Graph Service**: [graph_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/graph_service.py) coordinates subgraphs, co-accused, summaries, and central figures.
+  - **Similarity Service**: [similarity_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/similarity_service.py) coordinates similar case lookups, direct comparisons, and pairwise matrices.
+  - **Network Service**: [network_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/network_service.py) exposes single-node lookups and case/person/officer traversals.
+  - **Hotspot Service**: [hotspot_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/hotspot_service.py) combines temporal, spatial, and network alerts into dashboard-ready payloads.
+  - **Offender Service**: [offender_service.py](file:///c:/Users/dyara/CaseClock/backend/app/core/graph/services/offender_service.py) handles repeat offender tracking, resolved offender profiles, and factual summaries.
+- **Service Integration**: Exposing all services via FastAPI routers in [graph_routes.py](file:///c:/Users/dyara/CaseClock/backend/app/api/graph_routes.py) factory.
+- **Unit Tests**: Full test suite verifying loader, repository, services, and algorithms with 193 passing tests (100% success rate).
 
 | Item                                | Status                                                              |
 | ----------------------------------- | ------------------------------------------------------------------- |

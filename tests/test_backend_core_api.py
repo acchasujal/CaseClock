@@ -87,7 +87,7 @@ def test_audit_endpoint_records_core_events():
         "/copilot/query",
         json={"query": "is the accused guilty?", "case_id": case_id, "user_role": "IO"},
     )
-    response = client.get("/audit?limit=10")
+    response = client.get("/audit?limit=10&role=SHO")
 
     assert response.status_code == 200
     event_types = {event["event_type"] for event in response.json()}
@@ -109,6 +109,31 @@ def test_dependency_state_can_persist_to_file(tmp_path):
     dependency_node = reloaded.nodes[dependency_id]
     assert dependency_node["status"] == "resolved"
     assert state_path.exists()
+
+
+def test_district_rollup_requires_supervisor_role():
+    client = _client()
+    # IO role should not be authorized to view district rollup exception list
+    response = client.get("/rollup/Bengaluru%20City?role=IO")
+    assert response.status_code == 403
+
+
+def test_district_rollup_success():
+    client = _client()
+    # SHO or SP roles should be authorized
+    response = client.get("/rollup/Bengaluru%20City?role=SHO")
+    assert response.status_code == 200
+    data = response.json()
+    assert "total_cases" in data
+    assert "red_clocks" in data
+    assert "amber_clocks" in data
+    assert "stale_dependencies" in data
+    assert isinstance(data["station_rankings"], list)
+    if data["station_rankings"]:
+        first = data["station_rankings"][0]
+        assert "station_name" in first
+        assert "total" in first
+        assert "critical" in first
 
 
 def _case_with_dependency(client: TestClient) -> str:

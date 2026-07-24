@@ -32,9 +32,10 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   const url = path.startsWith('http') ? path : `${baseUrl}${path}`
+  const savedRole = localStorage.getItem('caseclock_role') || 'IO'
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    // Future: Authorization: `Bearer ${getToken()}`
+    'X-Dev-Role': savedRole,
     ...(options?.headers as Record<string, string> | undefined),
   }
 
