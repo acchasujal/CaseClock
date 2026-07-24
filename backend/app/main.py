@@ -7,8 +7,11 @@ Wires together:
   - Repository stored on app.state for dependency injection
 """
 
+# ruff: noqa: E402
+
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -26,6 +29,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.core_routes import create_core_router
 from backend.app.api.errors import install_error_handlers
 from backend.app.api.graph_routes import create_graph_router
+from backend.app.db.catalyst import CatalystBackendRepository
 from backend.app.config import Settings, get_settings
 from backend.app.db.in_memory import InMemoryBackendRepository
 
@@ -51,30 +55,28 @@ def create_app(
 
     # ── Repository ───────────────────────────────────────────────────────────
     if repository is None:
-        artifact_path: Path | None = None
-        if cfg.artifact_path and cfg.artifact_path != Path("artifacts/synthetic_graph/synthetic_graph.json"):
-            artifact_path = cfg.artifact_path
-
-        state_path = cfg.effective_state_path
-        # Phase 1 acceptance criterion: no production default JSON state path.
-        # In production (ENVIRONMENT=production), state_path must be explicitly
-        # configured; otherwise we refuse to run with a mutable local file.
-        if cfg.is_production and state_path is None:
-            logger.warning(
-                "Running in production without a configured STATE_PATH. "
-                "Dependency mutations will not be persisted across restarts. "
-                "Set STATE_PATH or integrate Catalyst Data Store (Phase 2)."
-            )
-
-        if cfg.caseclock_repository.lower() == "catalyst":
-            from backend.app.db.catalyst import CatalystBackendRepository
+        if os.getenv("CASECLOCK_REPOSITORY", "local").lower() == "catalyst":
             repository = CatalystBackendRepository()
         else:
+            artifact_path: Path | None = None
+            if cfg.artifact_path and cfg.artifact_path != Path("artifacts/synthetic_graph/synthetic_graph.json"):
+                artifact_path = cfg.artifact_path
+
+            state_path = cfg.effective_state_path
+            # Phase 1 acceptance criterion: no production default JSON state path.
+            # In production (ENVIRONMENT=production), state_path must be explicitly
+            # configured; otherwise we refuse to run with a mutable local file.
+            if cfg.is_production and state_path is None:
+                logger.warning(
+                    "Running in production without a configured STATE_PATH. "
+                    "Dependency mutations will not be persisted across restarts. "
+                    "Set STATE_PATH or use CASECLOCK_REPOSITORY=catalyst."
+                )
+
             repository = InMemoryBackendRepository(
                 artifact_path=artifact_path,
                 state_path=state_path,
             )
-
     # ── FastAPI app ───────────────────────────────────────────────────────────
     app = FastAPI(
         title=cfg.app_name,

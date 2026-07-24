@@ -34,15 +34,19 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from fastapi import Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 
 from backend.app.api.errors import ForbiddenError
 from backend.app.auth.principal import Principal
 from shared.contracts.api import UserRole
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from backend.app.config import Settings
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -89,14 +93,14 @@ class DevelopmentVerifier(TokenVerifier):
         raw_role = request.headers.get("X-Dev-Role")
         if not raw_role:
             qp = getattr(request, "query_params", None)
-            if qp is not None and not type(qp).__name__ in ("Mock", "MagicMock"):
+            if qp is not None and type(qp).__name__ not in ("Mock", "MagicMock"):
                 try:
                     raw_role = qp.get("role")
                 except AttributeError:
                     pass
         if not raw_role or type(raw_role).__name__ in ("Mock", "MagicMock"):
             raw_role = "IO"
-        
+
         raw_role = raw_role.strip().lower()
         role = self._ROLE_MAP.get(raw_role, UserRole.IO)
         logger.debug("DevelopmentVerifier: role=%s from headers/query", role)
@@ -156,14 +160,13 @@ class CatalystAuthVerifier(TokenVerifier):
         )
 
 
-def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-defined]
+def make_verifier(settings: "Settings") -> TokenVerifier:
     """Factory: choose the correct verifier based on environment and credentials.
 
     - If CATALYST_CLIENT_ID and CATALYST_PROJECT_ID are set → CatalystAuthVerifier.
     - Otherwise in development → DevelopmentVerifier.
     - In production without credentials → DevelopmentVerifier raises ForbiddenError.
     """
-    from backend.app.config import Settings
 
     has_catalyst = bool(settings.catalyst_client_id and settings.catalyst_project_id)
 
