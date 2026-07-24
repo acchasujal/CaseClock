@@ -228,13 +228,18 @@ class GraphService:
     def get_crime_summary(self) -> dict[str, Any]:
         """
         High-level case statistics.
-        
+
         Used by: Dashboard → Summary cards
         """
         store = self._repo.store
         summary = case_counts(store)
 
-        return serialize_dataclass(summary)
+        return {
+            "total_cases": summary.total,
+            "by_stage": summary.by_stage,
+            "by_category": summary.by_offence_category,
+            "by_risk": summary.by_risk_band,
+        }
 
     def get_crime_by_district(self) -> dict[str, Any]:
         """Crime counts per district. Used by: Map layer / District rollup."""
