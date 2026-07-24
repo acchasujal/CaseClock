@@ -56,6 +56,9 @@ class InMemoryBackendRepository:
         self._rebuild_indexes()
 
     def _default_artifact_path(self) -> Path:
+        local_resource = Path(__file__).resolve().parent / "synthetic_graph.json"
+        if local_resource.exists():
+            return local_resource
         return Path(__file__).resolve().parents[3] / "artifacts" / "synthetic_graph" / "synthetic_graph.json"
 
     def _load_artifact(self, artifact_path: Path) -> None:

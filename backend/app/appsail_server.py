@@ -26,6 +26,20 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
+from pathlib import Path
+
+# Add the directory containing the 'app' package to sys.path to allow absolute imports
+app_parent_dir = Path(__file__).resolve().parent.parent
+if str(app_parent_dir) not in sys.path:
+    sys.path.insert(0, str(app_parent_dir))
+
+# Support absolute 'backend.app' imports in production by aliasing 'backend.app' to 'app'
+import types
+backend_mock = types.ModuleType("backend")
+sys.modules["backend"] = backend_mock
+import app
+sys.modules["backend.app"] = app
 
 import uvicorn
 
@@ -52,14 +66,7 @@ def _get_port() -> int:
 
 if __name__ == "__main__":
     port = _get_port()
-
-    # Dynamically select import path based on runtime root directory structure
-    app_module = "backend.app.main:app"
-    try:
-        import backend.app.main
-    except ImportError:
-        app_module = "app.main:app"
-
+    app_module = "app.main:app"
     logger.info("Starting CaseClock backend on port %d using module %s", port, app_module)
     uvicorn.run(
         app_module,
