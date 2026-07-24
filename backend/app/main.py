@@ -77,7 +77,6 @@ def create_app(
                 artifact_path=artifact_path,
                 state_path=state_path,
             )
-
     # ── FastAPI app ───────────────────────────────────────────────────────────
     app = FastAPI(
         title=cfg.app_name,

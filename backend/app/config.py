@@ -47,6 +47,7 @@ class Settings(BaseSettings):
 
     # ── Catalyst (Phase 2/3) ─────────────────────────────────────────────────
     # These are intentionally empty by default; Phase 2 populates them.
+    caseclock_repository: str = Field(default="local", alias="CASECLOCK_REPOSITORY")
     catalyst_project_id: str = Field(default="", alias="CATALYST_PROJECT_ID")
     catalyst_client_id: str = Field(default="", alias="CATALYST_CLIENT_ID")
 
