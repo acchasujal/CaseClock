@@ -1,4 +1,9 @@
 {
+  "appsail": {
+    "caseclock-backend": {
+      "source": "backend"
+    }
+  },
   "slate": [
     {
       "name": "caseclock-frontend",

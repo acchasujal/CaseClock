@@ -1,0 +1,5 @@
+{
+  "command": "python3 app/appsail_server.py",
+  "stack": "python3.11",
+  "memory": 256
+}

@@ -1,0 +1,22 @@
+version: 1
+
+runners:
+  Machine:
+    config-id: 2
+
+images:
+  DeployMachine:
+    image: node:18
+
+stages:
+  - name: deploy
+    image: DeployMachine
+    runner: Machine
+    jobs:
+      - Deploy_Backend
+
+jobs:
+  Deploy_Backend:
+    steps:
+      - npm install -g zcatalyst-cli
+      - catalyst deploy --only appsail --token << env.CATALYST_TOKEN >>

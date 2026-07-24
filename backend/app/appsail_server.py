@@ -52,12 +52,18 @@ def _get_port() -> int:
 
 if __name__ == "__main__":
     port = _get_port()
-    logger.info("Starting CaseClock backend on port %d", port)
+
+    # Dynamically select import path based on runtime root directory structure
+    app_module = "backend.app.main:app"
+    try:
+        import backend.app.main
+    except ImportError:
+        app_module = "app.main:app"
+
+    logger.info("Starting CaseClock backend on port %d using module %s", port, app_module)
     uvicorn.run(
-        "backend.app.main:app",
+        app_module,
         host="0.0.0.0",
         port=port,
         log_level="info",
-        # AppSail handles TLS termination; backend runs HTTP internally.
-        # Do not set ssl_certfile/ssl_keyfile here.
     )
