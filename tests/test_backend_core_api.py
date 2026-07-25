@@ -146,7 +146,9 @@ def test_root_endpoint_status():
 
 
 def test_cors_preflight_on_worklist():
-    client = _client()
+    from backend.app.config import Settings
+    dev_settings = Settings(ENVIRONMENT="development")
+    client = TestClient(create_app(InMemoryBackendRepository(), settings=dev_settings))
     # Test OPTIONS preflight with allowed Slate origin
     response = client.options(
         "/worklist?role=SHO",
