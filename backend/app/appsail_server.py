@@ -7,19 +7,6 @@ The backend listens on the port provided by Catalyst:
     X_ZOHO_CATALYST_LISTEN_PORT  (set by AppSail runtime)
 
 If the env var is not set (local development), falls back to port 8000.
-
-## Deployment requirements (Phase 7)
-
-1. This file must be the AppSail startup command target.
-2. CORS_ORIGINS must be set to the deployed Catalyst Slate URL in AppSail
-   environment configuration (not here in code).
-3. ENVIRONMENT=production must be set in AppSail environment variables.
-4. STATE_PATH must be set (or left empty to disable in-memory persistence).
-5. Catalyst Auth credentials (Phase 3) must be set before deploying.
-
-## Command for AppSail startup command field
-
-    python backend/app/appsail_server.py
 """
 
 from __future__ import annotations
@@ -28,22 +15,36 @@ import logging
 import os
 import sys
 from pathlib import Path
-import types
-import app
-import uvicorn
-# Add the directory containing the 'app' package to sys.path to allow absolute imports
+
+# Add project root and app parent directory to sys.path
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 app_parent_dir = Path(__file__).resolve().parent.parent
 if str(app_parent_dir) not in sys.path:
-    sys.path.insert(0, str(app_parent_dir))
+    sys.path.append(str(app_parent_dir))
 
-# Support absolute 'backend.app' imports in production by aliasing 'backend.app' to 'app'
-
+# Support absolute 'backend.app' and 'backend.shared' imports in production
+import types
 backend_mock = types.ModuleType("backend")
 sys.modules["backend"] = backend_mock
 
-sys.modules["backend.app"] = app
+try:
+    import app
+    sys.modules["backend.app"] = app
+    backend_mock.app = app
+except Exception as err:
+    logging.warning("Could not alias app module: %s", err)
 
+try:
+    import shared
+    sys.modules["backend.shared"] = shared
+    backend_mock.shared = shared
+except Exception as err:
+    logging.warning("Could not alias shared module: %s", err)
 
+import uvicorn
 
 logging.basicConfig(
     level=logging.INFO,

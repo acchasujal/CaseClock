@@ -57,6 +57,11 @@ class AuditEventType(str, Enum):
     SEED_FAILED = "seed_failed"
     DEADLINE_SWEEP_COMPLETED = "deadline_sweep_completed"
 
+    # Document Intelligence
+    DOCUMENT_UPLOADED = "document_uploaded"
+    DOCUMENT_OCR_COMPLETED = "document_ocr_completed"
+    DOCUMENT_FACTS_CONFIRMED = "document_facts_confirmed"
+
     # Graph read model
     GRAPH_QUERY_EXECUTED = "graph_query_executed"
 

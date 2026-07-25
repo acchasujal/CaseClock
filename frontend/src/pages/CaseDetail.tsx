@@ -1,5 +1,6 @@
 import { Link, useSearchParams, useParams } from 'react-router-dom'
-import { ArrowLeft, Clock3, ShieldAlert, Network, Layers, MessageSquareCode, Calendar } from 'lucide-react'
+import { ArrowLeft, Clock3, ShieldAlert, Network, Layers, MessageSquareCode, Calendar, FileText } from 'lucide-react'
+import { DocumentScanModal } from '@/components/DocumentScanModal'
 import { CaseCopilotPanel } from '@/components/CaseCopilotPanel'
 import { ClockBadge } from '@/components/ClockBadge'
 import { DependencyPanel } from '@/components/DependencyPanel'
@@ -33,6 +34,7 @@ export default function CaseDetail() {
   const { role } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null)
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false)
   
   const activeTab = (tabs.some((tab) => tab.id === searchParams.get('tab'))
     ? searchParams.get('tab')
@@ -117,7 +119,14 @@ export default function CaseDetail() {
             <h1 className="text-h1 font-semibold text-neutral-900">{caseDetail.fir_number}</h1>
             <p className="mt-1 text-body text-neutral-600">{caseDetail.offence_category}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsDocModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-radius-sm bg-neutral-900 px-3 py-1.5 text-small font-semibold text-neutral-50 hover:bg-neutral-800 transition-colors shadow-xs"
+            >
+              <FileText className="h-4 w-4 text-status-info" /> Scan FIR / Document
+            </button>
             <RiskBadge level={computedRisk} />
             <span className="text-caption text-neutral-500">Urgency level derived from statutory clock states</span>
           </div>
@@ -347,6 +356,14 @@ export default function CaseDetail() {
           <CaseCopilotPanel caseId={caseDetail.id} role={role ?? 'IO'} />
         </div>
       )}
+
+      {/* Document Intelligence Scan Modal */}
+      <DocumentScanModal
+        caseId={id}
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        onConfirmed={() => void caseQuery.refetch()}
+      />
 
       {/* Screen reader current tab announcement */}
       <p className="sr-only" role="status" aria-live="polite">

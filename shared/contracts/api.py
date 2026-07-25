@@ -171,3 +171,72 @@ class DeadlineMonitorStatusResponse(BaseModel):
     status: str  # "active" | "delayed" | "unavailable"
     schedule: CronScheduleInfo
     last_run: Optional[CronLastRunSummary] = None
+
+
+# ── Document Intelligence ─────────────────────────────────────────────────────
+
+class CandidateFactField(BaseModel):
+    value: str
+    confidence: Optional[float] = None
+    source_text: Optional[str] = None
+
+
+class DocumentCandidateFacts(BaseModel):
+    fir_number: Optional[CandidateFactField] = None
+    police_station: Optional[CandidateFactField] = None
+    incident_date: Optional[CandidateFactField] = None
+    fir_registration_date: Optional[CandidateFactField] = None
+    offence_sections: list[str] = []
+    offence_category: Optional[CandidateFactField] = None
+    accused_names: list[str] = []
+    complainant_name: Optional[CandidateFactField] = None
+
+
+class ClockPreviewResponse(BaseModel):
+    applicable_rule: str
+    duration_days: int
+    calculated_deadline: str
+    days_remaining: int
+    predicted_status: ClockStatus
+    bnss_reference: str
+    requires_confirmation: bool = True
+
+
+class DocumentScanRequest(BaseModel):
+    """JSON body for document scan — file encoded as base64 to avoid python-multipart dependency."""
+    filename: str
+    content_type: str = "application/pdf"
+    document_type: str = "fir"
+    file_base64: str  # base64-encoded file bytes
+
+
+class DocumentScanResponse(BaseModel):
+    document_id: str
+    case_id: str
+    document_type: str
+    original_filename: str
+    storage_reference: str
+    uploaded_at: str
+    ocr_status: str  # "success" | "failed" | "partial"
+    ocr_text: str
+    ocr_confidence: float
+    candidate_facts: DocumentCandidateFacts
+    clock_preview: Optional[ClockPreviewResponse] = None
+    review_status: str  # "pending_review" | "confirmed"
+
+
+class DocumentConfirmRequest(BaseModel):
+    fir_number: Optional[str] = None
+    police_station: Optional[str] = None
+    fir_registration_date: Optional[str] = None
+    offence_category: Optional[str] = None
+    offence_sections: Optional[list[str]] = None
+
+
+class DocumentConfirmResponse(BaseModel):
+    status: str = "ok"
+    document_id: str
+    case_id: str
+    review_status: str = "confirmed"
+    updated_clock: ClockInstanceResponse
+    message: str

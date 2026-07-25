@@ -123,3 +123,71 @@ export interface DeadlineMonitorStatusResponse {
   schedule: CronScheduleInfo;
   last_run: CronLastRunSummary | null;
 }
+
+// ── Document Intelligence ─────────────────────────────────────────────────────
+
+export interface CandidateFactField {
+  value: string;
+  confidence?: number;
+  source_text?: string;
+}
+
+export interface DocumentCandidateFacts {
+  fir_number?: CandidateFactField;
+  police_station?: CandidateFactField;
+  incident_date?: CandidateFactField;
+  fir_registration_date?: CandidateFactField;
+  offence_sections: string[];
+  offence_category?: CandidateFactField;
+  accused_names: string[];
+  complainant_name?: CandidateFactField;
+}
+
+export interface ClockPreviewResponse {
+  applicable_rule: string;
+  duration_days: number;
+  calculated_deadline: string;
+  days_remaining: number;
+  predicted_status: ClockStatus;
+  bnss_reference: string;
+  requires_confirmation: boolean;
+}
+
+export interface DocumentScanRequest {
+  filename: string;
+  content_type?: string;
+  document_type?: string;
+  file_base64: string; // base64-encoded file bytes
+}
+
+export interface DocumentScanResponse {
+  document_id: string;
+  case_id: string;
+  document_type: string;
+  original_filename: string;
+  storage_reference: string;
+  uploaded_at: string;
+  ocr_status: "success" | "failed" | "partial";
+  ocr_text: string;
+  ocr_confidence: number;
+  candidate_facts: DocumentCandidateFacts;
+  clock_preview?: ClockPreviewResponse | null;
+  review_status: "pending_review" | "confirmed";
+}
+
+export interface DocumentConfirmRequest {
+  fir_number?: string;
+  police_station?: string;
+  fir_registration_date?: string;
+  offence_category?: string;
+  offence_sections?: string[];
+}
+
+export interface DocumentConfirmResponse {
+  status: string;
+  document_id: string;
+  case_id: string;
+  review_status: string;
+  updated_clock: ClockInstanceResponse;
+  message: string;
+}

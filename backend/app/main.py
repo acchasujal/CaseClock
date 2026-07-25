@@ -7,8 +7,6 @@ Wires together:
   - Repository stored on app.state for dependency injection
 """
 from __future__ import annotations
-from backend.app.api.routes import chat
-
 
 import sys
 from pathlib import Path
@@ -109,11 +107,17 @@ def create_app(
         )
 
     from backend.app.api.cron_routes import create_cron_router
+    from backend.app.api.document_routes import create_document_router
+    from backend.app.api.routes import chat
     from backend.app.api.system_routes import create_system_router
 
     # ── Routes ───────────────────────────────────────────────────────────────
     app.include_router(create_core_router())
     app.include_router(create_cron_router())
+    app.include_router(
+        create_document_router(),
+        prefix="/api/v1",
+    )
     app.include_router(
         create_graph_router(repository.graph_repository),
         prefix="/api/v1",

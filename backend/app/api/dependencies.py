@@ -24,6 +24,7 @@ from backend.app.db.in_memory import InMemoryBackendRepository
 from backend.app.services.audit_service import AuditService
 from backend.app.services.case_service import CaseService
 from backend.app.services.copilot_service import CopilotService
+from backend.app.services.document_service import DocumentService
 
 
 def get_settings_dep(request: Request) -> Settings:
@@ -107,3 +108,11 @@ def get_cron_service(
 ) -> CronService:
     """Provide CronService instance."""
     return CronService(repo, audit_svc)
+
+
+def get_document_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> DocumentService:
+    """Provide DocumentService instance."""
+    return DocumentService(repo, audit_svc)
