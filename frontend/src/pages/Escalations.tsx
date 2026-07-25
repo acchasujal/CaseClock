@@ -54,6 +54,7 @@ export default function Escalations() {
     refetch: refetchCases,
   } = useWorklist()
   const updateDependency = useUpdateDependency()
+  const { data: monitor } = useDeadlineMonitor()
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('')
@@ -287,9 +288,16 @@ export default function Escalations() {
         <p className="text-body text-neutral-500">
           Supervisor command dashboard prioritizing cases requiring critical intervention
         </p>
-        {monitor?.last_run && (
+        {monitor?.last_run ? (
+          <p className="text-caption text-neutral-400 font-mono mt-1 flex items-center gap-1.5">
+            <span className={`inline-block h-2 w-2 rounded-full ${monitor.status === 'active' ? 'bg-status-success' : 'bg-status-warning'}`} aria-hidden="true" />
+            <span>
+              Deadline monitor {monitor.status} · Last sweep monitored {monitor.last_run.cases_scanned} cases · Evaluated {monitor.last_run.clocks_evaluated} clocks · {monitor.last_run.escalations_created} new escalations
+            </span>
+          </p>
+        ) : (
           <p className="text-caption text-neutral-400 font-mono mt-1">
-            Autonomous Catalyst Cron monitored {monitor.last_run.cases_scanned} active cases · Evaluated {monitor.last_run.clocks_evaluated} statutory clocks · Generated {monitor.last_run.escalations_created} escalations
+            Deadline monitor status unavailable
           </p>
         )}
       </div>
