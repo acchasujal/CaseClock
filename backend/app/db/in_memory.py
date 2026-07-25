@@ -209,6 +209,14 @@ class InMemoryBackendRepository:
             reverse=True,
         )
 
+    def record_escalation(self, escalation: EscalationResponse) -> bool:
+        """Persist an escalation idempotently. Returns True if newly added, False if already exists."""
+        if escalation.id in self.manual_escalations:
+            return False
+        self.manual_escalations[escalation.id] = escalation
+        self._save_state()
+        return True
+
     def get_district_rollup(self, district: str) -> dict[str, Any]:
         district_normalized = district.strip().lower()
         district_case_ids = []

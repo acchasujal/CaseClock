@@ -85,6 +85,23 @@ class CatalystBackendRepository(InMemoryBackendRepository):
                 self.nodes[str(node["id"])] = node
                 self._append_unique_edge("CASE_HAS_DEPENDENCY", str(node.get("case_id", "")), str(node["id"]))
 
+        for row in self._iter_table("escalations"):
+            cleaned = self._clean_row(row)
+            esc_id = cleaned.get("id")
+            if esc_id:
+                try:
+                    self.manual_escalations[str(esc_id)] = EscalationResponse(
+                        id=str(esc_id),
+                        case_id=str(cleaned.get("case_id", "")),
+                        triggered_at=cleaned.get("triggered_at") or self.reference_time,
+                        reason=str(cleaned.get("reason", "")),
+                        routed_to_rank=str(cleaned.get("routed_to_rank", "SHO")),
+                        routed_to_officer_id=str(cleaned.get("routed_to_officer_id", "SHO")),
+                        resolved=bool(cleaned.get("resolved", False)),
+                    )
+                except Exception:
+                    pass
+
     def _iter_table(self, table_name: str) -> list[dict[str, Any]]:
         table = self._datastore.table(table_name)
         return [dict(row) for row in table.get_iterable_rows()]
@@ -190,13 +207,32 @@ class CatalystBackendRepository(InMemoryBackendRepository):
                 {
                     "id": escalation.id,
                     "case_id": escalation.case_id,
-                    "triggered_at": escalation.triggered_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "triggered_at": escalation.triggered_at.strftime("%Y-%m-%d %H:%M:%S") if isinstance(escalation.triggered_at, datetime) else str(escalation.triggered_at),
                     "reason": escalation.reason,
                     "routed_to_rank": escalation.routed_to_rank,
                     "routed_to_officer_id": escalation.routed_to_officer_id,
                     "resolved": escalation.resolved,
                 }
             )
+
+    def record_escalation(self, escalation: EscalationResponse) -> bool:
+        is_new = super().record_escalation(escalation)
+        if is_new:
+            try:
+                self._datastore.table("escalations").insert_row(
+                    {
+                        "id": escalation.id,
+                        "case_id": escalation.case_id,
+                        "triggered_at": escalation.triggered_at.strftime("%Y-%m-%d %H:%M:%S") if isinstance(escalation.triggered_at, datetime) else str(escalation.triggered_at),
+                        "reason": escalation.reason,
+                        "routed_to_rank": escalation.routed_to_rank,
+                        "routed_to_officer_id": escalation.routed_to_officer_id,
+                        "resolved": escalation.resolved,
+                    }
+                )
+            except Exception:
+                pass
+        return is_new
 
     def _audit(self, event_type: str, **details: Any) -> None:
         event = {

@@ -10,6 +10,7 @@
     "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,https://caseclock-frontend-zaruqrfp.onslate.in",
     "CASECLOCK_AUTH_ENABLED": "false",
     "CASECLOCK_PROJECT_ID": "51441000000017001",
-    "CASECLOCK_CLIENT_ID": "caseclock-app-client"
+    "CASECLOCK_CLIENT_ID": "caseclock-app-client",
+    "CRON_SECRET": "cc_cron_sec_8f9a2b4c1d6e3f5a0b7c4d1e"
   }
 }
