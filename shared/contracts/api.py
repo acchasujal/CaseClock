@@ -147,3 +147,27 @@ class DistrictRollupResponse(BaseModel):
     amber_clocks: int
     stale_dependencies: int
     station_rankings: list[StationRanking]
+
+
+# ── System Deadline Monitor ───────────────────────────────────────────────────
+
+class CronScheduleInfo(BaseModel):
+    type: str = "recursive"
+    interval_minutes: int = 15
+
+
+class CronLastRunSummary(BaseModel):
+    run_id: str
+    completed_at: str
+    cases_scanned: int
+    clocks_evaluated: int
+    state_transitions: int
+    escalations_created: int
+    errors: int
+    duration_ms: float
+
+
+class DeadlineMonitorStatusResponse(BaseModel):
+    status: str  # "active" | "delayed" | "unavailable"
+    schedule: CronScheduleInfo
+    last_run: Optional[CronLastRunSummary] = None

@@ -61,7 +61,7 @@ def create_app(
         # Phase 1 acceptance criterion: no production default JSON state path.
         # In production (ENVIRONMENT=production), state_path must be explicitly
         # configured; otherwise we refuse to run with a mutable local file.
-        if cfg.is_production and state_path is None:
+        if cfg.is_production and state_path is None and cfg.caseclock_repository.lower() != "catalyst":
             logger.warning(
                 "Running in production without a configured STATE_PATH. "
                 "Dependency mutations will not be persisted across restarts. "
@@ -108,15 +108,21 @@ def create_app(
             allow_headers=["*"],
         )
 
+    from backend.app.api.cron_routes import create_cron_router
+    from backend.app.api.system_routes import create_system_router
+
     # ── Routes ───────────────────────────────────────────────────────────────
     app.include_router(create_core_router())
+    app.include_router(create_cron_router())
     app.include_router(
         create_graph_router(repository.graph_repository),
         prefix="/api/v1",
     )
-    print("Before include:", len(app.routes))
+    app.include_router(
+        create_system_router(),
+        prefix="/api/v1",
+    )
     app.include_router(chat.router, prefix="/api")
-    print("After include:", len(app.routes))
 
     return app
 

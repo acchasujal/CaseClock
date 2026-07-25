@@ -26,12 +26,15 @@ from backend.app.services.case_service import CaseService
 from backend.app.services.copilot_service import CopilotService
 
 
-def get_settings_dep() -> Settings:
+def get_settings_dep(request: Request) -> Settings:
     """Provide application settings as a FastAPI dependency.
 
-    Wraps the cached `get_settings()` so routes can type-hint:
-        settings: Settings = Depends(get_settings_dep)
+    Prefers request.app.state.settings attached by create_app(), falling back
+    to cached get_settings().
     """
+    state_settings = getattr(request.app.state, "settings", None)
+    if state_settings is not None:
+        return state_settings  # type: ignore[no-any-return]
     return get_settings()
 
 
@@ -93,3 +96,14 @@ def get_copilot_service(
 ) -> CopilotService:
     """Provide CopilotService instance."""
     return CopilotService(repo, audit_svc)
+
+
+from backend.app.services.cron_service import CronService
+
+
+def get_cron_service(
+    repo: InMemoryBackendRepository = Depends(get_repository),
+    audit_svc: AuditService = Depends(get_audit_service),
+) -> CronService:
+    """Provide CronService instance."""
+    return CronService(repo, audit_svc)

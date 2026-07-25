@@ -51,10 +51,11 @@ class AuditEventType(str, Enum):
     ACCESS_DENIED = "access_denied"
     TOKEN_INVALID = "token_invalid"
 
-    # Admin
+    # Admin & Cron
     SEED_STARTED = "seed_started"
     SEED_COMPLETED = "seed_completed"
     SEED_FAILED = "seed_failed"
+    DEADLINE_SWEEP_COMPLETED = "deadline_sweep_completed"
 
     # Graph read model
     GRAPH_QUERY_EXECUTED = "graph_query_executed"
