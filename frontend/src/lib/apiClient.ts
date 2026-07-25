@@ -33,22 +33,15 @@ export async function apiFetch<T>(
   const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   const url = path.startsWith('http') ? path : `${baseUrl}${path}`
   const savedRole = localStorage.getItem('caseclock_role') || 'IO'
-  let savedToken = localStorage.getItem('caseclock_token')
-  if (!savedToken && savedRole) {
-    const payload = {
-      sub: `officer_${savedRole.toLowerCase()}`,
-      email: `officer_${savedRole.toLowerCase()}@caseclock.ksp.gov.in`,
-      role: savedRole,
-      iat: Math.floor(Date.now() / 1000),
-    }
-    savedToken = btoa(JSON.stringify(payload))
-    localStorage.setItem('caseclock_token', savedToken)
-  }
 
+  const method = (options?.method || 'GET').toUpperCase()
+  const isMutating = method !== 'GET' && method !== 'HEAD'
+
+  // GET/HEAD: send no custom headers so Chrome makes a simple request (no preflight).
+  // The backend DevelopmentVerifier reads role from the ?role= query param.
+  // Mutating methods: send Content-Type + X-Dev-Role so the backend knows the role.
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'X-Dev-Role': savedRole,
-    ...(savedToken ? { 'Authorization': `Bearer ${savedToken}` } : {}),
+    ...(isMutating ? { 'Content-Type': 'application/json', 'X-Dev-Role': savedRole } : {}),
     ...(options?.headers as Record<string, string> | undefined),
   }
 
