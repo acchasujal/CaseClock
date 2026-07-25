@@ -20,7 +20,7 @@ from backend.app.ai.exceptions import (
     QuickMLTimeoutError,
 )
 from backend.app.ai.quickml_client import QuickMLClient
-from backend.app.ai.schemas import ChatMessage, LLMRequest, LLMResponse, ToolCall, UsageMetadata
+from backend.app.ai.schemas import ChatMessage, LLMRequest, LLMResponse, UsageMetadata
 from backend.app.db.catalyst import CatalystRestDatastore
 
 

@@ -38,7 +38,6 @@ from backend.app.core.graph.algorithms.aggregation import (
     officer_workload_named,
 )
 from backend.app.core.graph.algorithms.statistics import GraphStatistics, compute_graph_statistics
-from backend.app.core.graph.algorithms.utils import GraphStore
 
 from helpers import (
     _FakeEdge,

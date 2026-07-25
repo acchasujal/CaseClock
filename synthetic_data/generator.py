@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from random import Random
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from synthetic_data.configs import SyntheticDataConfig, SyntheticGraphDataset, SyntheticNodeRecord, build_faker, build_random, utc_now
 from synthetic_data.factories.case_factory import CaseBlueprint, ReferenceCatalog, build_case_blueprints, build_reference_catalog

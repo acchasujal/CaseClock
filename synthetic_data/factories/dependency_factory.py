@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from random import Random
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from backend.app.core.graph.entities import Dependency
 from backend.app.core.graph.enums import GraphEntityType

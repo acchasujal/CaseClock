@@ -6,12 +6,12 @@ from datetime import datetime, timedelta
 from random import Random
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from backend.app.core.graph.entities import Evidence
 from backend.app.core.graph.enums import GraphEntityType
 
-from synthetic_data.configs import SyntheticDataConfig, SyntheticNodeRecord, build_faker, stable_uuid, utc_now
+from synthetic_data.configs import SyntheticDataConfig, SyntheticNodeRecord, build_faker, stable_uuid
 from synthetic_data.factories.case_factory import CaseBlueprint
 from synthetic_data.factories.officer_factory import OfficerProfile
 

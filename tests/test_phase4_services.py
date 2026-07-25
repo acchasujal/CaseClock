@@ -20,7 +20,7 @@ import pytest
 
 from backend.app.auth.principal import Principal
 from backend.app.db.in_memory import InMemoryBackendRepository
-from backend.app.services.audit_service import AuditEventType, AuditService
+from backend.app.services.audit_service import AuditService
 from backend.app.services.case_service import CaseService
 from backend.app.services.copilot_service import (
     CopilotIntent,

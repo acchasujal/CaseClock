@@ -31,12 +31,13 @@ No route code changes required.
 """
 
 from __future__ import annotations
+from backend.app.config import Settings
 
 import logging
 from abc import ABC, abstractmethod
 
 from fastapi import Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 
 from backend.app.api.errors import ForbiddenError
 from backend.app.auth.principal import Principal
@@ -89,7 +90,7 @@ class DevelopmentVerifier(TokenVerifier):
         raw_role = request.headers.get("X-Dev-Role")
         if not raw_role:
             qp = getattr(request, "query_params", None)
-            if qp is not None and not type(qp).__name__ in ("Mock", "MagicMock"):
+            if qp is not None and type(qp).__name__ not in ("Mock", "MagicMock"):
                 try:
                     raw_role = qp.get("role")
                 except AttributeError:
@@ -216,7 +217,6 @@ def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-d
     - If auth_mode is explicitly 'demo' or development mode without auth enabled → DevelopmentVerifier.
     - If auth_mode is 'catalyst' or (CASECLOCK_AUTH_ENABLED or credentials present) → CatalystAuthVerifier.
     """
-    from backend.app.config import Settings
 
     auth_mode = getattr(settings, "auth_mode", "demo").lower()
     if auth_mode == "demo":

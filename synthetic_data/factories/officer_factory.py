@@ -5,12 +5,12 @@ from __future__ import annotations
 from random import Random
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from backend.app.core.graph.entities import Officer
 from backend.app.core.graph.enums import GraphEntityType
 
-from synthetic_data.configs import SyntheticDataConfig, SyntheticNodeRecord, build_faker, choose_weighted, stable_uuid, timestamp_for_index, utc_now
+from synthetic_data.configs import SyntheticDataConfig, SyntheticNodeRecord, build_faker, stable_uuid, timestamp_for_index, utc_now
 from synthetic_data.factories.case_factory import ReferenceCatalog
 
 

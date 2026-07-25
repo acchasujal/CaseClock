@@ -18,7 +18,6 @@ Coverage
 
 from __future__ import annotations
 
-import pytest
 
 from backend.app.core.graph.algorithms.pattern_detection import (
     ClusterResult,
@@ -34,11 +33,9 @@ from backend.app.core.graph.algorithms.pattern_detection import (
     detect_repeat_phone,
     detect_repeat_vehicle,
 )
-from backend.app.core.graph.algorithms.utils import GraphStore
 
 from helpers import (
     _FakeEdge,
-    _FakeNode,
     make_case,
     make_dependency,
     make_officer,

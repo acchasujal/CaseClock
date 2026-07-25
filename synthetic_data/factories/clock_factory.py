@@ -6,14 +6,14 @@ from datetime import datetime, timedelta
 from random import Random
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from backend.app.core.graph.entities import ClockInstance
 from backend.app.core.graph.enums import GraphEntityType
 
 from shared.constants.clock_types import ClockType, get_clock_rule
 
-from synthetic_data.configs import SyntheticDataConfig, SyntheticNodeRecord, build_faker, clock_type_choices, choose_weighted, stable_uuid, utc_now
+from synthetic_data.configs import SyntheticDataConfig, SyntheticNodeRecord, build_faker, clock_type_choices, stable_uuid, utc_now
 from synthetic_data.factories.case_factory import CaseBlueprint
 
 

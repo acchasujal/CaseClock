@@ -1,6 +1,5 @@
 import pytest
-from uuid import UUID
-from shared.constants.clock_types import ClockType, CLOCK_RULES, get_clock_rule
+from shared.constants.clock_types import ClockType, get_clock_rule
 from backend.app.core.graph.graph_schema import GRAPH_SCHEMA
 from backend.app.core.graph.enums import GraphEntityType, GraphRelationshipType
 from synthetic_data.configs import SyntheticDataConfig

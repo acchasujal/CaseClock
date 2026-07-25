@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from dataclasses import dataclass
 from backend.app.core.graph.algorithms.utils import NodeRecord, AdjEdge
 from backend.app.core.graph.services.serializers import (
     serialize_node,
@@ -13,7 +14,7 @@ class Dummy:
         self.x = 1
 
 
-from dataclasses import dataclass
+
 
 
 @dataclass

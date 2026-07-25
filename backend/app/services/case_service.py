@@ -23,7 +23,7 @@ Phase transition:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from backend.app.auth.principal import Principal
@@ -35,7 +35,6 @@ from backend.app.services.audit_service import AuditEventType, AuditService
 from shared.contracts.api import (
     CaseDetailResponse,
     CaseSummaryResponse,
-    ClockInstanceResponse,
     DependencyResponse,
     DependencyStatus,
     EscalationResponse,

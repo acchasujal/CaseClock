@@ -20,7 +20,9 @@ from __future__ import annotations
 import json
 import os
 import sys
+import requests
 from pathlib import Path
+from backend.app.db.catalyst import CatalystRestDatastore
 
 # Ensure project root is in sys.path to enable imports from backend
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -38,9 +40,9 @@ try:
 except ImportError:
     pass
 
-import requests
 
-from backend.app.db.catalyst import CatalystRestDatastore
+
+
 
 
 def parse_json_env(var_name: str) -> dict[str, str] | None:

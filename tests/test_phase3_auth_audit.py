@@ -16,9 +16,8 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient

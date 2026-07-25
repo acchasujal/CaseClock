@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from random import Random
 from uuid import UUID
 
@@ -15,7 +14,6 @@ from backend.app.core.graph.enums import GraphEntityType
 from synthetic_data.configs import (
     SyntheticDataConfig,
     SyntheticNodeRecord,
-    build_random,
     build_faker,
     default_case_stages,
     default_offence_categories,
@@ -234,7 +232,6 @@ def build_case_blueprints(
     rng: Random,
     references: ReferenceCatalog,
 ) -> list[CaseBlueprint]:
-    fake = build_faker(config.seed)
     base_now = utc_now() - timedelta(days=config.snapshot_days_offset)
     case_blueprints: list[CaseBlueprint] = []
     offence_categories = list(default_offence_categories())

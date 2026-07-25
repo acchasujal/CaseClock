@@ -16,14 +16,9 @@ Coverage
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 import pytest
 
-from backend.app.core.graph.algorithms.utils import (
-    GraphStore,
-    build_graph_store,
-)
 
 from backend.app.core.graph.algorithms.similarity import (
     FEATURE_WEIGHTS,
@@ -101,7 +96,6 @@ def _store_with_two_linked_cases(
 
 def test_similarity_same_case_max():
     """A case compared with itself should score 1.0 (all features match)."""
-    from pprint import pprint
 
     store, case_id, _ = _store_with_two_linked_cases()
     # Compare case_a with itself
@@ -283,15 +277,8 @@ def test_find_similar_cases_excludes_self():
 def test_batch_similarity_matrix_pairs():
     """N=3 → up to 3 pairs."""
     store, ca, cb = _store_with_two_linked_cases()
-    # Add a third case
-    case_c = make_case(district="Mysuru")
-    # Rebuild store with third case
-    store2 = build_graph_store(
-        list(store.nodes.values()) + [
-            type("N", (), {"id": case_c.id, "entity_type": type("E", (), {"value": "Case"})(), "properties": case_c.properties})()
-        ],
-        [e for edges in store.edge_index.values() for e in edges],
-    )
+   
+    
     results = batch_similarity_matrix(store, [ca, cb])
     # One pair
     assert len(results) <= 1

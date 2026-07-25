@@ -22,7 +22,6 @@ Coverage
 
 from __future__ import annotations
 
-import pytest
 
 from backend.app.core.graph.algorithms.traversals import (
     SubgraphResult,
@@ -40,14 +39,12 @@ from backend.app.core.graph.algorithms.traversals import (
     get_sections_for_case,
     get_subgraph,
 )
-from backend.app.core.graph.algorithms.utils import GraphStore, build_graph_store
 
 from helpers import (
     _FakeEdge,
     make_case,
     make_clock,
     make_dependency,
-    make_evidence,
     make_officer,
     make_person,
     make_section,

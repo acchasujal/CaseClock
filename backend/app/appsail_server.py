@@ -28,20 +28,22 @@ import logging
 import os
 import sys
 from pathlib import Path
-
+import types
+import app
+import uvicorn
 # Add the directory containing the 'app' package to sys.path to allow absolute imports
 app_parent_dir = Path(__file__).resolve().parent.parent
 if str(app_parent_dir) not in sys.path:
     sys.path.insert(0, str(app_parent_dir))
 
 # Support absolute 'backend.app' imports in production by aliasing 'backend.app' to 'app'
-import types
+
 backend_mock = types.ModuleType("backend")
 sys.modules["backend"] = backend_mock
-import app
+
 sys.modules["backend.app"] = app
 
-import uvicorn
+
 
 logging.basicConfig(
     level=logging.INFO,

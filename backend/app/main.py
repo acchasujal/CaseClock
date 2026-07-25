@@ -12,6 +12,15 @@ from backend.app.api.routes import chat
 
 import sys
 from pathlib import Path
+import logging
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.config import Settings, get_settings
+from backend.app.api.core_routes import create_core_router
+from backend.app.api.errors import install_error_handlers
+from backend.app.api.graph_routes import create_graph_router
 
 # Add project root to sys.path to allow absolute 'backend' imports
 # when running uvicorn from the backend directory
@@ -19,16 +28,8 @@ root_dir = Path(__file__).resolve().parents[2]
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
-import logging
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.api.core_routes import create_core_router
-from backend.app.api.errors import install_error_handlers
-from backend.app.api.graph_routes import create_graph_router
-from backend.app.config import Settings, get_settings
-from backend.app.db.in_memory import InMemoryBackendRepository
 
 logger = logging.getLogger(__name__)
 

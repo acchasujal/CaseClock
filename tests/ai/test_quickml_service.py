@@ -8,19 +8,17 @@ LLM message building, error propagation, and orchestration execution order.
 
 from __future__ import annotations
 
-import json
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import pytest
 
 from backend.app.ai.exceptions import (
-    AIError,
     IntentExtractionError,
     PromptError,
     QuickMLError,
     ToolExecutionError,
 )
-from backend.app.ai.intent_dispatcher import IntentDispatcher, IntentName
+from backend.app.ai.intent_dispatcher import IntentDispatcher
 from backend.app.ai.intent_extractor import IntentExtractor
 from backend.app.ai.prompt_manager import PromptManager, PromptType
 from backend.app.ai.quickml_client import QuickMLClient
@@ -28,7 +26,6 @@ from backend.app.ai.quickml_service import QuickMLService
 from backend.app.ai.schemas import (
     ChatMessage,
     ChatRequest,
-    ChatResponse,
     ConversationContext,
     Entity,
     Intent,
@@ -582,26 +579,6 @@ def test_orchestration_execution_order_for_graph_intent(
 
     # Act
     service.chat(ChatRequest(message="Show hotspots"))
-
-    # Assert
-    expected_calls = [
-        call.extract("Show hotspots"),
-        call.dispatch(mock_extractor.extract.return_value),
-        call.render(
-            PromptType.SYNTHESIS,
-            user_query="Show hotspots",
-            user_message="Show hotspots",
-            intent_name="GET_HOTSPOTS",
-            confidence=0.95,
-            entities='[{"type": "zone", "value": "North Zone"}]',
-            graph_result=json.dumps({"hotspots": ["Station A", "Station B"]}, indent=2, default=str),
-        ),
-        call.generate(service._build_llm_request(service._build_synthesis_messages(
-            ConversationContext(conversation_id="dummy"),
-            "Rendered synthesis prompt",
-            "Show hotspots"
-        ))),
-    ]
 
     # Verify method call order
     call_names = [call_item[0] for call_item in manager_tracker.mock_calls]

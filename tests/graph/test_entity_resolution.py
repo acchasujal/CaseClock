@@ -7,7 +7,6 @@ phonetic spelling variations, multiple match candidate ranking, low confidence f
 and address boosts. Also covers the resolved pattern detection integration.
 """
 
-import pytest
 from backend.app.core.graph.algorithms.entity_resolution import (
     normalize_text,
     phonetic_normalize,

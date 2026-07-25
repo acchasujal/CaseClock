@@ -2,22 +2,6 @@
 import pytest
 import sys
 import pathlib
-from typing import Any
-from uuid import uuid4
-
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-print("ROOT =", ROOT)
-
-sys.path.insert(0, str(ROOT))
-
-
-
-from backend.app.core.graph.algorithms.utils import (
-    AdjEdge,
-    GraphStore,
-    NodeRecord,
-    build_graph_store,
-)
 from helpers import (
     _FakeEdge,
     make_case,
@@ -28,6 +12,19 @@ from helpers import (
     make_person,
     make_store,
 )
+from backend.app.core.graph.algorithms.utils import (
+    GraphStore,
+)
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+print("ROOT =", ROOT)
+
+sys.path.insert(0, str(ROOT))
+
+
+
+
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Lightweight fake record objects that mirror the SyntheticNodeRecord /
 # SyntheticEdgeRecord interface used by build_graph_store, without importing

@@ -61,7 +61,7 @@ def build_person_profiles(
 
     profiles: list[PersonProfile] = []
 
-    accused_profiles: list[PersonProfile] = []
+    
     accused_case_capacity = [
         choose_weighted(rng, [(4, 0.45), (5, 0.55)]) if index < 60 else choose_weighted(rng, [(2, 0.35), (3, 0.45), (4, 0.20)])
         for index in range(180)
