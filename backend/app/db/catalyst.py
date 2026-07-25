@@ -4,6 +4,7 @@ This adapter keeps the API surface aligned with the in-memory repository while
 loading rows from the real Catalyst tables created for the prototype.
 """
 
+
 from __future__ import annotations
 
 import json
@@ -258,6 +259,47 @@ class CatalystRestDatastore:
         self.environment = str(options.get("environment") or "Development")
         self.timeout = int(options.get("timeout_seconds") or os.getenv("CATALYST_HTTP_TIMEOUT_SECONDS") or 120)
         self._access_token: str | None = None
+
+    @classmethod
+    def from_env(cls) -> "CatalystRestDatastore":
+        # Load .env for local development (no effect if variables are already set)
+        try:
+            from dotenv import load_dotenv
+            from pathlib import Path
+
+            project_env = Path(__file__).resolve().parents[3] / ".env"
+            if project_env.exists():
+                load_dotenv(project_env)
+            else:
+                load_dotenv()
+        except ImportError:
+            pass
+
+        # Prefer JSON configuration if provided
+        auth_env = os.getenv("CATALYST_AUTH")
+        options_env = os.getenv("CATALYST_OPTIONS")
+
+        if auth_env and options_env:
+            return cls(
+                auth=_json_env("CATALYST_AUTH"),
+                options=_json_env("CATALYST_OPTIONS"),
+            )
+
+        # Fall back to individual environment variables
+        auth = {
+            "client_id": os.environ["CATALYST_CLIENT_ID"],
+            "client_secret": os.environ["CATALYST_CLIENT_SECRET"],
+            "refresh_token": os.environ["CATALYST_REFRESH_TOKEN"],
+        }
+
+        options = {
+            "project_id": os.environ["CATALYST_PROJECT_ID"],
+            "project_key": os.environ["CATALYST_PROJECT_KEY"],
+            "api_domain": os.getenv("CATALYST_API_DOMAIN", "https://api.catalyst.zoho.in"),
+            "accounts_domain": os.getenv("CATALYST_ACCOUNTS_DOMAIN", "https://accounts.zoho.in"),
+            "environment": os.getenv("CATALYST_ENVIRONMENT", "Development"),
+        }
+        return cls(auth=auth, options=options)
 
     def table(self, table_name: str) -> "CatalystRestTable":
         return CatalystRestTable(self, table_name)

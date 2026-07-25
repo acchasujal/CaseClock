@@ -6,8 +6,9 @@ Wires together:
   - Core routes and graph routes
   - Repository stored on app.state for dependency injection
 """
-
 from __future__ import annotations
+from backend.app.api.routes import chat
+
 
 import sys
 from pathlib import Path
@@ -112,6 +113,9 @@ def create_app(
         create_graph_router(repository.graph_repository),
         prefix="/api/v1",
     )
+    print("Before include:", len(app.routes))
+    app.include_router(chat.router, prefix="/api")
+    print("After include:", len(app.routes))
 
     return app
 

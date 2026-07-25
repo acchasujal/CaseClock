@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 from pydantic import BaseModel, Field
+from typing import Literal
 
 
 # ── Domain & Extraction Entities ──────────────────────────────────────────────
@@ -51,7 +52,12 @@ class Intent(BaseModel):
 class ChatMessage(BaseModel):
     """A single turn or message within a chat conversation."""
 
-    role: str = Field(
+    role: Literal[
+        "system",
+        "user",
+        "assistant",
+        "tool",
+    ] = Field(
         ...,
         description="Role of the message author: 'system', 'user', 'assistant', or 'tool'.",
     )
@@ -103,7 +109,7 @@ class ConversationContext(BaseModel):
 class ToolCall(BaseModel):
     """Represents a request from an LLM provider to execute a tool/function."""
 
-    tool_name: str = Field(
+    name: str = Field(
         ...,
         description="Target function or tool name to execute.",
     )
@@ -120,7 +126,7 @@ class ToolCall(BaseModel):
 class ToolResult(BaseModel):
     """Represents the output of a deterministic tool execution."""
 
-    tool_name: str = Field(
+    name: str = Field(
         ...,
         description="Name of the tool that was executed.",
     )
@@ -162,7 +168,10 @@ class UsageMetadata(BaseModel):
 
 class LLMRequest(BaseModel):
     """Provider-agnostic inference request."""
-
+    thinking: bool = Field(
+        default=False,
+        description="Whether to enable provider reasoning/thinking mode.",
+    )
     messages: list[ChatMessage] = Field(
         ...,
         description="List of chat messages representing conversation history and prompts.",
@@ -176,6 +185,7 @@ class LLMRequest(BaseModel):
         ge=0.0,
         le=2.0,
         description="Sampling temperature for text generation.",
+        
     )
     max_tokens: int | None = Field(
         default=None,
