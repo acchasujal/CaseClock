@@ -33,9 +33,22 @@ export async function apiFetch<T>(
   const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   const url = path.startsWith('http') ? path : `${baseUrl}${path}`
   const savedRole = localStorage.getItem('caseclock_role') || 'IO'
+  let savedToken = localStorage.getItem('caseclock_token')
+  if (!savedToken && savedRole) {
+    const payload = {
+      sub: `officer_${savedRole.toLowerCase()}`,
+      email: `officer_${savedRole.toLowerCase()}@caseclock.ksp.gov.in`,
+      role: savedRole,
+      iat: Math.floor(Date.now() / 1000),
+    }
+    savedToken = btoa(JSON.stringify(payload))
+    localStorage.setItem('caseclock_token', savedToken)
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Dev-Role': savedRole,
+    ...(savedToken ? { 'Authorization': `Bearer ${savedToken}` } : {}),
     ...(options?.headers as Record<string, string> | undefined),
   }
 

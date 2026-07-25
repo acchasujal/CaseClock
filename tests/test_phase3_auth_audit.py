@@ -155,11 +155,34 @@ class TestCatalystAuthVerifier:
         with pytest.raises(ValueError, match="project_id"):
             CatalystAuthVerifier(client_id="client-123", project_id="")
 
-    def test_verify_raises_forbidden_when_called(self):
+    def test_verify_raises_forbidden_when_called_without_headers(self):
         from backend.app.api.errors import ForbiddenError
         verifier = CatalystAuthVerifier(client_id="c", project_id="p")
         request = _make_request()
-        with pytest.raises(ForbiddenError):
+        with pytest.raises(ForbiddenError, match="required"):
+            self._run(verifier.verify(request))
+
+    def test_verify_accepts_valid_bearer_token(self):
+        import base64
+        import json
+        verifier = CatalystAuthVerifier(client_id="c", project_id="p")
+        token_payload = {"sub": "officer-789", "email": "sho@ksp.gov.in", "role": "SHO"}
+        token = base64.urlsafe_b64encode(json.dumps(token_payload).encode("utf-8")).decode("utf-8")
+        request = _make_request({"Authorization": f"Bearer {token}"})
+        principal = self._run(verifier.verify(request))
+        assert principal.role == UserRole.SHO
+        assert principal.user_id == "officer-789"
+        assert not principal.is_anonymous
+
+    def test_verify_rejects_invalid_role_token(self):
+        import base64
+        import json
+        from backend.app.api.errors import ForbiddenError
+        verifier = CatalystAuthVerifier(client_id="c", project_id="p")
+        token_payload = {"sub": "officer-000", "role": "INVALID_ROLE"}
+        token = base64.urlsafe_b64encode(json.dumps(token_payload).encode("utf-8")).decode("utf-8")
+        request = _make_request({"Authorization": f"Bearer {token}"})
+        with pytest.raises(ForbiddenError, match="Invalid user role"):
             self._run(verifier.verify(request))
 
 
@@ -172,8 +195,8 @@ class TestMakeVerifier:
         assert isinstance(verifier, DevelopmentVerifier)
 
     def test_returns_catalyst_verifier_with_credentials(self, monkeypatch):
-        monkeypatch.setenv("CATALYST_CLIENT_ID", "client-123")
-        monkeypatch.setenv("CATALYST_PROJECT_ID", "proj-456")
+        monkeypatch.setenv("CASECLOCK_CLIENT_ID", "client-123")
+        monkeypatch.setenv("CASECLOCK_PROJECT_ID", "proj-456")
         settings = Settings()
         verifier = make_verifier(settings)
         assert isinstance(verifier, CatalystAuthVerifier)
