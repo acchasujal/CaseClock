@@ -189,15 +189,27 @@ class TestCatalystAuthVerifier:
 # ── make_verifier factory tests ────────────────────────────────────────────────
 
 class TestMakeVerifier:
-    def test_returns_dev_verifier_without_catalyst_credentials(self):
-        settings = Settings()  # no CATALYST_* env vars → empty strings
+    def test_returns_dev_verifier_when_auth_mode_demo(self):
+        settings = Settings(AUTH_MODE="demo", ENVIRONMENT="production")
         verifier = make_verifier(settings)
         assert isinstance(verifier, DevelopmentVerifier)
 
-    def test_returns_catalyst_verifier_with_credentials(self, monkeypatch):
+    def test_demo_mode_validates_io_sho_sp(self):
+        verifier = DevelopmentVerifier(is_production=False)
+        for role_str in ["IO", "SHO", "SP", "io", "sho", "sp"]:
+            req = _make_request({"X-Dev-Role": role_str})
+            p = asyncio.run(verifier.verify(req))
+            assert p.role.value.upper() == role_str.upper()
+
+    def test_demo_mode_rejects_invalid_roles(self):
+        client = TestClient(create_app(InMemoryBackendRepository()))
+        response = client.get("/worklist?role=ADMIN")
+        assert response.status_code == 422
+
+    def test_returns_catalyst_verifier_when_auth_mode_catalyst(self, monkeypatch):
         monkeypatch.setenv("CASECLOCK_CLIENT_ID", "client-123")
         monkeypatch.setenv("CASECLOCK_PROJECT_ID", "proj-456")
-        settings = Settings()
+        settings = Settings(AUTH_MODE="catalyst")
         verifier = make_verifier(settings)
         assert isinstance(verifier, CatalystAuthVerifier)
 

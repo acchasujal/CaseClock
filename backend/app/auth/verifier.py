@@ -97,8 +97,8 @@ class DevelopmentVerifier(TokenVerifier):
         if not raw_role or type(raw_role).__name__ in ("Mock", "MagicMock"):
             raw_role = "IO"
         
-        raw_role = raw_role.strip().lower()
-        role = self._ROLE_MAP.get(raw_role, UserRole.IO)
+        raw_role_clean = raw_role.strip().lower()
+        role = self._ROLE_MAP.get(raw_role_clean, UserRole.IO)
         logger.debug("DevelopmentVerifier: role=%s from headers/query", role)
 
         return Principal(
@@ -213,15 +213,19 @@ class CatalystAuthVerifier(TokenVerifier):
 def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-defined]
     """Factory: choose the correct verifier based on environment and credentials.
 
-    - If CASECLOCK_AUTH_ENABLED or CASECLOCK_CLIENT_ID and CASECLOCK_PROJECT_ID are set → CatalystAuthVerifier.
-    - Otherwise in development → DevelopmentVerifier.
-    - In production without credentials → DevelopmentVerifier raises ForbiddenError.
+    - If auth_mode is explicitly 'demo' or development mode without auth enabled → DevelopmentVerifier.
+    - If auth_mode is 'catalyst' or (CASECLOCK_AUTH_ENABLED or credentials present) → CatalystAuthVerifier.
     """
     from backend.app.config import Settings
+
+    auth_mode = getattr(settings, "auth_mode", "demo").lower()
+    if auth_mode == "demo":
+        return DevelopmentVerifier(is_production=False)
 
     has_catalyst = bool(
         settings.caseclock_auth_enabled
         or (settings.catalyst_client_id and settings.catalyst_project_id)
+        or auth_mode == "catalyst"
     )
 
     if has_catalyst:

@@ -48,6 +48,7 @@ class Settings(BaseSettings):
 
     caseclock_repository: str = Field(default="local", alias="CASECLOCK_REPOSITORY")
     caseclock_auth_enabled: bool = Field(default=False, alias="CASECLOCK_AUTH_ENABLED")
+    auth_mode: str = Field(default="demo", alias="AUTH_MODE")
     catalyst_project_id: str = Field(default="", alias="CASECLOCK_PROJECT_ID")
     catalyst_client_id: str = Field(default="", alias="CASECLOCK_CLIENT_ID")
 

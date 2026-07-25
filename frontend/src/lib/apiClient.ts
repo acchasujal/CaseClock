@@ -31,21 +31,27 @@ export async function apiFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-  const url = path.startsWith('http') ? path : `${baseUrl}${path}`
+  let fullUrl = path.startsWith('http') ? path : `${baseUrl}${path}`
   const savedRole = localStorage.getItem('caseclock_role') || 'IO'
 
   const method = (options?.method || 'GET').toUpperCase()
   const isMutating = method !== 'GET' && method !== 'HEAD'
 
+  // If GET/HEAD and 'role=' is not already in the query string, automatically attach ?role= or &role=
+  if (!isMutating && !fullUrl.includes('role=')) {
+    const separator = fullUrl.includes('?') ? '&' : '?'
+    fullUrl = `${fullUrl}${separator}role=${encodeURIComponent(savedRole)}`
+  }
+
   // GET/HEAD: send no custom headers so Chrome makes a simple request (no preflight).
-  // The backend DevelopmentVerifier reads role from the ?role= query param.
+  // The backend DevelopmentVerifier/DemoVerifier reads role from the ?role= query param.
   // Mutating methods: send Content-Type + X-Dev-Role so the backend knows the role.
   const headers: Record<string, string> = {
     ...(isMutating ? { 'Content-Type': 'application/json', 'X-Dev-Role': savedRole } : {}),
     ...(options?.headers as Record<string, string> | undefined),
   }
 
-  const response = await fetch(url, {
+  const response = await fetch(fullUrl, {
     ...options,
     headers,
   })
