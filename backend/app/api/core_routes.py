@@ -45,6 +45,18 @@ def create_core_router() -> APIRouter:
     """
     router = APIRouter(tags=["backend-core"])
 
+    @router.get("/")
+    def root() -> dict[str, str]:
+        """Root service probe for simple browser and health checks."""
+        from backend.app.config import get_settings
+
+        cfg = get_settings()
+        return {
+            "service": "CaseClock API",
+            "status": "ok",
+            "version": cfg.app_version,
+        }
+
     @router.get("/health")
     def health() -> dict[str, str]:
         """Liveness probe.  Returns service name and version only."""

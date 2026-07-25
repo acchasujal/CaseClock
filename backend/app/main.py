@@ -92,9 +92,39 @@ def create_app(
     # so request IDs are set before any handler runs.
     install_error_handlers(app)
 
+    import re
+    from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+    from fastapi import Response
+
+    class CustomCORSMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+            origin = request.headers.get("origin") or request.headers.get("Origin") or ""
+            is_allowed = False
+            if origin:
+                if origin in cfg.cors_origins_list or re.match(r"https://.*\.onslate\.in|https://.*\.catalystappsail\.in", origin):
+                    is_allowed = True
+
+            if request.method == "OPTIONS":
+                resp = Response(status_code=200)
+                if is_allowed:
+                    resp.headers["Access-Control-Allow-Origin"] = origin
+                    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                    resp.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-Dev-Role, X-Request-ID, X-Catalyst-User-Token, *"
+                    resp.headers["Access-Control-Allow-Credentials"] = "true"
+                    resp.headers["Access-Control-Max-Age"] = "86400"
+                return resp
+
+            resp = await call_next(request)
+            if is_allowed and origin:
+                resp.headers["Access-Control-Allow-Origin"] = origin
+                resp.headers["Access-Control-Allow-Credentials"] = "true"
+            return resp
+
+    app.add_middleware(CustomCORSMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.cors_origins_list,
+        allow_origin_regex=r"https://.*\.onslate\.in|https://.*\.catalystappsail\.in",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

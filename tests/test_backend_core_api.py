@@ -136,6 +136,41 @@ def test_district_rollup_success():
         assert "critical" in first
 
 
+def test_root_endpoint_status():
+    client = _client()
+    response = client.get("/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "CaseClock API"
+    assert data["status"] == "ok"
+
+
+def test_cors_preflight_on_worklist():
+    client = _client()
+    # Test OPTIONS preflight with allowed Slate origin
+    response = client.options(
+        "/worklist?role=SHO",
+        headers={
+            "Origin": "https://caseclock-frontend-zaruqrfp.onslate.in",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization, content-type, x-dev-role",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://caseclock-frontend-zaruqrfp.onslate.in"
+    assert "GET" in response.headers.get("access-control-allow-methods", "")
+
+    # Test OPTIONS preflight with unapproved origin
+    unapproved_response = client.options(
+        "/worklist?role=SHO",
+        headers={
+            "Origin": "https://unapproved-hacker-site.com",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert "access-control-allow-origin" not in unapproved_response.headers
+
+
 def _case_with_dependency(client: TestClient) -> str:
     for summary in client.get("/worklist?role=SP").json():
         detail = client.get(f"/cases/{summary['id']}").json()
