@@ -13,6 +13,8 @@ import { clockStatusToRisk } from '@/lib/utils'
 import type { CaseSummaryResponse } from '@shared/contracts/api'
 import { ShieldAlert } from 'lucide-react'
 
+import { DeadlineMonitorBanner } from '@/components/DeadlineMonitorBanner'
+
 const PAGE_SIZE = 15
 
 // Shared select class to avoid repetition
@@ -221,6 +223,9 @@ export default function Worklist() {
           Statutory-deadline investigation command center for Mysuru District
         </p>
       </div>
+
+      {/* Autonomous Deadline Monitor Status Banner */}
+      <DeadlineMonitorBanner />
 
       {/* Filter and Search Action Bar */}
       <div

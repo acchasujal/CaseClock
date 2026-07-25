@@ -97,12 +97,17 @@ class CronService:
                 )
 
         duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        completed_at = getattr(self._repo, "reference_time", None)
+        from datetime import datetime, timezone
+        completed_at_str = (completed_at or datetime.now(timezone.utc)).isoformat()
 
-        # Operational log entry for this cron run
+        # Operational completion log entry for this cron run
         self._audit.record(
-            AuditEventType.WORKLIST_VIEWED,
+            AuditEventType.DEADLINE_SWEEP_COMPLETED,
             actor_id="system-cron",
             run_id=run_id,
+            completed_at=completed_at_str,
+            status="ok",
             cases_scanned=cases_scanned,
             clocks_evaluated=clocks_evaluated,
             state_transitions=state_transitions,

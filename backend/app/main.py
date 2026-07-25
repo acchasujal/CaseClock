@@ -108,12 +108,17 @@ def create_app(
         )
 
     from backend.app.api.cron_routes import create_cron_router
+    from backend.app.api.system_routes import create_system_router
 
     # ── Routes ───────────────────────────────────────────────────────────────
     app.include_router(create_core_router())
     app.include_router(create_cron_router())
     app.include_router(
         create_graph_router(repository.graph_repository),
+        prefix="/api/v1",
+    )
+    app.include_router(
+        create_system_router(),
         prefix="/api/v1",
     )
     app.include_router(chat.router, prefix="/api")

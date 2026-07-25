@@ -99,3 +99,27 @@ export interface TokenResponse {
   token_type: "bearer";
   role: UserRole;
 }
+
+// ── System Deadline Monitor ───────────────────────────────────────────────────
+
+export interface CronScheduleInfo {
+  type: string;
+  interval_minutes: number;
+}
+
+export interface CronLastRunSummary {
+  run_id: string;
+  completed_at: string;
+  cases_scanned: number;
+  clocks_evaluated: number;
+  state_transitions: number;
+  escalations_created: number;
+  errors: number;
+  duration_ms: number;
+}
+
+export interface DeadlineMonitorStatusResponse {
+  status: "active" | "delayed" | "unavailable";
+  schedule: CronScheduleInfo;
+  last_run: CronLastRunSummary | null;
+}

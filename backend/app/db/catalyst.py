@@ -102,6 +102,23 @@ class CatalystBackendRepository(InMemoryBackendRepository):
                 except Exception:
                     pass
 
+        for row in self._iter_table("audit_events"):
+            cleaned = self._clean_row(row)
+            audit_id = cleaned.get("id")
+            if audit_id:
+                details = self._json_dict(cleaned.get("details_json"))
+                self.audit_events.append(
+                    {
+                        "id": str(audit_id),
+                        "event_type": str(cleaned.get("event_type", "")),
+                        "occurred_at": str(cleaned.get("occurred_at", "")),
+                        "case_id": cleaned.get("case_id") or None,
+                        "actor_role": cleaned.get("actor_role") or None,
+                        "details": details,
+                        "metadata": details,
+                    }
+                )
+
     def _iter_table(self, table_name: str) -> list[dict[str, Any]]:
         table = self._datastore.table(table_name)
         return [dict(row) for row in table.get_iterable_rows()]

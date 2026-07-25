@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useEscalations } from '@/hooks/useEscalations'
 import { useWorklist } from '@/hooks/useWorklist'
 import { useUpdateDependency } from '@/hooks/useUpdateDependency'
+import { useDeadlineMonitor } from '@/hooks/useDeadlineMonitor'
 import { DataTable, type ColumnDef } from '@/components/DataTable'
 import { ClockBadge } from '@/components/ClockBadge'
 import { RiskBadge } from '@/components/RiskBadge'
@@ -286,6 +287,11 @@ export default function Escalations() {
         <p className="text-body text-neutral-500">
           Supervisor command dashboard prioritizing cases requiring critical intervention
         </p>
+        {monitor?.last_run && (
+          <p className="text-caption text-neutral-400 font-mono mt-1">
+            Autonomous Catalyst Cron monitored {monitor.last_run.cases_scanned} active cases · Evaluated {monitor.last_run.clocks_evaluated} statutory clocks · Generated {monitor.last_run.escalations_created} escalations
+          </p>
+        )}
       </div>
 
       {/* Summary Cards */}
