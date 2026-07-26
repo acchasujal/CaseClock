@@ -7,7 +7,7 @@
     "predeploy": "robocopy ..\\shared shared /E /NFL /NDL /NJH /NJS /nc /ns /np /XD __pycache__ & pip install --only-binary=:all: --platform manylinux2014_x86_64 --python-version 3.11 -r requirements.txt -t ."
   },
   "env_variables": {
-    "CASECLOCK_REPOSITORY": "catalyst",
+    "CASECLOCK_REPOSITORY": "local",
     "ENVIRONMENT": "production",
     "AUTH_MODE": "catalyst",
     "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,https://caseclock-frontend-zaruqrfp.onslate.in",
