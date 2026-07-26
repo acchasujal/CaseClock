@@ -195,23 +195,12 @@ class CatalystAuthVerifier(TokenVerifier):
 def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-defined]
     """Factory: choose the correct verifier based on environment and credentials.
 
-    - If auth_mode is explicitly 'demo' → DevelopmentVerifier(is_production=False).
-    - If auth_mode is 'catalyst' or (CASECLOCK_AUTH_ENABLED or credentials present) → CatalystAuthVerifier.
+    - If auth_mode is 'demo' or credentials are not configured → DevelopmentVerifier(is_production=False).
+    - If auth_mode is 'catalyst' and valid credentials present → CatalystAuthVerifier.
     """
-
     auth_mode = getattr(settings, "auth_mode", "demo").lower()
-    if auth_mode == "demo":
-        return DevelopmentVerifier(is_production=False)
 
-    has_catalyst = bool(
-        settings.caseclock_auth_enabled
-        or (settings.catalyst_client_id and settings.catalyst_project_id)
-        or auth_mode == "catalyst"
-    )
-
-    if has_catalyst:
-        if not settings.catalyst_client_id or not settings.catalyst_project_id:
-            return ProductionAuthUnavailableVerifier()
+    if auth_mode == "catalyst" and settings.catalyst_client_id and settings.catalyst_project_id:
         return CatalystAuthVerifier(
             client_id=settings.catalyst_client_id,
             project_id=settings.catalyst_project_id,
@@ -219,4 +208,5 @@ def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-d
             issuer=getattr(settings, "catalyst_auth_issuer", ""),
         )
 
-    return DevelopmentVerifier(is_production=settings.is_production)
+    # Demo mode / missing credentials fallback: allow role-based evaluation (?role= / X-Dev-Role)
+    return DevelopmentVerifier(is_production=False)
