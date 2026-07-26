@@ -32,6 +32,7 @@ def valid_intent_schema() -> dict:
                 "enum": [
                     "GET_CASE",
                     "GET_CASE_DETAILS",
+                    "SEARCH_CASES",
                     "GET_SIMILAR_CASES",
                     "GET_REPEAT_OFFENDERS",
                     "GET_NETWORK",
@@ -607,3 +608,33 @@ def test_build_intent_empty_entities(
     # Assert
     assert intent.name == "UNKNOWN"
     assert intent.entities == []
+
+
+def test_extract_search_cases_intent(
+    mock_dependencies: tuple[MagicMock, MagicMock],
+) -> None:
+    # Arrange
+    mock_client, mock_pm = mock_dependencies
+    payload = {
+        "intent": "SEARCH_CASES",
+        "confidence": 0.98,
+        "entities": [
+            {"type": "offence_category", "value": "vehicle_theft"},
+            {"type": "district", "value": "Belagavi"},
+        ],
+    }
+    mock_client.generate.return_value = LLMResponse(content=json.dumps(payload))
+    extractor = IntentExtractor(client=mock_client, prompt_manager=mock_pm)
+
+    # Act
+    intent = extractor.extract("Vehicle theft in Belagavi")
+
+    # Assert
+    assert intent.name == "SEARCH_CASES"
+    assert intent.confidence == 0.98
+    assert len(intent.entities) == 2
+    assert intent.entities[0].type == "offence_category"
+    assert intent.entities[0].value == "vehicle_theft"
+    assert intent.entities[1].type == "district"
+    assert intent.entities[1].value == "Belagavi"
+

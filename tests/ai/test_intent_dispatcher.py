@@ -461,3 +461,27 @@ def test_handle_unknown_bypasses_graph_services(
     assert result["graph_data"] is None
     for service_mock in mock_services.values():
         service_mock.assert_not_called()
+
+
+def test_handle_search_cases_calls_graph_service(
+    dispatcher: IntentDispatcher,
+    mock_services: dict[str, MagicMock],
+) -> None:
+    # Arrange
+    gs = mock_services["graph_service"]
+    gs.search_cases.return_value = {"count": 2, "returned": 2, "cases": [{"node_id": "c1"}, {"node_id": "c2"}]}
+    intent = Intent(
+        name="SEARCH_CASES",
+        entities=[
+            Entity(type="offence_category", value="vehicle_theft"),
+            Entity(type="district", value="Belagavi"),
+        ],
+    )
+
+    # Act
+    result = dispatcher.dispatch(intent)
+
+    # Assert
+    assert result == {"count": 2, "returned": 2, "cases": [{"node_id": "c1"}, {"node_id": "c2"}]}
+    gs.search_cases.assert_called_once_with(offence_category="vehicle_theft", district="Belagavi")
+

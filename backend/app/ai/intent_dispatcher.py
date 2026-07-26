@@ -88,6 +88,7 @@ class IntentName(str, Enum):
 
     GET_CASE = "GET_CASE"
     GET_CASE_DETAILS = "GET_CASE_DETAILS"
+    SEARCH_CASES = "SEARCH_CASES"
     GET_SIMILAR_CASES = "GET_SIMILAR_CASES"
     GET_REPEAT_OFFENDERS = "GET_REPEAT_OFFENDERS"
     GET_NETWORK = "GET_NETWORK"
@@ -285,6 +286,7 @@ class IntentDispatcher:
         return {
             IntentName.GET_CASE: self._handle_get_case,
             IntentName.GET_CASE_DETAILS: self._handle_get_case_details,
+            IntentName.SEARCH_CASES: self._handle_search_cases,
             IntentName.GET_SIMILAR_CASES: self._handle_get_similar_cases,
             IntentName.GET_REPEAT_OFFENDERS: self._handle_get_repeat_offenders,
             IntentName.GET_NETWORK: self._handle_get_network,
@@ -294,6 +296,19 @@ class IntentDispatcher:
             IntentName.GENERAL_CHAT: self._handle_general_chat,
             IntentName.UNKNOWN: self._handle_unknown,
         }
+
+    # ── Individual Handlers ────────────────────────────────────────────────────
+
+    def _handle_search_cases(self, intent: Intent) -> dict[str, Any]:
+        """Search cases by metadata criteria extracted from intent entities.
+
+        Delegates entirely to :meth:`GraphService.search_cases`.
+        Contains no business logic or filtering rules.
+        """
+        filters: dict[str, Any] = {}
+        for entity in intent.entities:
+            filters[entity.type] = str(entity.value)
+        return self._graph_service.search_cases(**filters)
 
     # ── Individual Handlers ────────────────────────────────────────────────────
 

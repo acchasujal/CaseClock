@@ -78,22 +78,60 @@ class GraphRepository:
                 results.append(case_node)
         return results
 
-    def get_persons_for_case(self, case_id: str, role: str | None = None) -> list[NodeRecord]:
+    def search_cases(self, **filters: Any) -> list[NodeRecord]:
         """
-        Return all persons linked to a case.
-        Optional role filter: "ACCUSED_IN", "VICTIM_IN", etc.
+        Search and filter Case nodes in the graph store based on metadata filters.
+
+        Performs case-insensitive normalized substring matching across case properties.
         """
-        results: list[NodeRecord] = []
-        # Check reverse adjacency (person -> case edges)
-        for person_id, edges in self._store.adj.items():
-            for edge in edges:
-                if edge.target_id == case_id:
-                    if role and edge.edge_type != role:
-                        continue
-                    person_node = self._store.nodes.get(person_id)
-                    if person_node and person_node.entity_type == "Person":
-                        results.append(person_node)
-        return results
+        active_filters = {
+            k: str(v)
+            for k, v in filters.items()
+            if v is not None and str(v).strip() != ""
+        }
+        if not active_filters:
+            return [n for n in self._store.nodes.values() if n.entity_type == "Case"]
+
+        matching_cases: list[NodeRecord] = []
+        for node in self._store.nodes.values():
+            if node.entity_type != "Case":
+                continue
+
+            match = True
+            for key, filter_val in active_filters.items():
+                prop_val = node.properties.get(key)
+                if key == "case_number" and prop_val is None:
+                    prop_val = node.properties.get("case_id", node.node_id)
+                elif key == "fir_number" and prop_val is None:
+                    prop_val = node.properties.get("fir_no")
+
+                if not _match_filter(prop_val, filter_val):
+                    match = False
+                    break
+
+            if match:
+                matching_cases.append(node)
+
+        return matching_cases
+
+
+def _match_filter(prop_val: Any, filter_val: str) -> bool:
+    """Helper for case-insensitive normalized substring matching between properties and filters."""
+    if prop_val is None:
+        return False
+    p_str = str(prop_val).strip().lower()
+    f_str = str(filter_val).strip().lower()
+    if p_str == f_str:
+        return True
+    p_norm = p_str.replace("_", " ").replace("-", " ")
+    f_norm = f_str.replace("_", " ").replace("-", " ")
+    if p_norm == f_norm:
+        return True
+    if f_norm in p_norm:
+        return True
+    return False
+
+
 
     # ── Internal helpers (for Dev 1 to extend) ─────────────────────────────
 

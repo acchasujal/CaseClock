@@ -30,12 +30,16 @@ from backend.app.core.graph.algorithms.traversals import (
     get_subgraph,
     get_co_accused,
 )
+from backend.app.core.graph.algorithms.utils import iter_nodes_by_type
 from backend.app.core.graph.repositories.graph_repository import GraphRepository
 from backend.app.core.graph.services.serializers import (
     serialize_node,
     serialize_edge,
     serialize_dataclass,
 )
+
+
+MAX_SEARCH_RESULTS: int = 50
 
 
 class GraphService:
@@ -48,6 +52,53 @@ class GraphService:
 
     def __init__(self, repository: GraphRepository) -> None:
         self._repo = repository
+
+    def search_cases(
+        self,
+        offence_category: str | None = None,
+        district: str | None = None,
+        police_station: str | None = None,
+        case_stage: str | None = None,
+        risk_band: str | None = None,
+        fir_number: str | None = None,
+        case_number: str | None = None,
+        reported_at: str | None = None,
+        incident_at: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """
+        Search and filter Case nodes via GraphRepository.
+
+        Supported filters: offence_category, district, police_station, case_stage,
+        risk_band, fir_number, case_number, reported_at, incident_at.
+
+        Returns:
+            dict with total matching "count", "returned" count, and serialized "cases" (capped at 50).
+        """
+        filters: dict[str, Any] = {
+            "offence_category": offence_category,
+            "district": district,
+            "police_station": police_station,
+            "case_stage": case_stage,
+            "risk_band": risk_band,
+            "fir_number": fir_number,
+            "case_number": case_number,
+            "reported_at": reported_at,
+            "incident_at": incident_at,
+        }
+        for k, v in kwargs.items():
+            if v is not None and k not in filters:
+                filters[k] = v
+
+        matching_nodes = self._repo.search_cases(**filters)
+        total_count = len(matching_nodes)
+        limited_nodes = matching_nodes[:MAX_SEARCH_RESULTS]
+
+        return {
+            "count": total_count,
+            "returned": len(limited_nodes),
+            "cases": [serialize_node(node) for node in limited_nodes],
+        }
 
     # ═══════════════════════════════════════════════════════════════════════
     # NETWORK & TRAVERSAL

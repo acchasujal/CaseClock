@@ -9,6 +9,7 @@
       "enum": [
         "GET_CASE",
         "GET_CASE_DETAILS",
+        "SEARCH_CASES",
         "GET_SIMILAR_CASES",
         "GET_REPEAT_OFFENDERS",
         "GET_NETWORK",
