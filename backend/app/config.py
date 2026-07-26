@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     auth_mode: str = Field(default="demo", alias="AUTH_MODE")
     catalyst_project_id: str = Field(default="", alias="CASECLOCK_PROJECT_ID")
     catalyst_client_id: str = Field(default="", alias="CASECLOCK_CLIENT_ID")
+    catalyst_jwks_url: str = Field(default="", alias="CASECLOCK_AUTH_JWKS_URL")
+    catalyst_auth_issuer: str = Field(default="", alias="CASECLOCK_AUTH_ISSUER")
     cron_secret: str = Field(default="", alias="CRON_SECRET")
 
     model_config = SettingsConfigDict(

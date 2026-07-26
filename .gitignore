@@ -95,3 +95,4 @@ Thumbs.db
 tests/scale/results/*.json
 ai/tests/refusal_testset/results/*.json
 artifacts/runtime_state/
+.test-tmp/

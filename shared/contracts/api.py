@@ -219,7 +219,7 @@ class DocumentScanResponse(BaseModel):
     uploaded_at: str
     ocr_status: str  # "success" | "failed" | "partial"
     ocr_text: str
-    ocr_confidence: float
+    ocr_confidence: Optional[float] = None
     candidate_facts: DocumentCandidateFacts
     clock_preview: Optional[ClockPreviewResponse] = None
     review_status: str  # "pending_review" | "confirmed"

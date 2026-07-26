@@ -10,8 +10,10 @@ AppSail startup crashes when the package was not in the pip cache).
 from __future__ import annotations
 
 import base64
+import binascii
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from backend.app.catalyst.document_intelligence import DocumentProviderError
 
 try:
     from backend.app.api.dependencies import get_document_service, get_principal
@@ -58,8 +60,11 @@ def create_document_router() -> APIRouter:
         """
         try:
             try:
-                file_bytes = base64.b64decode(body.file_base64)
-            except Exception as exc:
+                encoded = body.file_base64.strip()
+                if not encoded or len(encoded) % 4 or len(encoded) > 28_000_000:
+                    raise ValueError("Invalid base64 encoding in file_base64")
+                file_bytes = base64.b64decode(encoded, validate=True)
+            except (ValueError, binascii.Error) as exc:
                 raise ValueError(f"Invalid base64 encoding in file_base64: {exc}") from exc
 
             return doc_svc.scan_document(
@@ -74,6 +79,8 @@ def create_document_router() -> APIRouter:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=str(exc),
             ) from exc
+        except DocumentProviderError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

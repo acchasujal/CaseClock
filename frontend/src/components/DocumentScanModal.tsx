@@ -185,7 +185,10 @@ export function DocumentScanModal({ caseId, isOpen, onClose, onConfirmed }: Docu
             <div className="rounded-radius-sm bg-neutral-100 p-3 border border-neutral-200 flex items-center justify-between">
               <div className="flex items-center space-x-2 text-small text-neutral-800 font-semibold">
                 <CheckCircle2 className="h-4 w-4 text-status-success" />
-                <span>Zia OCR Extraction Complete ({scanResult.ocr_confidence}% Confidence)</span>
+                <span>
+                  Zia OCR Extraction Complete
+                  {scanResult.ocr_confidence == null ? ' (Confidence unavailable)' : ` (${scanResult.ocr_confidence}% Confidence)`}
+                </span>
               </div>
               <span className="text-caption text-neutral-400 font-mono">
                 Ref: {scanResult.document_id}

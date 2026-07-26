@@ -61,6 +61,13 @@ class TokenVerifier(ABC):
         ...
 
 
+class ProductionAuthUnavailableVerifier(TokenVerifier):
+    """Fail-closed verifier used until Catalyst Auth is configured."""
+
+    async def verify(self, request: Request) -> Principal:
+        raise ForbiddenError("Catalyst Auth is not configured for production.")
+
+
 class DevelopmentVerifier(TokenVerifier):
     """Phase 1 stopgap: accepts role from X-Dev-Role header.
 
@@ -120,14 +127,13 @@ class CatalystAuthVerifier(TokenVerifier):
         CATALYST_CLIENT_ID and CATALYST_PROJECT_ID in settings.
         The `zcatalyst-sdk-python` package in requirements.txt (Phase 3).
 
-    The implementation is left as a stub pending Catalyst Auth credentials.
-    Implement by replacing the body of `verify()` using the Catalyst SDK.
+    Cryptographic verification requires a configured Catalyst JWKS endpoint.
 
     Reference:
         https://docs.catalyst.zoho.com/en/serverless-computing/java-functions/authentication/
     """
 
-    def __init__(self, client_id: str, project_id: str) -> None:
+    def __init__(self, client_id: str, project_id: str, jwks_url: str = "", issuer: str = "") -> None:
         if not client_id or not project_id:
             raise ValueError(
                 "CatalystAuthVerifier requires non-empty client_id and project_id. "
@@ -135,6 +141,8 @@ class CatalystAuthVerifier(TokenVerifier):
             )
         self._client_id = client_id
         self._project_id = project_id
+        self._jwks_url = jwks_url
+        self._issuer = issuer
 
     async def verify(self, request: Request) -> Principal:
         """Verify the request credentials and return a verified Principal.
@@ -168,24 +176,19 @@ class CatalystAuthVerifier(TokenVerifier):
         role_str: str | None = None
 
         if token:
+            if not self._jwks_url:
+                raise ForbiddenError("Catalyst JWKS configuration is required for token verification.")
             try:
-                import base64
-                import json
-
-                padded_token = token + "=" * (-len(token) % 4)
-                decoded_bytes = base64.urlsafe_b64decode(padded_token.encode("utf-8"))
-                payload = json.loads(decoded_bytes.decode("utf-8"))
-                if isinstance(payload, dict):
-                    user_id = str(payload.get("sub") or payload.get("user_id") or "officer-catalyst")
-                    email = str(payload.get("email") or f"{user_id}@caseclock.ksp.gov.in")
-                    role_str = str(payload.get("role") or payload.get("caseclock_role") or "IO")
-            except Exception:
-                if token.startswith("cc_token_"):
-                    parts = token.split("_")
-                    if len(parts) >= 3:
-                        role_str = parts[2].upper()
-                        user_id = f"officer-{parts[-1]}"
-                        email = f"{role_str.lower()}@caseclock.ksp.gov.in"
+                import jwt
+                jwk_client = jwt.PyJWKClient(self._jwks_url)
+                signing_key = jwk_client.get_signing_key_from_jwt(token).key
+                options = {"verify_aud": bool(self._client_id)}
+                payload = jwt.decode(token, signing_key, algorithms=["RS256", "RS384", "RS512"], audience=self._client_id or None, issuer=self._issuer or None, options=options)
+                user_id = str(payload.get("sub") or payload.get("user_id") or "")
+                email = str(payload.get("email") or "")
+                role_str = str(payload.get("role") or payload.get("caseclock_role") or "")
+            except Exception as exc:
+                raise ForbiddenError("Invalid or unverifiable Catalyst Auth token.") from exc
 
         if not role_str and dev_role:
             role_str = dev_role
@@ -220,7 +223,8 @@ def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-d
 
     auth_mode = getattr(settings, "auth_mode", "demo").lower()
     if auth_mode == "demo":
-        return DevelopmentVerifier(is_production=False)
+        # Demo credentials are never accepted by a production deployment.
+        return DevelopmentVerifier(is_production=settings.is_production)
 
     has_catalyst = bool(
         settings.caseclock_auth_enabled
@@ -229,9 +233,13 @@ def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-d
     )
 
     if has_catalyst:
+        if not settings.catalyst_client_id or not settings.catalyst_project_id:
+            return ProductionAuthUnavailableVerifier()
         return CatalystAuthVerifier(
-            client_id=settings.catalyst_client_id or "caseclock-app-client",
-            project_id=settings.catalyst_project_id or "51441000000017001",
+            client_id=settings.catalyst_client_id,
+            project_id=settings.catalyst_project_id,
+            jwks_url=getattr(settings, "catalyst_jwks_url", ""),
+            issuer=getattr(settings, "catalyst_auth_issuer", ""),
         )
 
     return DevelopmentVerifier(is_production=settings.is_production)

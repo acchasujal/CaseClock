@@ -49,6 +49,7 @@ class InMemoryBackendRepository:
         self.edges: list[dict[str, Any]] = []
         self.manual_escalations: dict[str, EscalationResponse] = {}
         self.audit_events: list[dict[str, Any]] = []
+        self.documents: dict[str, dict[str, Any]] = {}
         self.state_path = state_path
 
         self._load_artifact(artifact_path or self._default_artifact_path())
@@ -83,6 +84,10 @@ class InMemoryBackendRepository:
             for escalation_id, payload in raw.get("manual_escalations", {}).items()
         }
         self.audit_events = list(raw.get("audit_events", []))
+        self.documents = {
+            str(document_id): dict(document)
+            for document_id, document in raw.get("documents", {}).items()
+        }
 
     def _save_state(self) -> None:
         if self.state_path is None:
@@ -105,6 +110,7 @@ class InMemoryBackendRepository:
                 for escalation_id, escalation in self.manual_escalations.items()
             },
             "audit_events": self.audit_events[-500:],
+            "documents": self.documents,
         }
         self.state_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 

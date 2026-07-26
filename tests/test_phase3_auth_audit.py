@@ -161,17 +161,16 @@ class TestCatalystAuthVerifier:
         with pytest.raises(ForbiddenError, match="required"):
             self._run(verifier.verify(request))
 
-    def test_verify_accepts_valid_bearer_token(self):
+    def test_verify_rejects_unsigned_claims_without_jwks(self):
         import base64
         import json
         verifier = CatalystAuthVerifier(client_id="c", project_id="p")
         token_payload = {"sub": "officer-789", "email": "sho@ksp.gov.in", "role": "SHO"}
         token = base64.urlsafe_b64encode(json.dumps(token_payload).encode("utf-8")).decode("utf-8")
         request = _make_request({"Authorization": f"Bearer {token}"})
-        principal = self._run(verifier.verify(request))
-        assert principal.role == UserRole.SHO
-        assert principal.user_id == "officer-789"
-        assert not principal.is_anonymous
+        from backend.app.api.errors import ForbiddenError
+        with pytest.raises(ForbiddenError, match="JWKS"):
+            self._run(verifier.verify(request))
 
     def test_verify_rejects_invalid_role_token(self):
         import base64
@@ -181,7 +180,7 @@ class TestCatalystAuthVerifier:
         token_payload = {"sub": "officer-000", "role": "INVALID_ROLE"}
         token = base64.urlsafe_b64encode(json.dumps(token_payload).encode("utf-8")).decode("utf-8")
         request = _make_request({"Authorization": f"Bearer {token}"})
-        with pytest.raises(ForbiddenError, match="Invalid user role"):
+        with pytest.raises(ForbiddenError, match="JWKS"):
             self._run(verifier.verify(request))
 
 

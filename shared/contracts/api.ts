@@ -198,7 +198,7 @@ export interface DocumentScanResponse {
   uploaded_at: string;
   ocr_status: "success" | "failed" | "partial";
   ocr_text: string;
-  ocr_confidence: number;
+  ocr_confidence: number | null;
   candidate_facts: DocumentCandidateFacts;
   clock_preview?: ClockPreviewResponse | null;
   review_status: "pending_review" | "confirmed";

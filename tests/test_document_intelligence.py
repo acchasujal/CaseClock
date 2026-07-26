@@ -9,6 +9,18 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import create_app
 from backend.app.db.in_memory import InMemoryBackendRepository
+from backend.app.catalyst.document_intelligence import OcrResult, StoredFile
+from backend.app.api.dependencies import get_document_service
+from backend.app.services.document_service import DocumentService
+from backend.app.services.audit_service import AuditService
+
+
+class TestDocumentProvider:
+    def store_file(self, filename, content_type, content):
+        return StoredFile("test-file-1", filename, len(content))
+
+    def extract_optical_characters(self, filename, content_type, content):
+        return OcrResult(content.decode("utf-8"), 99.0)
 
 
 def _make_scan_body(content: bytes, filename: str = "scanned_fir.pdf", document_type: str = "fir") -> dict:
@@ -28,7 +40,9 @@ def repo():
 
 @pytest.fixture
 def app(repo):
-    return create_app(repository=repo)
+    application = create_app(repository=repo)
+    application.dependency_overrides[get_document_service] = lambda: DocumentService(repo, AuditService(repo), TestDocumentProvider())
+    return application
 
 
 @pytest.fixture
@@ -92,6 +106,14 @@ def test_document_scan_unsupported_file_type(client):
         },
     )
     assert response2.status_code == 422
+
+
+def test_document_scan_rejects_invalid_base64_and_empty_payload(client):
+    case_id = client.get("/worklist").json()[0]["id"]
+    body = {"filename": "scan.png", "content_type": "image/png", "document_type": "fir", "file_base64": "%%%"}
+    assert client.post(f"/api/v1/cases/{case_id}/documents/scan", headers={"X-Dev-Role": "IO"}, json=body).status_code == 422
+    body["file_base64"] = ""
+    assert client.post(f"/api/v1/cases/{case_id}/documents/scan", headers={"X-Dev-Role": "IO"}, json=body).status_code == 422
 
 
 def test_officer_confirmation_updates_clock_deterministically(repo, client):
