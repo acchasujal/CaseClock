@@ -26,6 +26,18 @@
 
 ## Results
 
+### Before vs after optimization
+
+The safe optimization adds a per-node incident-edge index to the in-memory repository. It leaves response contents and graph semantics unchanged.
+
+| Metric | Before | After | Change |
+|---|---:|---:|---:|
+| 4,000-case depth-2 graph query mean | 26.61 ms | 21.523 ms | 19.1% lower |
+| 4,000-case depth-2 graph query p95 | not measured | 29.431 ms | baseline unavailable |
+| 5,000-case mixed-state deadline p50 | not measured | 97.017 ms | new representative workload |
+
+The before/after graph comparison uses the same 4,000-case synthetic configuration and fixed seed. Deadline results are not presented as an improvement because the new mixed-state workload is intentionally different from the historical all-green baseline.
+
 ### Statutory deadline engine — synthetic performance benchmark
 
 | Cases | Clocks | p50 runtime | p95 runtime | p50 throughput |
@@ -51,19 +63,32 @@ All generated clock responses in this run were deterministic `green` statuses fo
 - Main application JS chunk: 238.67 kB / 72.70 kB gzip.
 - Main CSS chunk: 32.82 kB / 6.70 kB gzip.
 
+### Local API benchmark
+
+Using the real FastAPI application, in-memory repository path, development role header, 100 requests per endpoint after warm-up:
+
+| Endpoint | Success | p50 | p95 |
+|---|---:|---:|---:|
+| `/worklist` | 100% | 11.341 ms | 18.670 ms |
+| `/cases/{id}` | 100% | 1.715 ms | 4.931 ms |
+| similar cases | 100% | 19.140 ms | 29.739 ms |
+| network analysis | 100% | 30.267 ms | 84.422 ms |
+| deadline monitor | 100% | 1.256 ms | 3.510 ms |
+
 ## Correctness Evidence
 
 - Relevant deterministic/backend correctness suites: **146/146 passed** in 18.31 s, covering graph foundation, phases 1–4, authentication/audit, system status, Catalyst repository fallback, clock engine, cron sweep, document intelligence contracts, and backend core API.
-- The repository collected 516 tests overall. A full-suite invocation did not reach a final summary in this Windows environment; it progressed through the document-intelligence portion before the runner terminated. Therefore the full suite is not presented as 516/516 passing.
+- The current repository collects 517 tests. The aggregate full-suite invocation progressed through 96% but did not emit a final summary in this Windows runner. No assertion failure was observed in the completed runs, so this report does not claim 517/517 until the runner produces a complete summary.
+- Final targeted backend gate: 50/50 passed, including the repository-index equivalence test. Frontend tests: 35/35 passed; production build passed.
 - Tests are regression/correctness evidence, not AI accuracy evidence.
 
 ## Scalability
 
-The controlled clock benchmark shows increasing runtime with workload size and remains below 100 ms p50 for 5,000 cases / 6,667 clocks on this machine. The graph scale test demonstrates 67,744 in-memory records and 26.61 ms average depth-2 network traversal. These are synthetic local measurements and should not be extrapolated to production data volume.
+The mixed-state clock benchmark remains below 100 ms p50 for 5,000 cases / 6,667 clocks; the historical all-green run was 131.713 ms p50 in the latest capture. The graph scale test demonstrates 67,744 in-memory records and 21.523 ms mean depth-2 network traversal after indexing. These are synthetic local measurements and should not be extrapolated to production data volume.
 
 ## Limitations
 
-- No reproducible API p50/p95 benchmark was claimed because a stable live server/database fixture was not available in the benchmark run.
+- The local API benchmark exercises the real FastAPI application with the in-memory repository fixture; it is not live AppSail/Catalyst latency.
 - No live Catalyst deadline sweep evidence was available; the sweep is covered functionally by tests but not benchmarked against a live provider.
 - No real labelled entity-resolution or similar-case ground truth exists in the repository; do not claim accuracy, precision, recall, F1, Precision@K, Recall@K or MRR.
 - QuickML, Zia OCR and other external services were not benchmarked: external provider/configuration availability was not established.
@@ -79,4 +104,3 @@ pytest -q tests\scale\test_scale_performance.py -s --disable-warnings
 cd frontend
 npm.cmd run build
 ```
-
