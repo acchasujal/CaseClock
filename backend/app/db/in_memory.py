@@ -47,6 +47,7 @@ class InMemoryBackendRepository:
 
         self.nodes: dict[str, dict[str, Any]] = {}
         self.edges: list[dict[str, Any]] = []
+        self.incident_edges: dict[str, list[dict[str, Any]]] = {}
         self.manual_escalations: dict[str, EscalationResponse] = {}
         self.audit_events: list[dict[str, Any]] = []
         self.documents: dict[str, dict[str, Any]] = {}
@@ -118,6 +119,14 @@ class InMemoryBackendRepository:
         self.case_ids = [node_id for node_id, node in self.nodes.items() if node.get("entity_type") == "Case"]
         self.case_to_clocks = self._targets_by_edge("CASE_HAS_CLOCK")
         self.case_to_dependencies = self._targets_by_edge("CASE_HAS_DEPENDENCY")
+        self.incident_edges = {}
+        for edge in self.edges:
+            source_id = str(edge.get("source_id", ""))
+            target_id = str(edge.get("target_id", ""))
+            if source_id:
+                self.incident_edges.setdefault(source_id, []).append(edge)
+            if target_id and target_id != source_id:
+                self.incident_edges.setdefault(target_id, []).append(edge)
         self.case_to_officer = {
             edge["source_id"]: edge["target_id"]
             for edge in self.edges
@@ -287,12 +296,11 @@ class InMemoryBackendRepository:
         self._audit("case_network_viewed", case_id=case_id)
         node_ids: list[str] = [case_id]
         edge_rows: list[dict[str, Any]] = []
-        for edge in self.edges:
-            if edge.get("source_id") == case_id or edge.get("target_id") == case_id:
-                peer = edge["target_id"] if edge["source_id"] == case_id else edge["source_id"]
-                if peer in self.nodes and len(node_ids) < 18:
-                    node_ids.append(peer)
-                    edge_rows.append(edge)
+        for edge in self.incident_edges.get(case_id, []):
+            peer = edge["target_id"] if edge["source_id"] == case_id else edge["source_id"]
+            if peer in self.nodes and len(node_ids) < 18:
+                node_ids.append(peer)
+                edge_rows.append(edge)
         unique_node_ids = list(dict.fromkeys(node_ids))
         return {
             "nodes": [self._flow_node(node_id, index) for index, node_id in enumerate(unique_node_ids)],
