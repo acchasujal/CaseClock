@@ -1,5 +1,5 @@
 {
-  "command": "python3 app/appsail_server.py",
+  "command": "python3 appsail_server.py",
   "buildPath": ".",
   "stack": "python_3_11",
   "memory": 256,
