@@ -33,6 +33,13 @@ class QuickMLAuthError(QuickMLError):
         super().__init__(message)
 
 
+class QuickMLConfigurationError(QuickMLAuthError):
+    """Raised when server-side QuickML/OAuth configuration is incomplete."""
+
+    def __init__(self, message: str = "QuickML provider is not configured.") -> None:
+        super().__init__(message)
+
+
 class QuickMLConnectionError(QuickMLError):
     """Raised when network connection to QuickML endpoint fails."""
 

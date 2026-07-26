@@ -84,6 +84,12 @@ def test_headers_content_type_present(client: QuickMLClient) -> None:
     assert headers["Content-Type"] == "application/json"
 
 
+def test_configured_endpoint_is_used(monkeypatch: pytest.MonkeyPatch, mock_datastore: MagicMock) -> None:
+    monkeypatch.setenv("QUICKML_ENDPOINT", "https://api.catalyst.zoho.in/quickml/custom/glm/chat")
+    client = QuickMLClient(datastore=mock_datastore, org_id="ORG_TEST_123")
+    assert client._endpoint.endswith("/quickml/custom/glm/chat")
+
+
 def test_headers_oauth_failure_raises_quickml_auth_error(
     mock_datastore: MagicMock,
 ) -> None:
@@ -599,6 +605,7 @@ def test_map_error_http_401_raises_quickml_auth_error(client: QuickMLClient) -> 
     # Assert
     assert isinstance(mapped, QuickMLAuthError)
     assert "401" in str(mapped)
+    assert "Unauthorized token" not in str(mapped)
 
 
 def test_map_error_http_403_raises_quickml_auth_error(client: QuickMLClient) -> None:
@@ -696,3 +703,22 @@ def test_generate_pipeline_exceptions_propagate(
         client.generate(sample_request)
 
     assert "timed out" in str(exc_info.value).lower()
+
+
+@patch("requests.post")
+def test_generate_refreshes_cached_token_once_after_provider_401(
+    mock_post: MagicMock, client: QuickMLClient, sample_request: LLMRequest
+) -> None:
+    unauthorized = MagicMock()
+    unauthorized.status_code = 401
+    unauthorized.text = "secret provider diagnostic"
+    success = MagicMock()
+    success.status_code = 200
+    success.json.return_value = {"response": "CASECLOCK_QUICKML_OK"}
+    mock_post.side_effect = [unauthorized, success]
+
+    response = client.generate(sample_request)
+
+    assert response.content == "CASECLOCK_QUICKML_OK"
+    assert mock_post.call_count == 2
+    assert "secret provider diagnostic" not in str(response)

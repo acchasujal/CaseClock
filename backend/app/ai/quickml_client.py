@@ -15,6 +15,7 @@ import requests
 
 from backend.app.ai.exceptions import (
     QuickMLAuthError,
+    QuickMLConfigurationError,
     QuickMLConnectionError,
     QuickMLRateLimitError,
     QuickMLResponseError,
@@ -39,7 +40,6 @@ PROTECTED_PAYLOAD_KEYS = {
     "stream",
 }
 
-
 class QuickMLClient:
     """Infrastructure client responsible for direct HTTP interaction with Catalyst QuickML API."""
 
@@ -49,6 +49,7 @@ class QuickMLClient:
         default_model: str = "crm-di-glm47b_30b_it",
         timeout: int | float | None = None,
         org_id: str | None = None,
+        endpoint: str | None = None,
     ) -> None:
         """Initialize QuickMLClient using existing CatalystRestDatastore.
         
@@ -68,6 +69,7 @@ class QuickMLClient:
             or os.getenv("CATALYST_ORG_ID")
             or ""
         )
+        self._endpoint = (endpoint or os.getenv("QUICKML_ENDPOINT") or "").rstrip("/")
 
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Sends an inference request to Catalyst QuickML and returns a provider-agnostic response.
@@ -85,17 +87,32 @@ class QuickMLClient:
             QuickMLRateLimitError: If API rate limit (HTTP 429) is hit.
             QuickMLResponseError: If the API returns a non-200 HTTP response or unparseable payload.
         """
-        headers = self._build_headers()
         payload = self._build_payload(request)
-        raw_resp = self._send_request(headers, payload)
+        headers = self._build_headers()
+        try:
+            raw_resp = self._send_request(headers, payload)
+        except QuickMLAuthError:
+            # Access tokens are short-lived. Refresh once after a provider 401,
+            # then surface the controlled provider error if it still fails.
+            invalidate = getattr(self._datastore, "invalidate_access_token", None)
+            if callable(invalidate):
+                invalidate()
+                raw_resp = self._send_request(self._build_headers(), payload)
+            else:
+                raise
         return self._parse_response(raw_resp)
 
     def _build_headers(self) -> dict[str, str]:
         """Constructs required HTTP headers including OAuth token and CATALYST-ORG."""
         try:
             token = self._datastore.access_token()
-        except Exception as e:
-            raise QuickMLAuthError(f"Failed to acquire Catalyst OAuth access token: {e}") from e
+        except ValueError as exc:
+            raise QuickMLConfigurationError(str(exc)) from exc
+        except Exception as exc:
+            raise QuickMLAuthError("Failed to acquire Catalyst OAuth access token.") from exc
+
+        if not token:
+            raise QuickMLAuthError("Catalyst OAuth provider returned an empty access token.")
 
         if not self._org_id:
             raise QuickMLAuthError("Missing CATALYST-ORG identifier in configuration or environment.")
@@ -143,9 +160,11 @@ class QuickMLClient:
 
     def _send_request(self, headers: dict[str, str], payload: dict[str, Any]) -> dict[str, Any]:
         """Executes POST request against QuickML chat endpoint with error handling."""
-        api_domain = str(getattr(self._datastore, "api_domain", "https://api.catalyst.zoho.in")).rstrip("/")
-        project_id = str(getattr(self._datastore, "project_id", ""))
-        url = f"{api_domain}/quickml/v1/project/{project_id}/glm/chat"
+        url = self._endpoint
+        if not url:
+            api_domain = str(getattr(self._datastore, "api_domain", "https://api.catalyst.zoho.in")).rstrip("/")
+            project_id = str(getattr(self._datastore, "project_id", ""))
+            url = f"{api_domain}/quickml/v1/project/{project_id}/glm/chat"
 
         try:
             response = requests.post(
@@ -164,9 +183,9 @@ class QuickMLClient:
             return response.json()
         except Exception as exc:
             raise QuickMLResponseError(
-                message=f"Failed to parse QuickML JSON response: {exc}",
+                message="Failed to parse QuickML JSON response.",
                 status_code=response.status_code,
-                response_body=response.text,
+                response_body=None,
             ) from exc
 
     def _parse_response(self, raw_resp: dict[str, Any]) -> LLMResponse:
@@ -256,19 +275,20 @@ class QuickMLClient:
 
         if response is not None:
             status_code = response.status_code
-            body = response.text
+            # Provider responses can contain sensitive diagnostic material.
+            # Keep only the status/category in exception text.
             if status_code in (401, 403):
                 return QuickMLAuthError(
-                    f"QuickML authentication failed (HTTP {status_code}): {body}"
+                    f"QuickML authentication failed (HTTP {status_code})."
                 )
             if status_code == 429:
                 return QuickMLRateLimitError(
-                    f"QuickML API rate limit exceeded (HTTP 429): {body}"
+                    "QuickML API rate limit exceeded (HTTP 429)."
                 )
             return QuickMLResponseError(
-                message=f"QuickML API returned HTTP {status_code}: {body}",
+                message=f"QuickML API returned HTTP {status_code}.",
                 status_code=status_code,
-                response_body=body,
+                response_body=None,
             )
 
         return QuickMLResponseError("Unknown QuickML error occurred.")

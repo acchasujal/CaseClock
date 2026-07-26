@@ -113,7 +113,7 @@ export default function Copilot() {
       const errorMessage: Message = {
         id: Math.random().toString(36).substring(2, 11),
         role: 'assistant',
-        text: `Error connecting to graph engine: ${error.message}`,
+        text: 'Case Copilot is temporarily unavailable. Please try again shortly.',
         timestamp,
       }
       setMessages(prev => [...prev, errorMessage])

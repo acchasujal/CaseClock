@@ -373,24 +373,33 @@ class CatalystRestDatastore:
         if self._access_token:
             return self._access_token
         if not self.auth.get("client_id") or not self.auth.get("client_secret") or not self.auth.get("refresh_token"):
-            raise ValueError("Catalyst OAuth credentials (client_id, client_secret, refresh_token) are missing or unconfigured.")
-        response = requests.post(
-            f"{self.accounts_domain}/oauth/v2/token",
-            data={
-                "grant_type": "refresh_token",
-                "refresh_token": self.auth["refresh_token"],
-                "client_id": self.auth["client_id"],
-                "client_secret": self.auth["client_secret"],
-            },
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        token = payload.get("access_token")
+            raise ValueError("Catalyst OAuth credentials are incomplete; configure client ID, client secret, and refresh token.")
+        try:
+            response = requests.post(
+                f"{self.accounts_domain}/oauth/v2/token",
+                data={
+                    "grant_type": "refresh_token",
+                    "refresh_token": self.auth["refresh_token"],
+                    "client_id": self.auth["client_id"],
+                    "client_secret": self.auth["client_secret"],
+                },
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except requests.RequestException as exc:
+            raise RuntimeError("Catalyst OAuth token refresh request failed.") from exc
+        except ValueError as exc:
+            raise RuntimeError("Catalyst OAuth token refresh returned malformed JSON.") from exc
+        token = payload.get("access_token") if isinstance(payload, dict) else None
         if not token:
-            raise RuntimeError(f"Catalyst token refresh failed: {payload}")
+            raise RuntimeError("Catalyst OAuth token refresh returned no access token.")
         self._access_token = str(token)
         return self._access_token
+
+    def invalidate_access_token(self) -> None:
+        """Discard the cached token so the next request obtains a fresh one."""
+        self._access_token = None
 
 
 class CatalystRestTable:

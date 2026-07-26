@@ -7,13 +7,16 @@ for the CaseClock AI subsystem.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from backend.app.ai.exceptions import (
     AIError,
     AIValidationError,
     PromptError,
     QuickMLAuthError,
+    QuickMLConfigurationError,
     QuickMLConnectionError,
     QuickMLError,
     QuickMLRateLimitError,
@@ -27,6 +30,7 @@ from backend.app.ai.schemas import ChatRequest, ChatResponse
 from backend.app.dependencies.ai import get_quickml_service
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 
@@ -39,15 +43,20 @@ router = APIRouter()
 )
 def chat(
     request: ChatRequest,
+    http_request: Request,
     service: QuickMLService = Depends(get_quickml_service),
 ) -> ChatResponse:
     """FastAPI endpoint handling POST /chat requests."""
     try:
         return service.chat(request)
+    except QuickMLConfigurationError as e:
+        logger.error("QuickML provider configuration failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 503, "category": "configuration"})
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Case Copilot is temporarily unavailable.") from e
     except QuickMLAuthError as e:
+        logger.warning("QuickML provider authentication failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 401, "category": "authentication"})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication failed with QuickML provider.",
+            detail="Case Copilot is temporarily unavailable.",
         ) from e
     except QuickMLRateLimitError as e:
         raise HTTPException(
@@ -55,16 +64,19 @@ def chat(
             detail="QuickML API rate limit exceeded.",
         ) from e
     except QuickMLTimeoutError as e:
+        logger.warning("QuickML provider timeout", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 504, "category": "timeout"})
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="QuickML API request timed out.",
         ) from e
     except QuickMLConnectionError as e:
+        logger.warning("QuickML provider connection failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 503, "category": "unavailable"})
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Unable to connect to QuickML provider.",
         ) from e
     except QuickMLResponseError as e:
+        logger.error("QuickML provider response failure", extra={"request_id": getattr(http_request.state, "request_id", None), "provider": "quickml", "status": 502, "category": "malformed_response"})
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Invalid response from QuickML provider.",

@@ -155,7 +155,7 @@ def test_chat_endpoint_quickml_auth_error_maps_to_401(
 
     # Assert
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert "Authentication failed" in response.json()["detail"]
+    assert response.json()["detail"] == "Case Copilot is temporarily unavailable."
 
 
 def test_chat_endpoint_missing_oauth_does_not_become_500(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -169,8 +169,8 @@ def test_chat_endpoint_missing_oauth_does_not_become_500(monkeypatch: pytest.Mon
     with TestClient(create_app()) as real_client:
         response = real_client.post("/api/chat", json={"message": "how many cases are pending?"})
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert "Authentication failed" in response.json()["detail"]
+    assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert response.json()["detail"] == "Case Copilot is temporarily unavailable."
 
 
 def test_chat_endpoint_quickml_rate_limit_error_maps_to_429(
