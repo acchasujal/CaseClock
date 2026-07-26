@@ -59,14 +59,17 @@ def create_core_router() -> APIRouter:
 
     @router.get("/health")
     def health() -> dict[str, str]:
-        """Liveness probe.  Returns service name and version only."""
+        """Liveness probe. Returns service name, version, and build SHA."""
+        import os
         from backend.app.config import get_settings
 
         cfg = get_settings()
+        build_sha = os.getenv("BUILD_SHA") or os.getenv("COMMIT_SHA") or "a3ecfe6"
         return {
             "status": "ok",
             "service": "caseclock-backend",
             "version": cfg.app_version,
+            "commit": build_sha,
         }
 
     @router.get("/worklist", response_model=list[CaseSummaryResponse])
