@@ -5,6 +5,50 @@
 
 [![CI](https://github.com/acchasujal/CaseClock/actions/workflows/ci.yml/badge.svg)](https://github.com/acchasujal/CaseClock/actions/workflows/ci.yml)
 
+## KSP Datathon 2026
+
+CaseClock is an Investigation Decision Intelligence Platform for Karnataka State Police that turns fragmented case data into timely, explainable action.
+
+[Live Prototype](https://caseclock-frontend-zaruqrfp.onslate.in) · [Demo Video](https://drive.google.com/file/d/1zmdwMHbuCU8Pvqoz40mblGX8S9lQ7v5L/view?usp=sharing) · [Prototype Deck](https://storage.googleapis.com/vision-hack2skill-production/innovator/USER00953434/1785087100169-CaseClockPS1TeamBruh.pdf)
+
+### The problem
+
+Investigators must coordinate statutory deadlines, forensic and evidentiary blockers, case relationships and supervisory escalation across fragmented records. A missed deadline can become a legal failure, while a generic dashboard rarely explains what needs attention or why.
+
+### Our solution
+
+CaseClock combines deterministic BNSS deadline rules with a unified investigation graph and evidence-grounded assistance. It helps IOs, SHOs and SPs see urgent clocks, named blockers, connected cases and explainable escalation context while retaining human confirmation for consequential actions.
+
+### Key capabilities
+
+- Statutory clock calculation and autonomous deadline sweeps.
+- Dependency/blocker tracking for FSL, CDR, statements and related evidence.
+- Risk-ranked worklists and supervisor escalation routing.
+- Case network, similar-case and pattern intelligence over one graph.
+- Case Copilot intent parsing with refusal gates and audit trails.
+- Role-aware IO/SHO/SP workflows using synthetic, non-PII demonstration data.
+
+### Submission documentation
+
+The concise final submission brief is in [`docs/datathon-2026-submission.md`](docs/datathon-2026-submission.md). Reproducible performance evidence is in [`docs/benchmark-report.md`](docs/benchmark-report.md) and [`docs/benchmark-results.json`](docs/benchmark-results.json).
+
+### Prototype performance
+
+Local synthetic measurements include 6,667 mixed-state statutory clocks at 97.0 ms p50 / 108.6 ms p95, a 4,000-case graph with 22,296 entities and 45,448 relationships, and a 29.4 ms p95 depth-2 graph query. These are prototype benchmarks—not production Catalyst SLOs.
+
+### Zoho Catalyst integration status
+
+| Integration | Repository-backed status | Workflow value |
+|---|---|---|
+| AppSail | Implemented/config-dependent; deployment URL documented | Hosts the FastAPI investigation services near the operational workflow. |
+| Slate | Implemented/config-dependent; frontend build passes | Delivers the role-aware investigator and supervisor interface. |
+| Data Store | Implemented/config-dependent; live provider not reverified in this run | Provides a durable adapter path for cases, graph records, clocks and audit state. |
+| Job Scheduling | Cron sweep route/service implemented; scheduler configuration-dependent | Keeps statutory monitoring running when officers are offline. |
+| QuickML | Client and controlled intent-routing path implemented; live provider not benchmarked | Converts investigator language into constrained structured intents. |
+| File Store + Zia OCR | Provider adapter implemented; live credentials/provider not verified | Supports evidence-document persistence and OCR when configured. |
+
+External-provider features are reported as configuration-dependent unless a live call has been reproduced. See [`docs/datathon-2026-submission.md`](docs/datathon-2026-submission.md) for the evidence boundary.
+
 ---
 
 ## What This Is
