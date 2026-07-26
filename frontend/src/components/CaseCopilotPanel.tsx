@@ -5,13 +5,24 @@ import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { apiFetch } from '@/lib/apiClient'
 import type { ChatResponse, UserRole } from '@shared/contracts/api'
+import { COPILOT_PROVIDER } from '@/config/copilot'
+import { ConvoKraftCopilot } from '@/components/ConvoKraftCopilot'
 
 interface CaseCopilotPanelProps {
   caseId: string
+  caseLabel?: string
   role: UserRole
 }
 
-export function CaseCopilotPanel({ caseId, role }: CaseCopilotPanelProps) {
+export function CaseCopilotPanel({ caseId, caseLabel, role }: CaseCopilotPanelProps) {
+  if (COPILOT_PROVIDER === 'convokraft') {
+    return <ConvoKraftCopilot caseLabel={caseLabel || caseId} />
+  }
+
+  return <QuickMLCaseCopilot caseId={caseId} role={role} />
+}
+
+function QuickMLCaseCopilot({ caseId, role: _role }: CaseCopilotPanelProps) {
   const [question, setQuestion] = useState('')
 
   const query = useMutation<ChatResponse, Error, string>({

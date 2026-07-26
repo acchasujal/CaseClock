@@ -353,7 +353,7 @@ export default function CaseDetail() {
           tabIndex={0}
           className="focus:outline-none"
         >
-          <CaseCopilotPanel caseId={caseDetail.id} role={role ?? 'IO'} />
+          <CaseCopilotPanel caseId={caseDetail.id} caseLabel={caseDetail.fir_number} role={role ?? 'IO'} />
         </div>
       )}
 

@@ -20,6 +20,8 @@ import {
   FileText
 } from 'lucide-react'
 import type { ChatResponse, ChatMessage as SharedChatMessage } from '@shared/contracts/api'
+import { COPILOT_PROVIDER } from '@/config/copilot'
+import { ConvoKraftCopilot } from '@/components/ConvoKraftCopilot'
 
 interface Message {
   id: string
@@ -39,6 +41,14 @@ const SUGGESTED_PROMPTS = [
 ]
 
 export default function Copilot() {
+  if (COPILOT_PROVIDER === 'convokraft') {
+    return <ConvoKraftCopilot className="mx-auto max-w-5xl" />
+  }
+
+  return <QuickMLCopilot />
+}
+
+function QuickMLCopilot() {
   const { role } = useAuth()
   const { data: cases } = useWorklist()
   
