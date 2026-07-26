@@ -209,9 +209,7 @@ class QuickMLService:
         ]
         graph_data_str = json.dumps(truncated_graph_data, indent=2, default=str)
 
-        print("=" * 50)
-        print("GRAPH RESULT SIZE:", len(graph_data_str))
-        print(graph_data_str[:1000])  # First 1000 chars
+        logger.debug("Graph result size: %d chars", len(graph_data_str))
 
         synthesis_prompt = self._prompt_manager.render(
             PromptType.SYNTHESIS,

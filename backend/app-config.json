@@ -3,6 +3,9 @@
   "buildPath": ".",
   "stack": "python_3_11",
   "memory": 256,
+  "scripts": {
+    "predeploy": "robocopy ..\\shared shared /E /NFL /NDL /NJH /NJS /nc /ns /np /XD __pycache__ & pip install --only-binary=:all: --platform manylinux2014_x86_64 --python-version 3.11 -r requirements.txt -t ."
+  },
   "env_variables": {
     "CASECLOCK_REPOSITORY": "catalyst",
     "ENVIRONMENT": "production",
@@ -11,6 +14,12 @@
     "CASECLOCK_AUTH_ENABLED": "true",
     "CASECLOCK_PROJECT_ID": "51441000000017001",
     "CASECLOCK_CLIENT_ID": "",
-    "CRON_SECRET": ""
+    "CRON_SECRET": "",
+    "CATALYST_ORG_ID": "60077090566",
+    "CATALYST_ORG": "60077090566",
+    "QUICKML_PROJECT_ID": "51441000000017001",
+    "QUICKML_ORG_ID": "60077090566",
+    "QUICKML_ENDPOINT": "https://api.catalyst.zoho.in/quickml/v1/project/51441000000017001/glm/chat",
+    "QUICKML_ENABLED": "true"
   }
 }
