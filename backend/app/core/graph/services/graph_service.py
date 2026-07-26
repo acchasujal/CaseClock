@@ -202,12 +202,25 @@ class GraphService:
         store = self._repo.store
         results = find_similar_cases(store, case_id, top_k=top_k, min_score=min_score)
 
+        matches = []
+        for r in results:
+            # Identify the OTHER case (not the requested anchor case)
+            other_case_id = r.case_b_id if r.case_a_id == case_id else r.case_a_id
+            matches.append({
+                "case_id": other_case_id,
+                "score": r.score,
+                # reasons = human-readable matched feature names
+                "reasons": r.matched_features,
+                # properties = feature-to-weight contribution mapping
+                "properties": r.feature_contributions,
+            })
+
         return {
             "case_id": case_id,
             "top_k": top_k,
             "min_score": min_score,
-            "matches": [serialize_dataclass(r) for r in results],
-            "match_count": len(results),
+            "matches": matches,
+            "match_count": len(matches),
         }
 
     def compare_two_cases(self, case_a_id: str, case_b_id: str) -> dict[str, Any]:

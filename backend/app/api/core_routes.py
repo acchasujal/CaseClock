@@ -64,7 +64,8 @@ def create_core_router() -> APIRouter:
         from backend.app.config import get_settings
 
         cfg = get_settings()
-        build_sha = os.getenv("BUILD_SHA") or os.getenv("COMMIT_SHA") or "a3ecfe6"
+        # BUILD_SHA is injected via app-config.json env_variables at deploy time
+        build_sha = os.getenv("BUILD_SHA") or os.getenv("COMMIT_SHA") or "e9495d5"
         return {
             "status": "ok",
             "service": "caseclock-backend",

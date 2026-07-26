@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 
 from backend.app.ai.intent_dispatcher import IntentDispatcher
 from backend.app.ai.prompt_manager import PromptManager
@@ -17,8 +17,18 @@ from backend.app.db.in_memory import InMemoryBackendRepository
 def get_quickml_service(
     repo: InMemoryBackendRepository = Depends(get_repository),
 ) -> QuickMLService:
-    """Construct a fully configured QuickMLService using the shared graph repository."""
-    datastore = CatalystRestDatastore.from_env()
+    """Construct a fully configured QuickMLService using the shared graph repository.
+
+    If OAuth credentials are absent or misconfigured, raises HTTP 503 immediately
+    rather than letting a RuntimeError propagate as HTTP 500.
+    """
+    try:
+        datastore = CatalystRestDatastore.from_env()
+    except (RuntimeError, ValueError, Exception) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"QuickML provider is not configured: {exc}",
+        ) from exc
 
     client = QuickMLClient(
         datastore=datastore,
