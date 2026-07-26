@@ -82,6 +82,7 @@ backend/uvicorn/
 # backend/shared/ is a deployment-only copy of root shared/
 # It is synced before each AppSail deploy, not tracked in git
 backend/shared/
+backend/build-sha.txt
 
 # IDE
 .idea/

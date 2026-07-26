@@ -158,6 +158,21 @@ def test_chat_endpoint_quickml_auth_error_maps_to_401(
     assert "Authentication failed" in response.json()["detail"]
 
 
+def test_chat_endpoint_missing_oauth_does_not_become_500(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Regression: provider auth failures during intent extraction stay controlled."""
+    for name in (
+        "CATALYST_CLIENT_ID", "CATALYST_CLIENT_SECRET", "CATALYST_REFRESH_TOKEN",
+        "CASECLOCK_CLIENT_ID", "CASECLOCK_CLIENT_SECRET", "CASECLOCK_REFRESH_TOKEN",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    with TestClient(create_app()) as real_client:
+        response = real_client.post("/api/chat", json={"message": "how many cases are pending?"})
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert "Authentication failed" in response.json()["detail"]
+
+
 def test_chat_endpoint_quickml_rate_limit_error_maps_to_429(
     client: TestClient, mock_quickml_service: MagicMock
 ) -> None:

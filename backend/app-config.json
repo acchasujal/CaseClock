@@ -4,7 +4,7 @@
   "stack": "python_3_11",
   "memory": 256,
   "scripts": {
-    "predeploy": "robocopy ..\\shared shared /E /NFL /NDL /NJH /NJS /nc /ns /np /XD __pycache__ & pip install --only-binary=:all: --platform manylinux2014_x86_64 --python-version 3.11 -r requirements.txt -t ."
+    "predeploy": "git -C .. rev-parse HEAD > build-sha.txt & robocopy ..\\shared shared /E /NFL /NDL /NJH /NJS /nc /ns /np /XD __pycache__ & pip install --only-binary=:all: --platform manylinux2014_x86_64 --python-version 3.11 -r requirements.txt -t ."
   },
   "env_variables": {
     "CASECLOCK_REPOSITORY": "local",
@@ -13,7 +13,6 @@
     "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,https://caseclock-frontend-zaruqrfp.onslate.in",
     "CASECLOCK_AUTH_ENABLED": "false",
     "CASECLOCK_PROJECT_ID": "51441000000017001",
-    "BUILD_SHA": "HEAD",
     "CRON_SECRET": "",
     "QUICKML_ORG_ID": "60077090566",
     "QUICKML_PROJECT_ID": "51441000000017001",

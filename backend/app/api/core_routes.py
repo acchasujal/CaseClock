@@ -7,6 +7,8 @@ contract types.  No business logic lives here.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
@@ -64,8 +66,11 @@ def create_core_router() -> APIRouter:
         from backend.app.config import get_settings
 
         cfg = get_settings()
-        # BUILD_SHA is injected via app-config.json env_variables at deploy time
-        build_sha = os.getenv("BUILD_SHA") or os.getenv("COMMIT_SHA") or "e9495d5"
+        # AppSail's predeploy script writes the exact source revision into this
+        # packaged file. An explicitly supplied runtime value takes precedence.
+        build_sha_file = Path(__file__).resolve().parents[2] / "build-sha.txt"
+        packaged_sha = build_sha_file.read_text(encoding="utf-8").strip() if build_sha_file.exists() else ""
+        build_sha = os.getenv("BUILD_SHA") or os.getenv("COMMIT_SHA") or packaged_sha or "unknown"
         return {
             "status": "ok",
             "service": "caseclock-backend",

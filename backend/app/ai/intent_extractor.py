@@ -30,7 +30,7 @@ from typing import Any
 
 import jsonschema
 
-from backend.app.ai.exceptions import IntentExtractionError
+from backend.app.ai.exceptions import IntentExtractionError, QuickMLError
 from backend.app.ai.prompt_manager import PromptManager, PromptType
 from backend.app.ai.quickml_client import QuickMLClient
 from backend.app.ai.schemas import ChatMessage, Entity, Intent, LLMRequest, LLMResponse
@@ -118,6 +118,10 @@ class IntentExtractor:
 
         try:
             llm_response: LLMResponse = self._client.generate(llm_request)
+        except QuickMLError:
+            # Preserve provider failures so the HTTP route can map them to a
+            # controlled 401/429/502/503/504 response instead of a generic 500.
+            raise
         except Exception as exc:
             raise IntentExtractionError(
                 f"QuickML provider failure during intent extraction: {exc}"

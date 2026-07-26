@@ -205,7 +205,15 @@ class GraphService:
         matches = []
         for r in results:
             # Identify the OTHER case (not the requested anchor case)
-            other_case_id = r.case_b_id if r.case_a_id == case_id else r.case_a_id
+            if r.case_a_id == case_id and r.case_b_id != case_id:
+                other_case_id = r.case_b_id
+            elif r.case_b_id == case_id and r.case_a_id != case_id:
+                other_case_id = r.case_a_id
+            else:
+                raise ValueError(
+                    "Similarity result does not contain the requested case as "
+                    "exactly one endpoint."
+                )
             matches.append({
                 "case_id": other_case_id,
                 "score": r.score,

@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from backend.app.ai.exceptions import IntentExtractionError
+from backend.app.ai.exceptions import IntentExtractionError, QuickMLAuthError
 from backend.app.ai.intent_extractor import IntentExtractor
 from backend.app.ai.prompt_manager import PromptManager, PromptType
 from backend.app.ai.quickml_client import QuickMLClient
@@ -126,6 +126,17 @@ def test_extract_quickml_provider_exception_raises_intent_extraction_error(
 
     assert "provider failure" in str(exc_info.value).lower()
     assert exc_info.value.__cause__ is not None
+
+
+def test_extract_preserves_quickml_errors_for_http_mapping(
+    mock_dependencies: tuple[MagicMock, MagicMock],
+) -> None:
+    mock_client, mock_pm = mock_dependencies
+    mock_client.generate.side_effect = QuickMLAuthError("OAuth credentials are missing")
+    extractor = IntentExtractor(client=mock_client, prompt_manager=mock_pm)
+
+    with pytest.raises(QuickMLAuthError):
+        extractor.extract("How many cases are pending?")
 
 
 def test_extract_empty_llm_response_raises_intent_extraction_error(
