@@ -8,13 +8,16 @@ for graph routes.
 from __future__ import annotations
 
 from typing import Any
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 
 # ── Common Graph Shapes ────────────────────────────────────────────────────────
 
 class NodeResponse(BaseModel):
-    id: str
+    # Internal graph services use ``node_id``; the HTTP contract uses ``id``.
+    # Accept both at the boundary so graph responses remain observationally
+    # compatible while satisfying the documented API schema.
+    id: str = Field(validation_alias=AliasChoices("id", "node_id"))
     entity_type: str
     properties: dict[str, Any]
 
