@@ -94,6 +94,14 @@ def get_case(store: GraphStore, case_id: str) -> NodeRecord | None:
     """
     Return the ``Case`` node for *case_id*, or ``None`` if not found.
 
+    Lookup order:
+    1. Try UUID lookup using get_node() (keep existing fast path).
+    2. If not found, iterate over Case nodes only.
+    3. Compare node.properties["fir_number"] with the supplied identifier.
+    4. Compare node.properties["case_number"] with the supplied identifier.
+    5. Return the matching NodeRecord.
+    6. Otherwise return None.
+
     Parameters
     ----------
     store   : GraphStore
@@ -104,9 +112,19 @@ def get_case(store: GraphStore, case_id: str) -> NodeRecord | None:
     NodeRecord | None
     """
     node = get_node(store, case_id)
-    if node is None or node.entity_type != _CASE:
-        return None
-    return node
+    if node is not None and node.entity_type == _CASE:
+        return node
+
+    target_id = safe_str(case_id)
+    for n in store.nodes.values():
+        if n.entity_type != _CASE:
+            continue
+        if n.properties.get("fir_number") == target_id:
+            return n
+        if n.properties.get("case_number") == target_id:
+            return n
+
+    return None
 
 
 def get_person(store: GraphStore, person_id: str) -> NodeRecord | None:

@@ -59,17 +59,19 @@ class NetworkService:
     # =====================================================================
 
     def get_case(self, case_id: str) -> dict[str, Any]:
-        """
-        Return the Case node for case_id.
-
-        Returns an error dict if the node does not exist or is not a Case.
-
-        Used by: Case detail header / breadcrumb resolution
-        """
         store = self._repo.store
+
+        print("=" * 50)
+        print(f"Searching for: {case_id}")
+        print(f"Total nodes: {len(store.nodes)}")
+
         node = get_case(store, case_id)
+
         if node is None:
+            print("Case lookup returned None")
             return {"error": "Case not found", "case_id": case_id}
+
+        print(f"Found node: {node.node_id}")
         return {"case": serialize_node(node)}
 
     def get_person(self, person_id: str) -> dict[str, Any]:

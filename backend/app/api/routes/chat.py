@@ -23,21 +23,10 @@ from backend.app.ai.prompt_manager import PromptManager
 from backend.app.ai.quickml_client import QuickMLClient
 from backend.app.ai.quickml_service import QuickMLService
 from backend.app.ai.schemas import ChatRequest, ChatResponse
-from backend.app.db.catalyst import CatalystRestDatastore
+from backend.app.dependencies.ai import get_quickml_service
 
 router = APIRouter()
 
-
-def get_quickml_service() -> QuickMLService:
-    """Dependency injection provider for QuickMLService.
-    
-    Instantiates CatalystRestDatastore, QuickMLClient, and PromptManager,
-    wiring them into QuickMLService.
-    """
-    datastore = CatalystRestDatastore.from_env()
-    client = QuickMLClient(datastore=datastore)
-    prompt_manager = PromptManager()
-    return QuickMLService(client=client, prompt_manager=prompt_manager)
 
 
 @router.post(

@@ -66,6 +66,26 @@ def test_get_case_happy(two_case_store):
     assert result.node_id == case_a.id
 
 
+def test_get_case_by_fir_number():
+    case = make_case()
+    case.properties["fir_number"] = "FIR/BEL/0064"
+    store = make_store([case], [])
+    result = get_case(store, "FIR/BEL/0064")
+    assert result is not None
+    assert result.node_id == case.id
+    assert result.properties["fir_number"] == "FIR/BEL/0064"
+
+
+def test_get_case_by_case_number():
+    case = make_case()
+    case.properties["case_number"] = "CC-0064"
+    store = make_store([case], [])
+    result = get_case(store, "CC-0064")
+    assert result is not None
+    assert result.node_id == case.id
+    assert result.properties["case_number"] == "CC-0064"
+
+
 def test_get_case_missing(empty_store):
     assert get_case(empty_store, "does-not-exist") is None
 

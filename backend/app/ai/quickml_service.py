@@ -158,11 +158,18 @@ class QuickMLService:
         logger.info("Dispatching intent=%s to deterministic graph services", intent.name)
         graph_data = self._intent_dispatcher.dispatch(intent)
 
+        # Preprocess / truncate large collections to keep prompt size within gateway limits
+        truncated_graph_data = self._truncate_graph_data(graph_data)
+
         # Step 5: Render synthesis prompt using PromptManager with rich context
         entities_formatted = [
             {"type": e.type, "value": e.value} for e in intent.entities
         ]
-        graph_data_str = json.dumps(graph_data, indent=2, default=str)
+        graph_data_str = json.dumps(truncated_graph_data, indent=2, default=str)
+
+        print("=" * 50)
+        print("GRAPH RESULT SIZE:", len(graph_data_str))
+        print(graph_data_str[:1000])  # First 1000 chars
 
         synthesis_prompt = self._prompt_manager.render(
             PromptType.SYNTHESIS,
@@ -261,3 +268,24 @@ class QuickMLService:
             data=data,
             metadata=metadata,
         )
+
+    def _truncate_graph_data(self, data: Any, key_name: str = "") -> Any:
+        """Recursively preprocesses graph payload to reduce prompt size for QuickML synthesis.
+
+        - Preserves all summary statistics, counts, alert levels, and dictionary structures.
+        - Limits lists of case IDs (keys containing 'case_id' or 'case_ids') to at most 5 entries.
+        - Limits all other large collections/lists to at most 10 items.
+        """
+        if isinstance(data, dict):
+            return {
+                k: self._truncate_graph_data(v, key_name=k)
+                for k, v in data.items()
+            }
+        elif isinstance(data, list):
+            is_case_id_list = "case_id" in key_name.lower() or "case_ids" in key_name.lower()
+            limit = 5 if is_case_id_list else 10
+            truncated_list = data[:limit]
+            return [self._truncate_graph_data(item, key_name=key_name) for item in truncated_list]
+        else:
+            return data
+

@@ -17,16 +17,16 @@ try:
     from backend.app.api.dependencies import get_document_service, get_principal
     from backend.app.auth.principal import Principal
     from backend.app.services.document_service import DocumentService
-    from backend.shared.contracts.api import (
+    from shared.contracts.api import (
         DocumentConfirmRequest,
         DocumentConfirmResponse,
         DocumentScanRequest,
         DocumentScanResponse,
     )
 except ImportError:
-    from app.api.dependencies import get_document_service, get_principal  # type: ignore
-    from app.auth.principal import Principal  # type: ignore
-    from app.services.document_service import DocumentService  # type: ignore
+    from backend.app.api.dependencies import get_document_service, get_principal  # type: ignore
+    from backend.app.auth.principal import Principal  # type: ignore
+    from backend.app.services.document_service import DocumentService  # type: ignore
     from shared.contracts.api import (  # type: ignore
         DocumentConfirmRequest,
         DocumentConfirmResponse,

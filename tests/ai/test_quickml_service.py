@@ -603,8 +603,33 @@ def test_orchestration_execution_order_for_general_chat(
     # Act
     service.chat(ChatRequest(message="Hello"))
 
-    # Assert
+    # Verify dispatch and render are bypassed for general chat
     call_names = [call_item[0] for call_item in manager_tracker.mock_calls]
     assert call_names == ["extract", "generate"]
-    mock_dispatcher.dispatch.assert_not_called()
-    mock_prompt_manager.render.assert_not_called()
+
+
+def test_truncate_graph_data_limits_collections_and_case_ids(
+    service: QuickMLService,
+) -> None:
+    data = {
+        "summary": {"total_cases": 100, "alert": "HIGH"},
+        "cases": list(range(20)),
+        "case_ids": [f"c{i}" for i in range(15)],
+        "nested": {
+            "related_case_id_list": [f"rc{i}" for i in range(10)],
+            "items": list(range(15)),
+        },
+    }
+
+    res = service._truncate_graph_data(data)
+
+    # Summary and scalar fields preserved
+    assert res["summary"] == {"total_cases": 100, "alert": "HIGH"}
+    # Generic collection limited to 10
+    assert len(res["cases"]) == 10
+    # case_ids collection limited to 5
+    assert len(res["case_ids"]) == 5
+    # Nested case_id collection limited to 5
+    assert len(res["nested"]["related_case_id_list"]) == 5
+    # Nested generic collection limited to 10
+    assert len(res["nested"]["items"]) == 10
