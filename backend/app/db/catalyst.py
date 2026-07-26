@@ -372,6 +372,8 @@ class CatalystRestDatastore:
     def access_token(self) -> str:
         if self._access_token:
             return self._access_token
+        if not self.auth.get("client_id") or not self.auth.get("client_secret") or not self.auth.get("refresh_token"):
+            raise ValueError("Catalyst OAuth credentials (client_id, client_secret, refresh_token) are missing or unconfigured.")
         response = requests.post(
             f"{self.accounts_domain}/oauth/v2/token",
             data={

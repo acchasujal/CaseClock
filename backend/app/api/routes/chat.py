@@ -15,6 +15,7 @@ from backend.app.ai.exceptions import (
     PromptError,
     QuickMLAuthError,
     QuickMLConnectionError,
+    QuickMLError,
     QuickMLRateLimitError,
     QuickMLResponseError,
     QuickMLTimeoutError,
@@ -67,6 +68,11 @@ def chat(
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Invalid response from QuickML provider.",
+        ) from e
+    except QuickMLError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED if "auth" in str(e).lower() or "token" in str(e).lower() else status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"QuickML provider error: {e}",
         ) from e
     except PromptError as e:
         raise HTTPException(
