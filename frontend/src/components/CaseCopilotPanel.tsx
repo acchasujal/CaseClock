@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { ShieldCheck, RotateCcw } from 'lucide-react'
+import { ShieldCheck, RotateCcw, Zap } from 'lucide-react'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { apiFetch } from '@/lib/apiClient'
@@ -99,6 +99,12 @@ export function CaseCopilotPanel({ caseId, role }: CaseCopilotPanelProps) {
               <p className="mt-2 text-caption text-neutral-500 font-mono">
                 Confidence: {Math.round(query.data.intent.confidence * 100)}%
               </p>
+            )}
+            {(query.data.metadata as Record<string, unknown>)?.provider === 'zoho_catalyst_quickml' && (
+              <div className="mt-2 flex items-center gap-1 text-caption text-neutral-400">
+                <Zap className="h-3 w-3" aria-hidden="true" />
+                <span>Powered by Zoho Catalyst QuickML &middot; GLM-4.7-Flash</span>
+              </div>
             )}
           </div>
         )}

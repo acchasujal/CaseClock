@@ -236,6 +236,7 @@ class QuickMLService:
             llm_response=llm_response,
             intent=intent,
             data=graph_data,
+            grounded=True,
         )
 
     def _build_context(self, request: ChatRequest) -> ConversationContext:
@@ -290,9 +291,15 @@ class QuickMLService:
         llm_response: LLMResponse,
         intent: Intent | None = None,
         data: dict[str, Any] | None = None,
+        grounded: bool = False,
     ) -> ChatResponse:
         """Formats provider LLMResponse into the final presentation ChatResponse."""
-        metadata: dict[str, Any] = {}
+        metadata: dict[str, Any] = {
+            "provider": "zoho_catalyst_quickml",
+            "model": "GLM-4.7-Flash",
+            "grounded": grounded,
+            "fallback_used": False,
+        }
         if llm_response.finish_reason is not None:
             metadata["finish_reason"] = llm_response.finish_reason
         if llm_response.usage is not None:

@@ -545,8 +545,13 @@ def test_build_chat_response_metadata_empty_when_none(service: QuickMLService) -
     # Act
     resp = service._build_chat_response(context, llm_resp)
 
-    # Assert
-    assert resp.metadata == {}
+    # Assert: provider metadata always present; finish_reason and usage absent when None
+    assert resp.metadata["provider"] == "zoho_catalyst_quickml"
+    assert resp.metadata["model"] == "GLM-4.7-Flash"
+    assert resp.metadata["grounded"] is False
+    assert resp.metadata["fallback_used"] is False
+    assert "finish_reason" not in resp.metadata
+    assert "usage" not in resp.metadata
 
 
 def test_build_chat_response_empty_message_defaults_to_empty_string(

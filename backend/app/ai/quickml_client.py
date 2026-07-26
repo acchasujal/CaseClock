@@ -61,7 +61,13 @@ class QuickMLClient:
         self._datastore = datastore
         self._default_model = default_model
         self._timeout = timeout or getattr(datastore, "timeout", 30)
-        self._org_id = org_id or os.getenv("CATALYST_ORG") or os.getenv("CATALYST_ORG_ID") or ""
+        self._org_id = (
+            org_id
+            or os.getenv("QUICKML_ORG_ID")
+            or os.getenv("CATALYST_ORG")
+            or os.getenv("CATALYST_ORG_ID")
+            or ""
+        )
 
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Sends an inference request to Catalyst QuickML and returns a provider-agnostic response.
