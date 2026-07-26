@@ -70,7 +70,8 @@ def create_core_router() -> APIRouter:
         # packaged file. An explicitly supplied runtime value takes precedence.
         build_sha_file = Path(__file__).resolve().parents[2] / "build-sha.txt"
         packaged_sha = build_sha_file.read_text(encoding="utf-8").strip() if build_sha_file.exists() else ""
-        build_sha = os.getenv("BUILD_SHA") or os.getenv("COMMIT_SHA") or packaged_sha or "unknown"
+        raw_sha = os.getenv("BUILD_SHA") or os.getenv("COMMIT_SHA") or packaged_sha
+        build_sha = raw_sha.strip() if raw_sha and raw_sha.strip() and raw_sha.strip().lower() != "head" else "unknown"
         return {
             "status": "ok",
             "service": "caseclock-backend",
