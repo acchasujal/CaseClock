@@ -28,7 +28,10 @@ import json
 import logging
 from typing import Any
 
-import jsonschema
+try:
+    import jsonschema
+except ImportError:  # QuickML is optional when ConvoKraft is the active provider.
+    jsonschema = None  # type: ignore[assignment]
 
 from backend.app.ai.exceptions import IntentExtractionError, QuickMLError
 from backend.app.ai.prompt_manager import PromptManager, PromptType
@@ -267,6 +270,12 @@ class IntentExtractor:
         IntentExtractionError
             If validation fails, carrying the validation error message.
         """
+        if jsonschema is None:
+            raise IntentExtractionError(
+                "Intent schema validation is unavailable because the optional "
+                "QuickML dependency jsonschema is not installed."
+            )
+
         try:
             jsonschema.validate(instance=payload, schema=schema)
         except jsonschema.ValidationError as exc:
