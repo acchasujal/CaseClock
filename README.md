@@ -44,7 +44,8 @@ Local synthetic measurements include 6,667 mixed-state statutory clocks at 97.0 
 | Slate | Implemented/config-dependent; frontend build passes | Delivers the role-aware investigator and supervisor interface. |
 | Data Store | Implemented/config-dependent; live provider not reverified in this run | Provides a durable adapter path for cases, graph records, clocks and audit state. |
 | Job Scheduling | Cron sweep route/service implemented; scheduler configuration-dependent | Keeps statutory monitoring running when officers are offline. |
-| QuickML | Client and controlled intent-routing path implemented; live provider not benchmarked | Converts investigator language into constrained structured intents. |
+| ConvoKraft | Webhook integration implemented; Catalyst Action configuration required | Routes operational assistant actions to deterministic CaseClock worklist, clock, and case services. |
+| QuickML | Optional client and controlled intent-routing path preserved; live provider not benchmarked | Future provider for constrained intent routing when explicitly enabled. |
 | File Store + Zia OCR | Provider adapter implemented; live credentials/provider not verified | Supports evidence-document persistence and OCR when configured. |
 
 External-provider features are reported as configuration-dependent unless a live call has been reproduced. See [`docs/datathon-2026-submission.md`](docs/datathon-2026-submission.md) for the evidence boundary.

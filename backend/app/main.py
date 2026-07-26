@@ -120,6 +120,7 @@ def create_app(
     from backend.app.api.document_routes import create_document_router
     from backend.app.api.routes import chat
     from backend.app.api.system_routes import create_system_router
+    from backend.app.api.convokraft_routes import create_convokraft_router
 
     # ── Routes ───────────────────────────────────────────────────────────────
     app.include_router(create_core_router())
@@ -137,6 +138,7 @@ def create_app(
         prefix="/api/v1",
     )
     app.include_router(chat.router, prefix="/api")
+    app.include_router(create_convokraft_router())
 
     return app
 

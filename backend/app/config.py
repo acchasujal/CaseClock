@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     catalyst_jwks_url: str = Field(default="", alias="CASECLOCK_AUTH_JWKS_URL")
     catalyst_auth_issuer: str = Field(default="", alias="CASECLOCK_AUTH_ISSUER")
     cron_secret: str = Field(default="", alias="CRON_SECRET")
+    convokraft_public_key: str = Field(default="", alias="CONVOKRAFT_PUBLIC_KEY")
 
     model_config = SettingsConfigDict(
         env_file=".env",
