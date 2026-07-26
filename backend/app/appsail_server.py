@@ -43,7 +43,6 @@ try:
     backend_mock.shared = shared
 except Exception as err:
     logging.warning("Could not alias shared module: %s", err)
-
 import uvicorn
 
 logging.basicConfig(

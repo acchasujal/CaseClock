@@ -329,30 +329,33 @@ class CatalystRestDatastore:
             pass
 
         # Prefer JSON configuration if provided
-        auth_env = os.getenv("CATALYST_AUTH")
-        options_env = os.getenv("CATALYST_OPTIONS")
+        auth_env = os.getenv("CATALYST_AUTH") or os.getenv("CASECLOCK_AUTH")
+        options_env = os.getenv("CATALYST_OPTIONS") or os.getenv("CASECLOCK_OPTIONS")
 
         if auth_env and options_env:
             return cls(
-                auth=_json_env("CATALYST_AUTH"),
-                options=_json_env("CATALYST_OPTIONS"),
+                auth=_json_env("CATALYST_AUTH", "CASECLOCK_AUTH"),
+                options=_json_env("CATALYST_OPTIONS", "CASECLOCK_OPTIONS"),
             )
 
         # Fall back to individual environment variables
         auth = {
-            "client_id": os.environ["CATALYST_CLIENT_ID"],
-            "client_secret": os.environ["CATALYST_CLIENT_SECRET"],
-            "refresh_token": os.environ["CATALYST_REFRESH_TOKEN"],
+            "client_id": _env("CATALYST_CLIENT_ID", "CASECLOCK_CLIENT_ID"),
+            "client_secret": _env("CATALYST_CLIENT_SECRET", "CASECLOCK_CLIENT_SECRET"),
+            "refresh_token": _env("CATALYST_REFRESH_TOKEN", "CASECLOCK_REFRESH_TOKEN"),
         }
 
+        project_id = _env("CATALYST_PROJECT_ID", "CASECLOCK_PROJECT_ID")
+
         options = {
-            "project_id": os.environ["CATALYST_PROJECT_ID"],
-            "project_key": os.environ["CATALYST_PROJECT_KEY"],
-            "api_domain": os.getenv("CATALYST_API_DOMAIN", "https://api.catalyst.zoho.in"),
-            "accounts_domain": os.getenv("CATALYST_ACCOUNTS_DOMAIN", "https://accounts.zoho.in"),
-            "environment": os.getenv("CATALYST_ENVIRONMENT", "Development"),
+            "project_id": project_id,
+            "project_key": _env("CATALYST_PROJECT_KEY", "CASECLOCK_PROJECT_KEY", default=project_id),
+            "api_domain": _env("CATALYST_API_DOMAIN", "CASECLOCK_API_DOMAIN", default="https://api.catalyst.zoho.in"),
+            "accounts_domain": _env("CATALYST_ACCOUNTS_DOMAIN", "CASECLOCK_ACCOUNTS_DOMAIN", default="https://accounts.zoho.in"),
+            "environment": _env("CATALYST_ENVIRONMENT", "CASECLOCK_ENVIRONMENT", default="Development"),
         }
         return cls(auth=auth, options=options)
+
 
     def table(self, table_name: str) -> "CatalystRestTable":
         return CatalystRestTable(self, table_name)
@@ -427,11 +430,26 @@ class CatalystRestTable:
         return response.json()
 
 
-def _json_env(name: str) -> dict[str, str]:
-    raw = os.getenv(name)
+def _env(primary: str, fallback: str | None = None, default: str | None = None) -> str:
+    """Resolve environment variable from primary name, falling back to secondary name or default.
+
+    Raises RuntimeError if neither environment variable is set and no default is provided.
+    """
+    val = os.getenv(primary) or (os.getenv(fallback) if fallback else None) or default
+    if val is None:
+        names = f"'{primary}' or '{fallback}'" if fallback else f"'{primary}'"
+        raise RuntimeError(f"Missing required environment variable: {names}")
+    return val
+
+
+def _json_env(name: str, fallback: str | None = None) -> dict[str, str]:
+    raw = os.getenv(name) or (os.getenv(fallback) if fallback else None)
     if not raw:
-        raise RuntimeError(f"{name} must be set for CASECLOCK_REPOSITORY=catalyst")
+        names = f"'{name}' or '{fallback}'" if fallback else f"'{name}'"
+        raise RuntimeError(f"{names} must be set for CASECLOCK_REPOSITORY=catalyst")
     parsed = json.loads(raw)
     if not isinstance(parsed, dict):
-        raise RuntimeError(f"{name} must be a JSON object")
+        names = f"'{name}' or '{fallback}'" if fallback else f"'{name}'"
+        raise RuntimeError(f"{names} must be a JSON object")
     return {str(key): str(value) for key, value in parsed.items()}
+
