@@ -13,6 +13,7 @@ import logging
 import uuid
 from typing import Any
 
+from backend.app.ai.entity_resolver import EntityResolver
 from backend.app.ai.exceptions import MissingEntityError
 from backend.app.ai.intent_dispatcher import IntentDispatcher, IntentName
 
@@ -78,6 +79,7 @@ class QuickMLService:
         client: QuickMLClient,
         prompt_manager: PromptManager,
         intent_extractor: IntentExtractor | None = None,
+        entity_resolver: EntityResolver | None = None,
         intent_dispatcher: IntentDispatcher | None = None,
         min_confidence_threshold: float = DEFAULT_MIN_CONFIDENCE_THRESHOLD,
     ) -> None:
@@ -87,6 +89,7 @@ class QuickMLService:
             client: Infrastructure client for QuickML API execution.
             prompt_manager: Manager for prompt template retrieval and rendering.
             intent_extractor: Extractor for NLU intent parsing (lazily constructed if None).
+            entity_resolver: Resolver for deterministic entity normalization (lazily constructed if None).
             intent_dispatcher: Dispatcher for deterministic graph services (lazily constructed if None).
             min_confidence_threshold: Minimum confidence score required before dispatching graph intent.
         """
@@ -101,6 +104,11 @@ class QuickMLService:
                 client=client,
                 prompt_manager=prompt_manager,
             )
+
+        if entity_resolver is not None:
+            self._entity_resolver = entity_resolver
+        else:
+            self._entity_resolver = EntityResolver()
 
         if intent_dispatcher is not None:
             self._intent_dispatcher = intent_dispatcher
@@ -171,6 +179,9 @@ class QuickMLService:
                 confidence=intent.confidence,
                 entities=intent.entities,
             )
+
+        # Step 2.5: Deterministically resolve extracted entity values to canonical graph terms
+        intent = self._entity_resolver.resolve(intent)
 
         # Step 3: GENERAL_CHAT / UNKNOWN intent bypass
         if intent.name in (IntentName.GENERAL_CHAT.value, IntentName.UNKNOWN.value):
