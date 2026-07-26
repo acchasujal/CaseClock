@@ -340,19 +340,19 @@ class CatalystRestDatastore:
 
         # Fall back to individual environment variables
         auth = {
-            "client_id": _env("CATALYST_CLIENT_ID", "CASECLOCK_CLIENT_ID"),
-            "client_secret": _env("CATALYST_CLIENT_SECRET", "CASECLOCK_CLIENT_SECRET"),
-            "refresh_token": _env("CATALYST_REFRESH_TOKEN", "CASECLOCK_REFRESH_TOKEN"),
+            "client_id": os.getenv("CATALYST_CLIENT_ID") or os.getenv("CASECLOCK_CLIENT_ID") or "",
+            "client_secret": os.getenv("CATALYST_CLIENT_SECRET") or os.getenv("CASECLOCK_CLIENT_SECRET") or "",
+            "refresh_token": os.getenv("CATALYST_REFRESH_TOKEN") or os.getenv("CASECLOCK_REFRESH_TOKEN") or "",
         }
 
-        project_id = _env("CATALYST_PROJECT_ID", "CASECLOCK_PROJECT_ID")
+        project_id = os.getenv("CATALYST_PROJECT_ID") or os.getenv("CASECLOCK_PROJECT_ID") or "51441000000017001"
 
         options = {
             "project_id": project_id,
-            "project_key": _env("CATALYST_PROJECT_KEY", "CASECLOCK_PROJECT_KEY", default=project_id),
-            "api_domain": _env("CATALYST_API_DOMAIN", "CASECLOCK_API_DOMAIN", default="https://api.catalyst.zoho.in"),
-            "accounts_domain": _env("CATALYST_ACCOUNTS_DOMAIN", "CASECLOCK_ACCOUNTS_DOMAIN", default="https://accounts.zoho.in"),
-            "environment": _env("CATALYST_ENVIRONMENT", "CASECLOCK_ENVIRONMENT", default="Development"),
+            "project_key": os.getenv("CATALYST_PROJECT_KEY") or os.getenv("CASECLOCK_PROJECT_KEY") or project_id,
+            "api_domain": os.getenv("CATALYST_API_DOMAIN") or os.getenv("CASECLOCK_API_DOMAIN") or "https://api.catalyst.zoho.in",
+            "accounts_domain": os.getenv("CATALYST_ACCOUNTS_DOMAIN") or os.getenv("CASECLOCK_ACCOUNTS_DOMAIN") or "https://accounts.zoho.in",
+            "environment": os.getenv("CATALYST_ENVIRONMENT") or os.getenv("CASECLOCK_ENVIRONMENT") or "Development",
         }
         return cls(auth=auth, options=options)
 
