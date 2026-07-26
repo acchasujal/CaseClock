@@ -44,6 +44,13 @@ try:
 except Exception as err:
     logging.warning("Could not alias shared module: %s", err)
 
+
+
+print("FILE =", __file__)
+print("CWD =", os.getcwd())
+print("PATHS =", sys.path)
+print("DIR =", os.listdir("."))
+
 import uvicorn
 
 logging.basicConfig(

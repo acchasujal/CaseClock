@@ -8,9 +8,11 @@
     "ENVIRONMENT": "production",
     "AUTH_MODE": "demo",
     "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,https://caseclock-frontend-zaruqrfp.onslate.in",
-    "CASECLOCK_AUTH_ENABLED": "false",
+    "CASECLOCK_AUTH_ENABLED": "true",
     "CASECLOCK_PROJECT_ID": "51441000000017001",
-    "CASECLOCK_CLIENT_ID": "caseclock-app-client",
-    "CRON_SECRET": "cc_cron_sec_8f9a2b4c1d6e3f5a0b7c4d1e"
+    "CRON_SECRET": "cc_cron_sec_8f9a2b4c1d6e3f5a0b7c4d1e",
+    "CASECLOCK_CLIENT_ID": "1000.B68ZTA3V03EUAULB2A30SUN53P64JE",
+    "CASECLOCK_CLIENT_SECRET": "1cb384c58828a2c0d2b85de7e6c46c692e51cd3396",
+    "CASECLOCK_REFRESH_TOKEN": "1000.ae2c386a907691400532ac8e91ea142f.5ea3b89cfc2fbb3a19fdf4399e4ad312"
   }
 }
