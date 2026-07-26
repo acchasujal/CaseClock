@@ -4,7 +4,7 @@
   "stack": "python_3_11",
   "memory": 256,
   "scripts": {
-    "predeploy": "git -C .. rev-parse HEAD > build-sha.txt & robocopy ..\\shared shared /E /NFL /NDL /NJH /NJS /nc /ns /np /XD __pycache__ & pip install --only-binary=:all: --platform manylinux2014_x86_64 --python-version 3.11 -r requirements.txt -t ."
+    "predeploy": "python3 predeploy.py"
   },
   "env_variables": {
     "CASECLOCK_REPOSITORY": "local",
