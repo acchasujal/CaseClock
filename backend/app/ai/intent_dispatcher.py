@@ -54,7 +54,8 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Any, Callable
 
-from backend.app.ai.exceptions import ToolExecutionError
+from backend.app.ai.exceptions import MissingEntityError, ToolExecutionError
+
 from backend.app.ai.schemas import Entity, Intent
 from backend.app.core.graph.services.graph_service import GraphService
 from backend.app.core.graph.services.hotspot_service import HotspotService
@@ -122,7 +123,7 @@ def _first_entity_value(entities: list[Entity], entity_type: str) -> str | None:
 
 
 def _require_entity(intent: Intent, entity_type: str) -> str:
-    """Extract a required entity value, raising :class:`ToolExecutionError` if absent.
+    """Extract a required entity value, raising :class:`MissingEntityError` if absent.
 
     Parameters
     ----------
@@ -138,17 +139,19 @@ def _require_entity(intent: Intent, entity_type: str) -> str:
 
     Raises
     ------
-    ToolExecutionError
+    MissingEntityError
         If no entity of the requested type is present in the intent.
     """
     value = _first_entity_value(intent.entities, entity_type)
     if value is None:
-        raise ToolExecutionError(
+        raise MissingEntityError(
             f"Intent '{intent.name}' requires entity type '{entity_type}', "
             f"but none was found in: {[e.type for e in intent.entities]}",
-            tool_name=intent.name,
+            entity_type=entity_type,
+            intent_name=intent.name,
         )
     return value
+
 
 
 # ── IntentDispatcher ──────────────────────────────────────────────────────────
@@ -374,11 +377,13 @@ class IntentDispatcher:
         if person_id:
             return self._graph_service.get_person_network(person_id)
 
-        raise ToolExecutionError(
+        raise MissingEntityError(
             f"Intent '{intent.name}' requires at least one entity of type "
             f"'case_id' or 'officer_id' to resolve a network subgraph.",
-            tool_name=intent.name,
+            entity_type="case_id",
+            intent_name=intent.name,
         )
+
 
     def _handle_get_hotspots(self, intent: Intent) -> dict[str, Any]:
         """Return the full hotspot report (temporal, spatial, workload, network).

@@ -13,7 +13,9 @@ import logging
 import uuid
 from typing import Any
 
+from backend.app.ai.exceptions import MissingEntityError
 from backend.app.ai.intent_dispatcher import IntentDispatcher, IntentName
+
 from backend.app.ai.intent_extractor import IntentExtractor
 from backend.app.ai.prompt_manager import PromptManager, PromptType
 from backend.app.ai.quickml_client import QuickMLClient
@@ -38,8 +40,37 @@ logger = logging.getLogger(__name__)
 # Default minimum confidence threshold for intent extraction validation
 DEFAULT_MIN_CONFIDENCE_THRESHOLD: float = 0.60
 
+MISSING_ENTITY_CLARIFICATIONS: dict[str, dict[str, str]] = {
+    "GET_SIMILAR_CASES": {
+        "case_id": "I need a reference case to find similar cases.\nPlease specify a case identifier, for example:\n\n    Show similar cases to FIR/BEL/0064",
+    },
+    "GET_CASE": {
+        "case_id": "I need a case identifier to show case details.\nPlease specify a case identifier, for example:\n\n    Show case FIR/BEL/0064",
+    },
+    "GET_CASE_DETAILS": {
+        "case_id": "I need a case identifier to show full case details.\nPlease specify a case identifier, for example:\n\n    Show case details for FIR/BEL/0064",
+    },
+    "GET_NETWORK": {
+        "case_id": "I need a case identifier to build the network graph.\nPlease specify a case identifier, for example:\n\n    Show network for FIR/BEL/0064",
+        "officer_id": "I need a case or officer identifier to build the network graph.\nPlease specify a case identifier, for example:\n\n    Show network for FIR/BEL/0064",
+    },
+    "GET_CLOCK": {
+        "case_id": "I need a case identifier to display statutory clocks.\nPlease specify a case identifier, for example:\n\n    Show investigation clock for FIR/BEL/0064",
+    },
+    "GET_DEPENDENCIES": {
+        "case_id": "I need a case identifier to show pending dependencies.\nPlease specify a case identifier, for example:\n\n    Show dependency chain for FIR/BEL/0064",
+    },
+    "GET_CO_ACCUSED": {
+        "person_id": "I need a person identifier to find co-accused individuals.\nPlease specify a person identifier, for example:\n\n    Show co-accused for Person P-101",
+    },
+    "GET_OFFENDER_PROFILE": {
+        "person_id": "I need a person identifier to show an offender profile.\nPlease specify a person identifier, for example:\n\n    Show profile for Person P-101",
+    },
+}
+
 
 class QuickMLService:
+
     """Application layer orchestrator for the CaseClock AI pipeline."""
 
     def __init__(
@@ -156,10 +187,21 @@ class QuickMLService:
 
         # Step 4: Dispatch graph intent to deterministic services
         logger.info("Dispatching intent=%s to deterministic graph services", intent.name)
-        graph_data = self._intent_dispatcher.dispatch(intent)
+        try:
+            graph_data = self._intent_dispatcher.dispatch(intent)
+        except MissingEntityError as e:
+            logger.info("Missing required entity '%s' for intent '%s'", e.entity_type, e.intent_name)
+            clarification_msg = self._build_missing_entity_clarification(e.intent_name, e.entity_type)
+            return self._build_chat_response(
+                context=context,
+                llm_response=LLMResponse(content=clarification_msg),
+                intent=intent,
+                data=None,
+            )
 
         # Preprocess / truncate large collections to keep prompt size within gateway limits
         truncated_graph_data = self._truncate_graph_data(graph_data)
+
 
         # Step 5: Render synthesis prompt using PromptManager with rich context
         entities_formatted = [
@@ -288,4 +330,20 @@ class QuickMLService:
             return [self._truncate_graph_data(item, key_name=key_name) for item in truncated_list]
         else:
             return data
+
+    def _build_missing_entity_clarification(
+        self, intent_name: str | None, entity_type: str
+    ) -> str:
+        """Builds a user-friendly clarification prompt when a required entity is missing."""
+        if intent_name and intent_name in MISSING_ENTITY_CLARIFICATIONS:
+            msg = MISSING_ENTITY_CLARIFICATIONS[intent_name].get(entity_type)
+            if msg:
+                return msg
+        entity_label = entity_type.replace("_", " ")
+        return (
+            f"I need a {entity_label} to process this request.\n"
+            f"Please specify a case identifier, for example:\n\n"
+            f"    Show similar cases to FIR/BEL/0064"
+        )
+
 

@@ -96,6 +96,21 @@ class ToolExecutionError(AIError):
         self.tool_name = tool_name
 
 
+class MissingEntityError(ToolExecutionError):
+    """Raised when an intent requires a mandatory entity that was not provided."""
+
+    def __init__(
+        self,
+        message: str = "A required entity for this intent was missing.",
+        entity_type: str = "case_id",
+        intent_name: str | None = None,
+    ) -> None:
+        super().__init__(message, tool_name=intent_name)
+        self.entity_type = entity_type
+        self.intent_name = intent_name
+
+
+
 class AIValidationError(AIError):
     """Raised when AI subsystem request/response validation fails."""
 

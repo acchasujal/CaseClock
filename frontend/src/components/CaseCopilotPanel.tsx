@@ -4,7 +4,7 @@ import { ShieldCheck, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { apiFetch } from '@/lib/apiClient'
-import type { CopilotQueryResponse, UserRole } from '@shared/contracts/api'
+import type { ChatResponse, UserRole } from '@shared/contracts/api'
 
 interface CaseCopilotPanelProps {
   caseId: string
@@ -14,11 +14,11 @@ interface CaseCopilotPanelProps {
 export function CaseCopilotPanel({ caseId, role }: CaseCopilotPanelProps) {
   const [question, setQuestion] = useState('')
 
-  const query = useMutation<CopilotQueryResponse, Error, string>({
+  const query = useMutation<ChatResponse, Error, string>({
     mutationFn: (value) =>
-      apiFetch<CopilotQueryResponse>('/copilot/query', {
+      apiFetch<ChatResponse>('/api/chat', {
         method: 'POST',
-        body: JSON.stringify({ query: value, case_id: caseId, user_role: role }),
+        body: JSON.stringify({ message: value, case_id: caseId }),
       }),
   })
 
@@ -92,39 +92,13 @@ export function CaseCopilotPanel({ caseId, role }: CaseCopilotPanelProps) {
           </div>
         )}
 
-        {query.data?.refused && (
-          <div
-            className="rounded-radius-sm border border-neutral-200 bg-neutral-100 p-3"
-            role="status"
-          >
-            <div className="flex items-center gap-2 text-small font-semibold text-neutral-800">
-              <ShieldCheck className="h-4 w-4 text-status-info" aria-hidden="true" />
-              Unable to answer safely
-            </div>
-            <p className="mt-2 text-small text-neutral-700">{query.data.refusal_reason}</p>
-            <p className="mt-1 text-caption text-neutral-500">
-              Confidence gate: {Math.round((query.data.confidence ?? 0) * 100)}%
-            </p>
-          </div>
-        )}
-
-        {query.data && !query.data.refused && (
+        {query.data && (
           <div className="rounded-radius-sm border border-neutral-200 bg-neutral-50 p-3">
-            <p className="text-small text-neutral-800">{query.data.answer}</p>
-            <p className="mt-1 text-caption text-neutral-500">
-              Confidence: {Math.round((query.data.confidence ?? 0) * 100)}%
-            </p>
-            {query.data.reasoning_path && query.data.reasoning_path.length > 0 && (
-              <details className="mt-3 text-small text-neutral-700">
-                <summary className="cursor-pointer font-semibold focus-visible:ring-1 focus-visible:ring-status-info rounded-radius-sm">
-                  Citations and reasoning path
-                </summary>
-                <ul className="mt-2 list-disc space-y-1 pl-5" aria-label="Reasoning path">
-                  {query.data.reasoning_path.map((path) => (
-                    <li key={path}>{path}</li>
-                  ))}
-                </ul>
-              </details>
+            <p className="text-small text-neutral-800 whitespace-pre-wrap">{query.data.message}</p>
+            {query.data.intent?.confidence !== undefined && (
+              <p className="mt-2 text-caption text-neutral-500 font-mono">
+                Confidence: {Math.round(query.data.intent.confidence * 100)}%
+              </p>
             )}
           </div>
         )}
@@ -132,3 +106,4 @@ export function CaseCopilotPanel({ caseId, role }: CaseCopilotPanelProps) {
     </section>
   )
 }
+

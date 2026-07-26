@@ -19,6 +19,7 @@ import {
   Layers,
   FileText
 } from 'lucide-react'
+import type { ChatResponse, ChatMessage as SharedChatMessage } from '@shared/contracts/api'
 
 interface Message {
   id: string
@@ -29,15 +30,6 @@ interface Message {
   confidence?: number
   reasoning_path?: string[] | null
   timestamp: string
-}
-
-interface CopilotQueryResponse {
-  answer: string | null
-  refused: boolean
-  refusal_reason: string | null
-  confidence: number
-  reasoning_path: string[] | null
-  intent: string
 }
 
 const SUGGESTED_PROMPTS = [
@@ -54,6 +46,7 @@ export default function Copilot() {
   const realCase847 = useMemo(() => cases?.[0] || null, [cases])
   const realCase902 = useMemo(() => cases?.[1] || null, [cases])
 
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [caseContext, setCaseContext] = useState<string>('847') // Default to first case
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -82,26 +75,35 @@ export default function Copilot() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const queryMutation = useMutation<CopilotQueryResponse, Error, { text: string; caseId: string | null }>({
-    mutationFn: ({ text, caseId }) =>
-      apiFetch<CopilotQueryResponse>('/copilot/query', {
+  const queryMutation = useMutation<ChatResponse, Error, { text: string; caseId: string | null }>({
+    mutationFn: ({ text, caseId }) => {
+      const historyPayload: SharedChatMessage[] = messages
+        .filter(m => m.id !== 'welcome')
+        .map(m => ({
+          role: m.role,
+          content: m.text,
+        }))
+
+      return apiFetch<ChatResponse>('/api/chat', {
         method: 'POST',
         body: JSON.stringify({
-          query: text,
+          message: text,
+          conversation_id: conversationId || undefined,
           case_id: caseId || undefined,
-          user_role: role || 'IO'
+          history: historyPayload,
         }),
-      }),
+      })
+    },
     onSuccess: (data) => {
+      if (data.conversation_id) {
+        setConversationId(data.conversation_id)
+      }
       const timestamp = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
       const botMessage: Message = {
         id: Math.random().toString(36).substring(2, 11),
         role: 'assistant',
-        text: data.refused ? (data.refusal_reason ?? 'Refused') : (data.answer ?? ''),
-        refused: data.refused,
-        refusal_reason: data.refusal_reason,
-        confidence: data.confidence,
-        reasoning_path: data.reasoning_path,
+        text: data.message || '',
+        confidence: data.intent?.confidence,
         timestamp,
       }
       setMessages(prev => [...prev, botMessage])
@@ -149,6 +151,7 @@ export default function Copilot() {
   }
 
   const handleClear = () => {
+    setConversationId(null)
     setMessages([
       {
         id: 'welcome',

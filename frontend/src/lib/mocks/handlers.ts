@@ -4,6 +4,7 @@ import type {
   CaseDetailResponse, 
   EscalationResponse, 
   CopilotQueryResponse,
+  ChatResponse,
   DependencyResponse,
   DependencyStatus
 } from '@shared/contracts/api'
@@ -291,6 +292,34 @@ export const handlers = [
         "Query parsed -> Intent: general_info",
         "Graph check -> OK"
       ]
+    }
+
+    return HttpResponse.json(response)
+  }),
+
+  // 8. POST /api/chat
+  http.post('*/api/chat', async ({ request }) => {
+    await delay(400)
+    const body = (await request.json()) as { message?: string; query?: string; case_id?: string; conversation_id?: string }
+    const msg = (body.message || body.query || '').toLowerCase()
+    
+    let answer = "This query was successfully processed by the CaseClock AI pipeline against the investigation graph."
+    
+    if (msg.includes('guilty') || msg.includes('commit') || msg.includes('culpable')) {
+      answer = "I cannot infer guilt, innocence, or risk of reoffense. These are matters of judicial determination."
+    } else if (msg.includes('hotspot')) {
+      answer = "Hotspot analysis complete: Identified 4 high-priority cluster zones across Bengaluru and Mysuru stations with 12 stale forensic dependencies."
+    } else if (msg.includes('offender')) {
+      answer = "Repeat offender intelligence: Found 3 repeat offenders linked to 8 interconnected BNS cases."
+    }
+
+    const response: ChatResponse = {
+      message: answer,
+      conversation_id: body.conversation_id || 'conv-mock-123',
+      intent: {
+        name: msg.includes('hotspot') ? 'GET_HOTSPOTS' : msg.includes('offender') ? 'GET_REPEAT_OFFENDERS' : 'GENERAL_CHAT',
+        confidence: 0.98,
+      },
     }
 
     return HttpResponse.json(response)

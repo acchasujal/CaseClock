@@ -456,20 +456,22 @@ def test_chat_extractor_exception_propagates(
     assert "extractor failed" in str(exc_info.value).lower()
 
 
-def test_chat_dispatcher_exception_propagates(
-    service: QuickMLService, mock_dispatcher: MagicMock
+def test_chat_missing_entity_returns_graceful_clarification(
+    service: QuickMLService, mock_dispatcher: MagicMock, mock_extractor: MagicMock
 ) -> None:
-    # Arrange
-    mock_dispatcher.dispatch.side_effect = ToolExecutionError("Dispatcher failed")
+    from backend.app.ai.exceptions import MissingEntityError
+    mock_extractor.extract.return_value = Intent(name="GET_SIMILAR_CASES", confidence=0.9, entities=[])
+    mock_dispatcher.dispatch.side_effect = MissingEntityError("Missing case_id", entity_type="case_id", intent_name="GET_SIMILAR_CASES")
 
-    # Act & Assert
-    with pytest.raises(ToolExecutionError) as exc_info:
-        service.chat(ChatRequest(message="Test"))
+    resp = service.chat(ChatRequest(message="Show similar cases"))
 
-    assert "dispatcher failed" in str(exc_info.value).lower()
+    assert resp.message.startswith("I need a reference case")
+    assert "FIR/BEL/0064" in resp.message
+    assert resp.data is None
 
 
 def test_chat_prompt_exception_propagates(
+
     service: QuickMLService, mock_prompt_manager: MagicMock
 ) -> None:
     # Arrange

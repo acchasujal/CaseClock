@@ -92,6 +92,35 @@ export interface CopilotQueryResponse {
   confidence: number;        // 0.0–1.0
 }
 
+// ── AI Chat (POST /api/chat) ──────────────────────────────────────────────────
+
+export interface ChatMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  conversation_id?: string;
+  case_id?: string;
+  history?: ChatMessage[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface ChatResponse {
+  message: string;
+  conversation_id: string;
+  intent?: {
+    name: string;
+    confidence?: number;
+    entities?: Array<{ type: string; value: unknown }>;
+  };
+  entities?: Array<{ type: string; value: unknown }>;
+  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export interface TokenResponse {
