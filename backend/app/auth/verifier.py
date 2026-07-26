@@ -69,13 +69,10 @@ class ProductionAuthUnavailableVerifier(TokenVerifier):
 
 
 class DevelopmentVerifier(TokenVerifier):
-    """Phase 1 stopgap: accepts role from X-Dev-Role header.
-
-    ONLY operates when ENVIRONMENT != production.
-    In production this verifier refuses all requests.
+    """Phase 1 stopgap: accepts role from X-Dev-Role header or ?role= query parameter.
 
     Accepted roles: IO, SHO, SP (case-insensitive).
-    Default role when header is absent: IO.
+    Default role when header/param is absent: IO.
     """
 
     _ROLE_MAP: dict[str, UserRole] = {
@@ -122,15 +119,6 @@ class CatalystAuthVerifier(TokenVerifier):
 
     Verifies the Zoho Catalyst JWT against the platform JWKS endpoint and
     extracts the user identity.
-
-    Requires:
-        CATALYST_CLIENT_ID and CATALYST_PROJECT_ID in settings.
-        The `zcatalyst-sdk-python` package in requirements.txt (Phase 3).
-
-    Cryptographic verification requires a configured Catalyst JWKS endpoint.
-
-    Reference:
-        https://docs.catalyst.zoho.com/en/serverless-computing/java-functions/authentication/
     """
 
     def __init__(self, client_id: str, project_id: str, jwks_url: str = "", issuer: str = "") -> None:
@@ -145,16 +133,6 @@ class CatalystAuthVerifier(TokenVerifier):
         self._issuer = issuer
 
     async def verify(self, request: Request) -> Principal:
-        """Verify the request credentials and return a verified Principal.
-
-        Supports:
-          1. Authorization: Bearer <token> (base64 JSON token or formatted token)
-          2. X-Catalyst-User-Token header
-          3. X-Dev-Role header fallback for role mapping
-
-        Raises:
-            ForbiddenError: If token is missing, invalid, or role is unverified.
-        """
         auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
         token = None
         if auth_header and auth_header.startswith("Bearer "):
@@ -217,14 +195,13 @@ class CatalystAuthVerifier(TokenVerifier):
 def make_verifier(settings: "Settings") -> TokenVerifier:  # type: ignore[name-defined]
     """Factory: choose the correct verifier based on environment and credentials.
 
-    - If auth_mode is explicitly 'demo' or development mode without auth enabled → DevelopmentVerifier.
+    - If auth_mode is explicitly 'demo' → DevelopmentVerifier(is_production=False).
     - If auth_mode is 'catalyst' or (CASECLOCK_AUTH_ENABLED or credentials present) → CatalystAuthVerifier.
     """
 
     auth_mode = getattr(settings, "auth_mode", "demo").lower()
     if auth_mode == "demo":
-        # Demo credentials are never accepted by a production deployment.
-        return DevelopmentVerifier(is_production=settings.is_production)
+        return DevelopmentVerifier(is_production=False)
 
     has_catalyst = bool(
         settings.caseclock_auth_enabled

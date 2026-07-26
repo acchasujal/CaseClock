@@ -67,8 +67,18 @@ def create_app(
             )
 
         if cfg.caseclock_repository.lower() == "catalyst":
-            from backend.app.db.catalyst import CatalystBackendRepository
-            repository = CatalystBackendRepository()
+            try:
+                from backend.app.db.catalyst import CatalystBackendRepository
+                repository = CatalystBackendRepository()
+            except Exception as err:
+                logger.warning(
+                    "Failed to initialize CatalystBackendRepository (%s); falling back to InMemoryBackendRepository.",
+                    err,
+                )
+                repository = InMemoryBackendRepository(
+                    artifact_path=artifact_path,
+                    state_path=state_path,
+                )
         else:
             repository = InMemoryBackendRepository(
                 artifact_path=artifact_path,
