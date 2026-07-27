@@ -63,6 +63,26 @@ def test_production_webhook_fails_closed_without_signature_configuration() -> No
     assert response.status_code == 401
 
 
+def test_production_webhook_missing_key_with_signature_is_503() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY=""))
+    response = client.post(
+        "/api/integrations/convokraft/action",
+        content=b'{"action":"case_status_summary"}',
+        headers={"content-type": "application/json", "X-CONVOKRAFT-SIGNATURE": "AAAA"},
+    )
+    assert response.status_code == 503
+
+
+def test_literal_newline_key_format_is_supported() -> None:
+    private_key = dsa.generate_private_key(key_size=1024)
+    pem = private_key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo).decode()
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY=pem.replace("\n", "\\n")))
+    body = __import__("json").dumps(_payload("case_status_summary"), separators=(",", ":")).encode()
+    signature = __import__("base64").b64encode(private_key.sign(body, hashes.SHA256())).decode()
+    response = client.post("/api/integrations/convokraft/action", content=body, headers={"content-type": "application/json", "X-CONVOKRAFT-SIGNATURE": signature})
+    assert response.status_code == 200
+
+
 def test_valid_signed_request_returns_case_summary() -> None:
     private_key = dsa.generate_private_key(key_size=1024)
     public_key = private_key.public_key().public_bytes(

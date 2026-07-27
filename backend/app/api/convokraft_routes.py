@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -14,6 +15,8 @@ from backend.app.auth.principal import Principal
 from backend.app.config import Settings
 from backend.app.services.case_service import CaseService
 from shared.contracts.api import UserRole
+
+logger = logging.getLogger(__name__)
 
 
 class ConvoKraftCryptoUnavailable(RuntimeError):
@@ -26,6 +29,11 @@ class ConvoKraftKeyConfigurationError(RuntimeError):
 
 def _execution(message: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"status": "execution", "message": message, "card": [], "data": data or {}, "broadcast": {}, "trigger": {}, "followup": {}}
+
+
+def _normalise_public_key(value: str) -> str:
+    """Normalize only environment transport escaping; preserve PEM markers/content."""
+    return value.replace("\\n", "\n").strip()
 
 
 def _verify_signature(raw_body: bytes, signature: str, public_key: str) -> bool:
@@ -79,13 +87,34 @@ def create_convokraft_router() -> APIRouter:
         raw_body = await request.body()
         settings: Settings = request.app.state.settings
         if settings.is_production:
+            signature = request.headers.get("X-CONVOKRAFT-SIGNATURE", "")
+            public_key = _normalise_public_key(settings.convokraft_public_key)
+            logger.info(
+                "ConvoKraft signature verification requested",
+                extra={
+                    "request_id": request_id,
+                    "category": "signature_verification",
+                    "public_key_configured": bool(public_key),
+                    "public_key_length": len(public_key),
+                    "public_key_pem": public_key.startswith("-----BEGIN PUBLIC KEY-----") and public_key.endswith("-----END PUBLIC KEY-----"),
+                },
+            )
+            if not signature:
+                logger.warning("ConvoKraft signature missing", extra={"request_id": request_id, "category": "missing_signature"})
+                raise HTTPException(status_code=401, detail="Invalid ConvoKraft signature")
+            if not public_key:
+                logger.error("ConvoKraft public key missing", extra={"request_id": request_id, "category": "public_key_missing"})
+                raise HTTPException(status_code=503, detail="ConvoKraft signature configuration is missing")
             try:
-                verified = _verify_signature(raw_body, request.headers.get("X-CONVOKRAFT-SIGNATURE", ""), settings.convokraft_public_key)
+                verified = _verify_signature(raw_body, signature, public_key)
             except ConvoKraftCryptoUnavailable as exc:
+                logger.error("ConvoKraft crypto runtime unavailable", extra={"request_id": request_id, "category": "crypto_runtime_unavailable"})
                 raise HTTPException(status_code=503, detail="ConvoKraft signature verification is unavailable") from exc
             except ConvoKraftKeyConfigurationError as exc:
+                logger.error("ConvoKraft public key configuration invalid", extra={"request_id": request_id, "category": "public_key_invalid"})
                 raise HTTPException(status_code=503, detail="ConvoKraft signature configuration is invalid") from exc
             if not verified:
+                logger.warning("ConvoKraft signature invalid", extra={"request_id": request_id, "category": "invalid_signature"})
                 raise HTTPException(status_code=401, detail="Invalid ConvoKraft signature")
         try:
             payload = json.loads(raw_body)
