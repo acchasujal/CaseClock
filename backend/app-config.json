@@ -4,7 +4,7 @@
   "stack": "python_3_11",
   "memory": 256,
   "scripts": {
-    "predeploy": "python3 predeploy.py"
+    "predeploy": "python predeploy.py"
   },
   "env_variables": {
     "CASECLOCK_REPOSITORY": "local",
