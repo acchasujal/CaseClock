@@ -88,7 +88,7 @@ def _principal_from_payload(payload: dict[str, Any], settings: Settings) -> Prin
         role = UserRole(str(client_data.get("role") or "IO").upper())
     except ValueError as exc:
         raise HTTPException(status_code=403, detail="Unsupported CaseClock role") from exc
-    if settings.is_production and not settings.convokraft_public_key:
+    if settings.is_production and settings.convokraft_verify_signature and not settings.convokraft_public_key:
         raise HTTPException(status_code=503, detail="ConvoKraft signature verification is not configured")
     user = payload.get("user") or {}
     return Principal(
@@ -110,7 +110,7 @@ def create_convokraft_router() -> APIRouter:
     ) -> dict[str, Any]:
         raw_body = await request.body()
         settings: Settings = request.app.state.settings
-        if settings.is_production:
+        if settings.is_production and settings.convokraft_verify_signature:
             signature = request.headers.get("X-CONVOKRAFT-SIGNATURE", "")
             public_key = _normalise_public_key(settings.convokraft_public_key)
             logger.info(
@@ -144,6 +144,11 @@ def create_convokraft_router() -> APIRouter:
             if not verified:
                 logger.warning("ConvoKraft signature invalid", extra={"request_id": request_id, "category": "invalid_signature"})
                 raise HTTPException(status_code=401, detail="Invalid ConvoKraft signature")
+        elif settings.is_production:
+            logger.warning(
+                "ConvoKraft signature verification disabled by configuration",
+                extra={"request_id": request_id, "category": "signature_verification_disabled"},
+            )
         try:
             payload = json.loads(raw_body)
         except json.JSONDecodeError as exc:

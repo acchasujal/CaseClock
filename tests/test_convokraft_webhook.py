@@ -63,6 +63,32 @@ def test_production_webhook_fails_closed_without_signature_configuration() -> No
     assert response.status_code == 401
 
 
+def test_convo_kraft_signature_verification_defaults_to_enabled() -> None:
+    assert Settings().convokraft_verify_signature is True
+
+
+def test_disabled_signature_verification_allows_unsigned_action_processing() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_VERIFY_SIGNATURE=False, CONVOKRAFT_PUBLIC_KEY=""))
+    response = client.post("/api/integrations/convokraft/action", json=_payload("case_status_summary"))
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "execution"
+
+
+def test_enabled_signature_verification_rejects_unsigned_request() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_VERIFY_SIGNATURE=True, CONVOKRAFT_PUBLIC_KEY=""))
+    response = client.post("/api/integrations/convokraft/action", json=_payload("case_status_summary"))
+
+    assert response.status_code == 401
+
+
+def test_disabled_signature_verification_does_not_bypass_role_security() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_VERIFY_SIGNATURE=False, CONVOKRAFT_PUBLIC_KEY=""))
+    response = client.post("/api/integrations/convokraft/action", json=_payload("case_status_summary", "not-a-role"))
+
+    assert response.status_code == 403
+
+
 def test_production_webhook_missing_key_with_signature_is_503() -> None:
     client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY=""))
     response = client.post(

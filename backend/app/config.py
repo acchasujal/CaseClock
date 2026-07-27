@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     catalyst_auth_issuer: str = Field(default="", alias="CASECLOCK_AUTH_ISSUER")
     cron_secret: str = Field(default="", alias="CRON_SECRET")
     convokraft_public_key: str = Field(default="", alias="CONVOKRAFT_PUBLIC_KEY")
+    convokraft_verify_signature: bool = Field(default=True, alias="CONVOKRAFT_VERIFY_SIGNATURE")
 
     model_config = SettingsConfigDict(
         env_file=".env",
