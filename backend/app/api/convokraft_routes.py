@@ -16,6 +16,14 @@ from backend.app.services.case_service import CaseService
 from shared.contracts.api import UserRole
 
 
+class ConvoKraftCryptoUnavailable(RuntimeError):
+    """Raised when production signature verification cannot be performed."""
+
+
+class ConvoKraftKeyConfigurationError(RuntimeError):
+    """Raised when the configured ConvoKraft public key is unusable."""
+
+
 def _execution(message: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"status": "execution", "message": message, "card": [], "data": data or {}, "broadcast": {}, "trigger": {}, "followup": {}}
 
@@ -27,14 +35,19 @@ def _verify_signature(raw_body: bytes, signature: str, public_key: str) -> bool:
         from cryptography.exceptions import InvalidSignature
         from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.hazmat.primitives.asymmetric import dsa
+    except ImportError as exc:
+        raise ConvoKraftCryptoUnavailable("Signature verification dependency is unavailable") from exc
 
+    try:
         key = serialization.load_pem_public_key(public_key.encode("utf-8"))
         if not isinstance(key, dsa.DSAPublicKey):
-            return False
+            raise ConvoKraftKeyConfigurationError("ConvoKraft public key is not a DSA key")
         key.verify(base64.b64decode(signature, validate=True), raw_body, hashes.SHA256())
         return True
-    except (ImportError, InvalidSignature, ValueError, TypeError, binascii.Error):
+    except InvalidSignature:
         return False
+    except (ValueError, TypeError, binascii.Error) as exc:
+        raise ConvoKraftKeyConfigurationError("ConvoKraft public key or signature is malformed") from exc
 
 
 def _principal_from_payload(payload: dict[str, Any], settings: Settings) -> Principal:
@@ -65,8 +78,15 @@ def create_convokraft_router() -> APIRouter:
     ) -> dict[str, Any]:
         raw_body = await request.body()
         settings: Settings = request.app.state.settings
-        if settings.is_production and not _verify_signature(raw_body, request.headers.get("X-CONVOKRAFT-SIGNATURE", ""), settings.convokraft_public_key):
-            raise HTTPException(status_code=401, detail="Invalid ConvoKraft signature")
+        if settings.is_production:
+            try:
+                verified = _verify_signature(raw_body, request.headers.get("X-CONVOKRAFT-SIGNATURE", ""), settings.convokraft_public_key)
+            except ConvoKraftCryptoUnavailable as exc:
+                raise HTTPException(status_code=503, detail="ConvoKraft signature verification is unavailable") from exc
+            except ConvoKraftKeyConfigurationError as exc:
+                raise HTTPException(status_code=503, detail="ConvoKraft signature configuration is invalid") from exc
+            if not verified:
+                raise HTTPException(status_code=401, detail="Invalid ConvoKraft signature")
         try:
             payload = json.loads(raw_body)
         except json.JSONDecodeError as exc:

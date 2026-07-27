@@ -1,4 +1,6 @@
 from fastapi.testclient import TestClient
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import dsa
 
 from backend.app.config import Settings
 from backend.app.db.in_memory import InMemoryBackendRepository
@@ -59,3 +61,47 @@ def test_production_webhook_fails_closed_without_signature_configuration() -> No
     client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY=""))
     response = client.post("/api/integrations/convokraft/action", json=_payload("case_status_summary"))
     assert response.status_code == 401
+
+
+def test_valid_signed_request_returns_case_summary() -> None:
+    private_key = dsa.generate_private_key(key_size=1024)
+    public_key = private_key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    ).decode()
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY=public_key))
+    body = __import__("json").dumps(_payload("case_status_summary"), separators=(",", ":")).encode()
+    signature = __import__("base64").b64encode(private_key.sign(body, hashes.SHA256())).decode()
+
+    response = client.post(
+        "/api/integrations/convokraft/action",
+        content=body,
+        headers={"content-type": "application/json", "X-CONVOKRAFT-SIGNATURE": signature},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "execution"
+
+
+def test_malformed_public_key_is_configuration_error() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY="not-a-pem-key"))
+    response = client.post(
+        "/api/integrations/convokraft/action",
+        content=b'{"action":"case_status_summary"}',
+        headers={"content-type": "application/json", "X-CONVOKRAFT-SIGNATURE": "AAAA"},
+    )
+    assert response.status_code == 503
+
+
+def test_unavailable_crypto_is_configuration_error(monkeypatch) -> None:
+    from backend.app.api import convokraft_routes
+
+    original = convokraft_routes._verify_signature
+    monkeypatch.setattr(convokraft_routes, "_verify_signature", lambda *_args: (_ for _ in ()).throw(convokraft_routes.ConvoKraftCryptoUnavailable()))
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY="configured"))
+    response = client.post(
+        "/api/integrations/convokraft/action",
+        content=b'{"action":"case_status_summary"}',
+        headers={"content-type": "application/json", "X-CONVOKRAFT-SIGNATURE": "AAAA"},
+    )
+    monkeypatch.setattr(convokraft_routes, "_verify_signature", original)
+    assert response.status_code == 503

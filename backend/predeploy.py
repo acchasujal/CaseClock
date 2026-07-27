@@ -1,6 +1,7 @@
 """Prepare the AppSail build directory with shared contracts and dependencies."""
 
 from pathlib import Path
+import os
 import shutil
 import subprocess
 import sys
@@ -25,6 +26,13 @@ def main() -> None:
             "-t",
             str(ROOT),
         ],
+        check=True,
+    )
+    verify_env = dict(os.environ)
+    verify_env["PYTHONPATH"] = str(ROOT) + os.pathsep + verify_env.get("PYTHONPATH", "")
+    subprocess.run(
+        [sys.executable, "-c", "import cryptography; from cryptography.hazmat.primitives.asymmetric import dsa"],
+        env=verify_env,
         check=True,
     )
     try:
