@@ -36,6 +36,22 @@ def _normalise_public_key(value: str) -> str:
     return value.replace("\\n", "\n").strip()
 
 
+def _public_key_representation(value: str) -> str:
+    """Classify key transport without logging key material."""
+    normalized = _normalise_public_key(value)
+    if not normalized:
+        return "missing"
+    if normalized.startswith("-----BEGIN") and normalized.endswith("-----"):
+        return "pem"
+    try:
+        decoded = base64.b64decode("".join(normalized.split()), validate=True)
+    except (ValueError, binascii.Error):
+        return "unrecognized"
+    if decoded.startswith(b"-----BEGIN"):
+        return "base64_pem"
+    return "base64_der"
+
+
 def _verify_signature(raw_body: bytes, signature: str, public_key: str) -> bool:
     if not signature or not public_key:
         return False
@@ -47,7 +63,15 @@ def _verify_signature(raw_body: bytes, signature: str, public_key: str) -> bool:
         raise ConvoKraftCryptoUnavailable("Signature verification dependency is unavailable") from exc
 
     try:
-        key = serialization.load_pem_public_key(public_key.encode("utf-8"))
+        normalized_key = _normalise_public_key(public_key)
+        if normalized_key.startswith("-----BEGIN"):
+            key = serialization.load_pem_public_key(normalized_key.encode("utf-8"))
+        else:
+            key_bytes = base64.b64decode("".join(normalized_key.split()), validate=True)
+            if key_bytes.startswith(b"-----BEGIN"):
+                key = serialization.load_pem_public_key(key_bytes)
+            else:
+                key = serialization.load_der_public_key(key_bytes)
         if not isinstance(key, dsa.DSAPublicKey):
             raise ConvoKraftKeyConfigurationError("ConvoKraft public key is not a DSA key")
         key.verify(base64.b64decode(signature, validate=True), raw_body, hashes.SHA256())
@@ -90,7 +114,11 @@ def create_convokraft_router() -> APIRouter:
             signature = request.headers.get("X-CONVOKRAFT-SIGNATURE", "")
             public_key = _normalise_public_key(settings.convokraft_public_key)
             logger.info(
-                "ConvoKraft signature verification requested",
+                "ConvoKraft signature verification requested source=CONVOKRAFT_PUBLIC_KEY "
+                "configured=%s length=%d representation=%s",
+                bool(public_key),
+                len(public_key),
+                _public_key_representation(public_key),
                 extra={
                     "request_id": request_id,
                     "category": "signature_verification",

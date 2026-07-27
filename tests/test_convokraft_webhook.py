@@ -102,6 +102,25 @@ def test_valid_signed_request_returns_case_summary() -> None:
     assert response.json()["status"] == "execution"
 
 
+def test_base64_der_dsa_public_key_is_supported() -> None:
+    private_key = dsa.generate_private_key(key_size=1024)
+    der = private_key.public_key().public_bytes(
+        serialization.Encoding.DER,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY=__import__("base64").b64encode(der).decode()))
+    body = __import__("json").dumps(_payload("case_status_summary"), separators=(",", ":")).encode()
+    signature = __import__("base64").b64encode(private_key.sign(body, hashes.SHA256())).decode()
+
+    response = client.post(
+        "/api/integrations/convokraft/action",
+        content=body,
+        headers={"content-type": "application/json", "X-CONVOKRAFT-SIGNATURE": signature},
+    )
+
+    assert response.status_code == 200
+
+
 def test_malformed_public_key_is_configuration_error() -> None:
     client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_PUBLIC_KEY="not-a-pem-key"))
     response = client.post(
