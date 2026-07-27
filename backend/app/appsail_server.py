@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import os
+import platform
 import sys
 from pathlib import Path
 
@@ -52,6 +53,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _log_crypto_runtime() -> None:
+    """Emit safe runtime diagnostics for the signed ConvoKraft integration."""
+    logger.info("ConvoKraft crypto runtime python=%s platform=%s machine=%s", sys.version.split()[0], platform.platform(), platform.machine())
+    imports = (
+        ("cryptography", "import cryptography"),
+        ("InvalidSignature", "from cryptography.exceptions import InvalidSignature"),
+        ("hashes", "from cryptography.hazmat.primitives import hashes"),
+        ("serialization", "from cryptography.hazmat.primitives import serialization"),
+        ("dsa", "from cryptography.hazmat.primitives.asymmetric import dsa"),
+    )
+    for stage, statement in imports:
+        try:
+            namespace: dict[str, object] = {}
+            exec(statement, namespace)
+            module = namespace.get("cryptography")
+            logger.info("ConvoKraft crypto_init stage=%s result=success%s", stage, f" version={getattr(module, '__version__', 'unknown')} path={getattr(module, '__file__', 'unknown')}" if stage == "cryptography" else "")
+        except Exception as exc:
+            logger.error("ConvoKraft crypto_init stage=%s result=failure exception_type=%s exception=%s", stage, type(exc).__name__, str(exc)[:160])
+
+
 def _get_port() -> int:
     """Get the port to listen on.
 
@@ -68,6 +89,7 @@ def _get_port() -> int:
 
 if __name__ == "__main__":
     port = _get_port()
+    _log_crypto_runtime()
     app_module = "app.main:app"
     logger.info("Starting CaseClock backend on port %d using module %s", port, app_module)
     uvicorn.run(
