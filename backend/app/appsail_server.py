@@ -17,6 +17,12 @@ import platform
 import sys
 from pathlib import Path
 
+# Dependencies are staged inside the exact AppSail source root by predeploy.
+app_root = Path(__file__).resolve().parent.parent
+vendor_dir = app_root / "vendor"
+if vendor_dir.is_dir():
+    sys.path.insert(0, str(vendor_dir))
+
 # Add project root and app parent directory to sys.path
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:

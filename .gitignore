@@ -45,6 +45,7 @@ frontend/.catalyst/
 
 # Vendored Python packages (pip install -t .) — never commit these
 # AppSail installs dependencies from requirements.txt at build time
+backend/vendor/
 backend/*.dist-info/
 backend/typing_extensions.py
 backend/py.py
