@@ -17,6 +17,7 @@
     "QUICKML_ORG_ID": "60077090566",
     "QUICKML_PROJECT_ID": "51441000000017001",
     "QUICKML_ENDPOINT": "https://api.catalyst.zoho.in/quickml/v1/project/51441000000017001/glm/chat",
-    "QUICKML_ENABLED": "false"
+    "QUICKML_ENABLED": "false",
+    "CONVOKRAFT_VERIFY_SIGNATURE": "false"
   }
 }
