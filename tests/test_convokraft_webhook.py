@@ -15,6 +15,31 @@ def _payload(action: str, role: str = "IO") -> dict:
     return {"todo": "execute", "bot": "voiceassistant", "action": action, "environment": "development", "params": {}, "userInput": "", "user": {"id": "demo-user"}, "clientData": {"role": role}}
 
 
+def _realistic_payload(action: str, params: dict | None = None) -> dict:
+    return {
+        "todo": "execute",
+        "bot": "voiceassistant",
+        "action": action,
+        "button_id": "",
+        "environment": "development",
+        "params": params or {},
+        "userInput": "",
+        "previousParam": "",
+        "user": {"id": "demo-user"},
+        "org": {},
+        "broadcast": {},
+        "cache": {},
+        "sessionData": {},
+        "clientData": {"role": "IO"},
+    }
+
+
+def _assert_execution_contract(response) -> None:
+    assert response.status_code == 200
+    assert set(response.json()) == {"status", "message", "card", "data", "broadcast", "trigger", "followup"}
+    assert response.json()["status"] == "execution"
+
+
 def test_case_status_summary_uses_repository_worklist() -> None:
     client = _client()
     expected = client.get("/worklist?role=IO").json()
@@ -25,6 +50,33 @@ def test_case_status_summary_uses_repository_worklist() -> None:
     assert body["status"] == "execution"
     assert body["data"]["active_case_count"] == len(expected)
     assert body["data"]["active_case_count"] > 0
+
+
+def test_realistic_case_status_summary_uses_catalyst_execution_contract() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_VERIFY_SIGNATURE=False))
+    response = client.post("/api/integrations/convokraft/action", json=_realistic_payload("CaseStatusSummary"))
+
+    _assert_execution_contract(response)
+    assert response.json()["data"]["active_case_count"] > 0
+
+
+def test_realistic_deadline_summary_uses_catalyst_execution_contract() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_VERIFY_SIGNATURE=False))
+    response = client.post("/api/integrations/convokraft/action", json=_realistic_payload("DeadlineSummary"))
+
+    _assert_execution_contract(response)
+    assert set(response.json()["data"]) == {"overdue", "red", "amber", "green"}
+
+
+def test_realistic_case_detail_uses_catalyst_execution_contract() -> None:
+    client = _client(Settings(ENVIRONMENT="production", CONVOKRAFT_VERIFY_SIGNATURE=False))
+    response = client.post(
+        "/api/integrations/convokraft/action",
+        json=_realistic_payload("CaseDetail", {"firNumber": "FIR/MAN/0003"}),
+    )
+
+    _assert_execution_contract(response)
+    assert response.json()["data"]["case"]["fir_number"] == "FIR/MAN/0003"
 
 
 def test_role_context_changes_worklist_scope() -> None:

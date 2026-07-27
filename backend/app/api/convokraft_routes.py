@@ -31,6 +31,23 @@ def _execution(message: str, data: dict[str, Any] | None = None) -> dict[str, An
     return {"status": "execution", "message": message, "card": [], "data": data or {}, "broadcast": {}, "trigger": {}, "followup": {}}
 
 
+def _action_key(value: str) -> str:
+    """Normalize Catalyst action IDs and human-readable action names."""
+    return "".join(character for character in value.casefold() if character.isalnum())
+
+
+def _action_response(action_name: str, response: dict[str, Any]) -> dict[str, Any]:
+    logger.info(
+        "ConvoKraft action response action=%s response_type=%s top_level_keys=%s http_status=%d",
+        action_name,
+        response.get("status", ""),
+        sorted(response.keys()),
+        200,
+        extra={"category": "action_response"},
+    )
+    return response
+
+
 def _normalise_public_key(value: str) -> str:
     """Normalize only environment transport escaping; preserve PEM markers/content."""
     return value.replace("\\n", "\n").strip()
@@ -157,28 +174,44 @@ def create_convokraft_router() -> APIRouter:
             raise HTTPException(status_code=400, detail="Malformed ConvoKraft payload")
 
         principal = _principal_from_payload(payload, settings)
-        action_name = str(payload.get("action") or "").strip().lower()
+        action_name = str(payload.get("action") or "").strip()
+        action_key = _action_key(action_name)
+        params = payload.get("params") or {}
+        logger.info(
+            "ConvoKraft action received action=%s top_level_keys=%s parameter_names=%s",
+            action_name,
+            sorted(str(key) for key in payload.keys()),
+            sorted(str(key) for key in params.keys()) if isinstance(params, dict) else [],
+            extra={"category": "action_request"},
+        )
         worklist = case_svc.list_worklist(principal=principal, request_id=request_id)
         statuses = {status: sum(item.clock.status.value == status for item in worklist) for status in ("overdue", "red", "amber", "green")}
 
-        if action_name == "case_status_summary":
+        if action_key in {"casestatussummary"}:
             message = f"{len(worklist)} active cases are currently in the {principal.role.value} worklist: {statuses['overdue']} overdue, {statuses['red']} red-risk, {statuses['amber']} amber and {statuses['green']} green."
-            return _execution(message, {"active_case_count": len(worklist), **statuses})
-        if action_name == "urgent_cases":
+            return _action_response(action_name, _execution(message, {"active_case_count": len(worklist), **statuses}))
+        if action_key in {"urgentcases"}:
             urgent = [item for item in worklist if item.clock.status.value in {"overdue", "red"}]
             names = ", ".join(item.fir_number for item in urgent[:10]) or "None"
-            return _execution(f"{len(urgent)} cases require immediate attention: {names}.", {"count": len(urgent), "cases": [item.fir_number for item in urgent]})
-        if action_name == "deadline_summary":
-            return _execution(f"Deadline summary: {statuses['overdue']} overdue, {statuses['red']} red-risk, {statuses['amber']} amber and {statuses['green']} green.", statuses)
-        if action_name == "case_detail_summary":
-            params = payload.get("params") or {}
-            case_id = str(params.get("case_id") or params.get("fir_number") or "")
+            return _action_response(action_name, _execution(f"{len(urgent)} cases require immediate attention: {names}.", {"count": len(urgent), "cases": [item.fir_number for item in urgent]}))
+        if action_key in {"deadlinesummary"}:
+            return _action_response(action_name, _execution(f"Deadline summary: {statuses['overdue']} overdue, {statuses['red']} red-risk, {statuses['amber']} amber and {statuses['green']} green.", statuses))
+        if action_key in {"casedetailsummary", "casedetail"}:
+            normalized_params = {_action_key(str(key)): value for key, value in params.items()} if isinstance(params, dict) else {}
+            case_id = str(normalized_params.get("caseid") or normalized_params.get("firnumber") or "")
             if not case_id:
-                return _execution("Please provide a case ID or FIR number.")
-            detail = case_svc.get_case_detail(case_id, principal=principal, request_id=request_id)
+                return _action_response(action_name, _execution("Please provide a case ID or FIR number."))
+            lookup_id = case_id
+            if normalized_params.get("firnumber"):
+                matching_case = next(
+                    (item for item in worklist if item.fir_number.casefold() == case_id.casefold()),
+                    None,
+                )
+                lookup_id = matching_case.id if matching_case else case_id
+            detail = case_svc.get_case_detail(lookup_id, principal=principal, request_id=request_id)
             if detail is None:
-                return _execution(f"I could not find case {case_id}.")
-            return _execution(f"{detail.fir_number} is recorded at {detail.station_name} with {len(detail.dependencies)} dependencies and {len(detail.clocks)} statutory clocks.", {"case": detail.model_dump()})
-        return _execution("I do not support that CaseClock action yet.")
+                return _action_response(action_name, _execution(f"I could not find case {case_id}."))
+            return _action_response(action_name, _execution(f"{detail.fir_number} is recorded at {detail.station_name} with {len(detail.dependencies)} dependencies and {len(detail.clocks)} statutory clocks.", {"case": detail.model_dump()}))
+        return _action_response(action_name, _execution("I do not support that CaseClock action yet."))
 
     return router
