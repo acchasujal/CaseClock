@@ -179,13 +179,6 @@ export default function Escalations() {
       accessorKey: 'station_name',
     },
     {
-      header: 'Officer',
-      accessorKey: 'id',
-      cell: () => (
-        <span className="text-caption text-neutral-400 italic">N/A [Schema Gap]</span>
-      ),
-    },
-    {
       header: 'Escalation Reason',
       accessorKey: 'reason',
       cell: (row) => (

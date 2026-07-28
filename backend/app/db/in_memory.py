@@ -352,6 +352,7 @@ class InMemoryBackendRepository:
             fir_number=str(case.get("fir_number", case_id)),
             station_name=str(case.get("police_station", "Unknown station")),
             offence_category=str(case.get("offence_category", "unknown")),
+            updated_at=case["updated_at"],
             clock=primary_clock,
             unresolved_dependency_count=len(unresolved),
             risk_rank=self._risk_rank(primary_clock, len(unresolved)),

@@ -34,9 +34,9 @@ export default function Settings() {
           <div className="flex items-center justify-between py-3">
             <div>
               <p className="text-small font-semibold text-neutral-800">Language / Locale</p>
-              <p className="text-caption text-neutral-500">Requires user profile endpoint [Schema Gap]</p>
+              <p className="text-caption text-neutral-500">Language follows the browser locale</p>
             </div>
-            <span className="text-caption text-neutral-400 italic">Not yet available</span>
+            <span className="text-caption text-neutral-400 italic">Browser default</span>
           </div>
         </div>
       </section>
@@ -76,9 +76,9 @@ export default function Settings() {
           <div className="flex items-center justify-between py-3">
             <div>
               <p className="text-small font-semibold text-neutral-800">Session Management</p>
-              <p className="text-caption text-neutral-500">Requires JWT session endpoint [Schema Gap]</p>
+              <p className="text-caption text-neutral-500">Session controls are managed by the authentication provider</p>
             </div>
-            <span className="text-caption text-neutral-400 italic">Not yet available</span>
+            <span className="text-caption text-neutral-400 italic">Provider managed</span>
           </div>
         </div>
       </section>

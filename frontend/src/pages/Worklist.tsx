@@ -21,6 +21,29 @@ const PAGE_SIZE = 15
 const SELECT_CLASS =
   'block w-full rounded-radius-sm border border-neutral-300 bg-neutral-50 px-3 py-1.5 text-small text-neutral-900 focus:border-status-info focus:ring-1 focus:ring-status-info'
 
+const relativeTimeFormatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+
+function formatRelativeTime(timestamp: string): string {
+  const elapsedSeconds = (Date.parse(timestamp) - Date.now()) / 1000
+  const absoluteSeconds = Math.abs(elapsedSeconds)
+  const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+    ['year', 31_536_000],
+    ['month', 2_592_000],
+    ['day', 86_400],
+    ['hour', 3_600],
+    ['minute', 60],
+  ]
+  const [unit, secondsPerUnit] = units.find(([, seconds]) => absoluteSeconds >= seconds) ?? ['second', 1]
+  return relativeTimeFormatter.format(Math.round(elapsedSeconds / secondsPerUnit), unit)
+}
+
+function formatExactDateTime(timestamp: string): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(timestamp))
+}
+
 export default function Worklist() {
   const navigate = useNavigate()
   const { data: cases, isLoading, error, refetch } = useWorklist()
@@ -167,13 +190,6 @@ export default function Worklist() {
       ),
     },
     {
-      header: 'Assigned Officer',
-      accessorKey: 'id',
-      cell: () => (
-        <span className="text-caption text-neutral-400 italic">N/A [Schema Gap]</span>
-      ),
-    },
-    {
       header: 'Case Status',
       accessorKey: 'unresolved_dependency_count',
       cell: (row) => (
@@ -185,9 +201,15 @@ export default function Worklist() {
     },
     {
       header: 'Last Updated',
-      accessorKey: 'id',
-      cell: () => (
-        <span className="text-caption text-neutral-400 font-mono">N/A [Schema Gap]</span>
+      accessorKey: 'updated_at',
+      cell: (row) => (
+        <time
+          dateTime={row.updated_at}
+          title={formatExactDateTime(row.updated_at)}
+          className="whitespace-nowrap text-caption text-neutral-600"
+        >
+          {formatRelativeTime(row.updated_at)}
+        </time>
       ),
     },
     {

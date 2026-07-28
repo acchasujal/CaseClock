@@ -13,6 +13,9 @@ Keep Python and TypeScript mirrors in sync — every entry must describe what ch
   `TokenResponse`
 - Enums: `UserRole`, `ClockStatus`, `DependencyStatus`
 
+### Changed
+- Added `updated_at` to `CaseSummaryResponse` in both Python and TypeScript contracts.
+
 ---
 
 <!-- Template for future entries:

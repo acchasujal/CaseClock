@@ -50,6 +50,7 @@ export interface CaseSummaryResponse {
   fir_number: string;
   station_name: string;
   offence_category: string;
+  updated_at: string;        // ISO 8601
   clock: ClockInstanceResponse;
   unresolved_dependency_count: number;
   risk_rank: number;         // Lower = more urgent

@@ -73,6 +73,7 @@ class CaseSummaryResponse(BaseModel):
     fir_number: str
     station_name: str
     offence_category: str
+    updated_at: datetime
     clock: ClockInstanceResponse
     unresolved_dependency_count: int
     risk_rank: int          # Computed: lower = more urgent
