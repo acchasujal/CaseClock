@@ -149,6 +149,35 @@ def create_convokraft_router() -> APIRouter:
     ) -> dict[str, Any]:
         raw_body = await request.body()
         settings: Settings = request.app.state.settings
+        request_headers = {
+            key: value
+            for key, value in request.headers.items()
+            if key.casefold() != "authorization"
+        }
+        request_payload: Any = None
+        try:
+            request_payload = json.loads(raw_body)
+            request_body_log = json.dumps(request_payload, indent=2, default=str)
+        except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+            request_body_log = raw_body.decode("utf-8", errors="replace")
+        logger.info(
+            "\n================ FULL CONVOKRAFT REQUEST ================\n%s\n================ END REQUEST ================",
+            request_body_log,
+            extra={
+                "category": "full_convokraft_request",
+                "top_level_keys": sorted(request_payload.keys()) if isinstance(request_payload, dict) else [],
+                "request_path": request.url.path,
+                "request_method": request.method,
+                "content_type": request.headers.get("content-type", ""),
+                "user_agent": request.headers.get("user-agent", ""),
+                "request_headers": request_headers,
+                "action_exists": isinstance(request_payload, dict) and "action" in request_payload,
+                "skill_exists": isinstance(request_payload, dict) and "skill" in request_payload,
+                "todo_exists": isinstance(request_payload, dict) and "todo" in request_payload,
+                "client_data_exists": isinstance(request_payload, dict) and "clientData" in request_payload,
+                "session_data_exists": isinstance(request_payload, dict) and "sessionData" in request_payload,
+            },
+        )
         if settings.is_production and settings.convokraft_verify_signature:
             signature = request.headers.get("X-CONVOKRAFT-SIGNATURE", "")
             public_key = _normalise_public_key(settings.convokraft_public_key)
