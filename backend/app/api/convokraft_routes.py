@@ -225,9 +225,22 @@ def create_convokraft_router() -> APIRouter:
             raise HTTPException(status_code=400, detail="Malformed ConvoKraft payload")
 
         principal = _principal_from_payload(payload, settings)
-        action_name = str(payload.get("action") or "").strip()
+        raw_action = payload.get("action")
+        namespace = raw_action.get("namespace") if isinstance(raw_action, dict) else None
+        action_name = str(raw_action or "").strip()
         action_key = _action_key(action_name)
         params = payload.get("params") or {}
+        supported_namespaces = [
+            "casestatussummary",
+            "urgentcases",
+            "deadlinesummary",
+            "casedetailsummary",
+            "casedetail",
+        ]
+        logger.info("Dispatch namespace = %r", namespace)
+        logger.info("Dispatch action value = %r", raw_action)
+        logger.info("Dispatch action name = %r; normalized key = %r", action_name, action_key)
+        logger.info("Supported namespaces: %s", supported_namespaces)
         logger.info(
             "ConvoKraft action received action=%s top_level_keys=%s parameter_names=%s",
             action_name,
@@ -239,15 +252,19 @@ def create_convokraft_router() -> APIRouter:
         statuses = {status: sum(item.clock.status.value == status for item in worklist) for status in ("overdue", "red", "amber", "green")}
 
         if action_key in {"casestatussummary"}:
+            logger.info("Executing CaseStatusSummary")
             message = f"{len(worklist)} active cases are currently in the {principal.role.value} worklist: {statuses['overdue']} overdue, {statuses['red']} red-risk, {statuses['amber']} amber and {statuses['green']} green."
             return _action_response(action_name, _execution(message, {"active_case_count": len(worklist), **statuses}))
         if action_key in {"urgentcases"}:
+            logger.info("Executing UrgentCases")
             urgent = [item for item in worklist if item.clock.status.value in {"overdue", "red"}]
             names = ", ".join(item.fir_number for item in urgent[:10]) or "None"
             return _action_response(action_name, _execution(f"{len(urgent)} cases require immediate attention: {names}.", {"count": len(urgent), "cases": [item.fir_number for item in urgent]}))
         if action_key in {"deadlinesummary"}:
+            logger.info("Executing DeadlineSummary")
             return _action_response(action_name, _execution(f"Deadline summary: {statuses['overdue']} overdue, {statuses['red']} red-risk, {statuses['amber']} amber and {statuses['green']} green.", statuses))
         if action_key in {"casedetailsummary", "casedetail"}:
+            logger.info("Executing CaseDetail")
             normalized_params = {_action_key(str(key)): value for key, value in params.items()} if isinstance(params, dict) else {}
             case_id = str(normalized_params.get("caseid") or normalized_params.get("firnumber") or "")
             if not case_id:
@@ -263,6 +280,7 @@ def create_convokraft_router() -> APIRouter:
             if detail is None:
                 return _action_response(action_name, _execution(f"I could not find case {case_id}."))
             return _action_response(action_name, _execution(f"{detail.fir_number} is recorded at {detail.station_name} with {len(detail.dependencies)} dependencies and {len(detail.clocks)} statutory clocks.", {"case": detail.model_dump()}))
+        logger.info("Executing fallback")
         return _action_response(action_name, _execution("I do not support that CaseClock action yet."))
 
     return router
