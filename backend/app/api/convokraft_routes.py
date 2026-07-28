@@ -45,6 +45,28 @@ def _action_response(action_name: str, response: dict[str, Any]) -> dict[str, An
         200,
         extra={"category": "action_response"},
     )
+    logger.info(
+        "ConvoKraft FULL RESPONSE:\n%s",
+        json.dumps(response, indent=2, default=str),
+        extra={
+            "category": "action_response_debug",
+            "http_status": 200,
+            "response_type": response.get("status"),
+            "status_value": response.get("status"),
+            "message_type": type(response.get("message")).__name__,
+            "message_value": response.get("message"),
+            "card_type": type(response.get("card")).__name__,
+            "card_value": response.get("card"),
+            "data_type": type(response.get("data")).__name__,
+            "data_value": response.get("data"),
+            "broadcast_type": type(response.get("broadcast")).__name__,
+            "broadcast_value": response.get("broadcast"),
+            "followup_type": type(response.get("followup")).__name__,
+            "followup_value": response.get("followup"),
+            "trigger_type": type(response.get("trigger")).__name__,
+            "trigger_value": response.get("trigger"),
+        },
+    )
     return response
 
 
